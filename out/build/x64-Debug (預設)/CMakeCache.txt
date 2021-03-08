@@ -215,6 +215,12 @@ _VCPKG_CL:FILEPATH=C:/Program Files (x86)/Microsoft Visual Studio/2019/Community
 // triplet
 _VCPKG_INSTALLED_DIR:PATH=C:/Users/user/Desktop/OpenGL/vcpkg/installed
 
+//The directory containing a CMake configuration file for glfw3.
+glfw3_DIR:PATH=glfw3_DIR-NOTFOUND
+
+//The directory containing a CMake configuration file for glfw.
+glfw_DIR:PATH=glfw_DIR-NOTFOUND
+
 
 ########################
 # INTERNAL cache entries
