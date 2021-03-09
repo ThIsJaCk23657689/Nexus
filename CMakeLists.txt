@@ -9,11 +9,16 @@ set(NEXUS_INCLUDE_DIRS
 	"${CMAKE_CURRENT_SOURCE_DIR}/External/stb_image")
 
 set(NEXUS_SOURCE
+	"${CMAKE_CURRENT_SOURCE_DIR}/Source/Application.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/Source/Shader.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/Source/Camera.cpp"
+
 	"${CMAKE_CURRENT_SOURCE_DIR}/External/stb_image/stb_image.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/External/stb_image/stb_image_write.cpp")
 
 # Project setting
 project (${TARGET_NAME})
+# add_library(${TARGET_NAME}　${NEXUS_SOURCE})
 add_executable(${TARGET_NAME} Source/Main.cpp)
 
 # Loading GLFW
@@ -38,5 +43,4 @@ target_link_libraries(${TARGET_NAME} PRIVATE assimp::assimp)
 
 target_include_directories(${TARGET_NAME} PUBLIC ${NEXUS_INCLUDE_DIRS})
 
-# add_library("StbLib" ${NEXUS_SOURCE})
-# target_link_libraries(${TARGET_NAME} StbLib)
+# target_link_libraries(${TARGET_NAME} PUBLIC ${NEXUS_SOURCE})
