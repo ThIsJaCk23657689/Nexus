@@ -1,3 +1,0 @@
-C:/Users/user/Desktop/OpenGL/Nexus/out/build/x64-Debug (預設)/CMakeFiles/edit_cache.dir
-C:/Users/user/Desktop/OpenGL/Nexus/out/build/x64-Debug (預設)/CMakeFiles/Nexus.dir
-C:/Users/user/Desktop/OpenGL/Nexus/out/build/x64-Debug (預設)/CMakeFiles/rebuild_cache.dir

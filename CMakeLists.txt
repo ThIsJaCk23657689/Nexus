@@ -14,7 +14,7 @@ set(NEXUS_SOURCE
 
 # Project setting
 project (${TARGET_NAME})
-add_executable(${TARGET_NAME} Source/Main.cpp "Header/Application.h" "Source/Application.cpp")
+add_executable(${TARGET_NAME} Source/Main.cpp)
 
 # Loading GLFW
 find_package(glfw3 CONFIG REQUIRED)
@@ -36,5 +36,7 @@ target_link_libraries(${TARGET_NAME} PRIVATE imgui::imgui)
 find_package(Assimp CONFIG REQUIRED)
 target_link_libraries(${TARGET_NAME} PRIVATE assimp::assimp)
 
-# add_library(${TARGET_NAME} ${NEXUS_SOURCE})
-# target_include_directories(${TARGET_NAME} PUBLIC ${NEXUS_INCLUDE_DIRS})
+target_include_directories(${TARGET_NAME} PUBLIC ${NEXUS_INCLUDE_DIRS})
+
+# add_library("StbLib" ${NEXUS_SOURCE})
+# target_link_libraries(${TARGET_NAME} StbLib)
