@@ -1,10 +1,11 @@
 #pragma once
 
-#include "MessageLogger.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <string>
 #include <vector>
+
+#include "MessageLogger.h"
 
 namespace Nexus {
 
@@ -21,7 +22,8 @@ namespace Nexus {
 		bool ShowAxis = false;
 	};
 
-	struct Application {
+	class Application {
+	public:
 		virtual void Initialize() = 0;
 		virtual void Update() = 0;
 

@@ -1,7 +1,13 @@
 #pragma once
 
 namespace Nexus {
-	struct Camera {
+	class Camera {
+	public:
+		virtual ~Camera() {}
+		
+	protected:
+		
+	private:
 		
 	};
 }

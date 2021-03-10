@@ -1,7 +1,13 @@
 #pragma once
 
 namespace Nexus {
-	struct Shader {
-		
+	class Shader {
+	public:
+		virtual ~Shader() {}
+
+	protected:
+
+	private:
+
 	};
 }

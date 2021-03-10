@@ -13,8 +13,8 @@ namespace Nexus {
 		LOG_ERROR,
 	};
 	
-	struct MessageLogger {
-		
+	class MessageLogger {
+	public:
 		void Message(LogLevel type, std::string message);
 		void ShowInitInfo(const GLubyte* vendor, const GLubyte* renderer, const GLubyte* version);
 		

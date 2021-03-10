@@ -17,7 +17,8 @@
 
 #define PI 3.14159265359f
 
-struct NexusDemo final : public Nexus::Application {
+class NexusDemo final : public Nexus::Application {
+public:
 	NexusDemo() {
 		Settings.Width = 1280;
 		Settings.Height = 720;
