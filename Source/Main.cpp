@@ -7,6 +7,8 @@
 #include <imgui.h>
 
 #include "Application.h"
+#include "Shader.h"
+#include "Camera.h"
 
 #include <vector>
 #include <iostream>
@@ -35,6 +37,9 @@ public:
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		// Create shader program
+
+		// Create Camera
+		camera = std::make_unique<Nexus::Camera>(glm::vec3(0.0f, 2.0f, 10.0f));
 
 		// Create object data
 
@@ -80,7 +85,7 @@ public:
 	}
 
 private:
-	
+	std::unique_ptr<Nexus::Camera> camera = nullptr;
 };
 
 int main() {
