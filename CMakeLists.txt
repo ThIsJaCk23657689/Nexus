@@ -10,7 +10,7 @@ set(NEXUS_INCLUDE_DIRS
 
 set(NEXUS_SOURCE
 	"${CMAKE_CURRENT_SOURCE_DIR}/Source/Application.cpp"
-	"${CMAKE_CURRENT_SOURCE_DIR}/Source/MessageLogger.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/Source/Logger.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/Source/Shader.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/Source/Camera.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/External/stb_image/stb_image.cpp"
@@ -46,3 +46,7 @@ target_link_libraries(${MY_LIBRARY} PRIVATE assimp::assimp)
 add_executable(${MY_PROJECT} Source/Main.cpp)
 target_link_libraries(${MY_PROJECT} PRIVATE glfw glm glad::glad imgui::imgui assimp::assimp)
 target_link_libraries(${MY_PROJECT} PUBLIC ${MY_LIBRARY})
+
+# Copy these shader files
+add_custom_command(TARGET ${MY_PROJECT} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
+	${CMAKE_SOURCE_DIR}/Shaders/ ${CMAKE_BINARY_DIR}/Shaders/)

@@ -1,4 +1,5 @@
 #include "Application.h"
+#include "Logger.h"
 
 #include <iostream>
 #include <imgui.h>
@@ -108,11 +109,11 @@ namespace Nexus {
 		
 		// Initialize GLFW
 		if (!glfwInit()) {
-			Logger.Message(LOG_ERROR, "Failed to initialize GLFW.");
+			Logger::Message(LOG_ERROR, "Failed to initialize GLFW.");
 			glfwTerminate();
 			exit(-1);
 		}
-		Logger.Message(LOG_DEBUG, "Initialize GLFW successful.");
+		Logger::Message(LOG_DEBUG, "Initialize GLFW successful.");
 		
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -126,11 +127,11 @@ namespace Nexus {
 		// Create a window
 		Window = glfwCreateWindow(Settings.Width, Settings.Height, Settings.WindowTitle.c_str(), nullptr, nullptr);
 		if (!Window) {
-			Logger.Message(LOG_ERROR, "Failed to create GLFW window :(");
+			Logger::Message(LOG_ERROR, "Failed to create GLFW window :(");
 			glfwTerminate();
 			exit(-1);
 		}
-		Logger.Message(LOG_DEBUG, "Create GLFW window successful.");
+		Logger::Message(LOG_DEBUG, "Create GLFW window successful.");
 
 		// Register callbacks and settings
 		glfwMakeContextCurrent(Window);
@@ -144,11 +145,11 @@ namespace Nexus {
 
 		// Initialize GLAD (Must behind the create window)
 		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-			Logger.Message(LOG_ERROR, "Failed to initialize GLAD.");
+			Logger::Message(LOG_ERROR, "Failed to initialize GLAD.");
 			glfwTerminate();
 			exit(-1);
 		}
-		Logger.Message(LOG_DEBUG, "Initialize GLAD successful.");
+		Logger::Message(LOG_DEBUG, "Initialize GLAD successful.");
 
 		// Initialize ImGui and bind to GLFW and OpenGL3(glad)
 		std::string glsl_version = "#version 330";
@@ -163,7 +164,7 @@ namespace Nexus {
 		const GLubyte* opengl_vendor = glGetString(GL_VENDOR);
 		const GLubyte* opengl_renderer = glGetString(GL_RENDERER);
 		const GLubyte* opengl_version = glGetString(GL_VERSION);
-		Logger.ShowInitInfo(opengl_vendor, opengl_renderer, opengl_version);
+		Logger::ShowInitInfo(opengl_vendor, opengl_renderer, opengl_version);
 
 		// Mouse Initialize
 		lastX = (float)Settings.Width / 2.0f;

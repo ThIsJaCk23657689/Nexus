@@ -1,10 +1,10 @@
-#include "MessageLogger.h"
+#include "Logger.h"
 
 #include <iostream>
 #include <ctime>
 
 namespace Nexus {
-	void MessageLogger::Message(LogLevel type, std::string message) {
+	void Logger::Message(LogLevel type, std::string message) {
 		switch (type) {
 			case LOG_DEBUG:
 				std::cout << GetTimestamp() << "[DEBUG] " << message << std::endl;
@@ -24,14 +24,14 @@ namespace Nexus {
 		}
 	}
 
-	void MessageLogger::ShowInitInfo(const GLubyte* vendor, const GLubyte* renderer, const GLubyte* version) {
+	void Logger::ShowInitInfo(const GLubyte* vendor, const GLubyte* renderer, const GLubyte* version) {
 		std::cout << GetTimestamp() << "[INFO] GPU Vendor: " << vendor << std::endl;
-		std::cout << GetTimestamp() << "[INFO] GPU: " << renderer << std::endl;
+		std::cout << GetTimestamp() << "[INFO] GPU Renderer: " << renderer << std::endl;
 		std::cout << GetTimestamp() << "[INFO] OpenGL Version: " << version << std::endl;
 	}
 
 	// Generate timestamp for logging
-	std::string MessageLogger::GetTimestamp() {
+	std::string Logger::GetTimestamp() {
 		time_t timer = std::time(0);
 		std::tm bt{};
 		localtime_s(&bt, &timer);

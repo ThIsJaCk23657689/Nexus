@@ -37,7 +37,8 @@ public:
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		// Create shader program
-
+		myShader = std::make_unique<Nexus::Shader>("Shaders/lighting.vert", "Shaders/lighting.frag");
+		
 		// Create Camera
 		camera = std::make_unique<Nexus::Camera>(glm::vec3(0.0f, 2.0f, 10.0f));
 
@@ -86,6 +87,7 @@ public:
 
 private:
 	std::unique_ptr<Nexus::Camera> camera = nullptr;
+	std::unique_ptr<Nexus::Shader> myShader = nullptr;
 };
 
 int main() {

@@ -13,14 +13,11 @@ namespace Nexus {
 		LOG_ERROR,
 	};
 	
-	class MessageLogger {
+	class Logger {
 	public:
-		void Message(LogLevel type, std::string message);
-		void ShowInitInfo(const GLubyte* vendor, const GLubyte* renderer, const GLubyte* version);
-		
-	private:
-		
-		std::string GetTimestamp();
-		
+		static void Message(LogLevel type, std::string message);
+		static void ShowInitInfo(const GLubyte* vendor, const GLubyte* renderer, const GLubyte* version);
+		static std::string GetTimestamp();
+
 	};
 }

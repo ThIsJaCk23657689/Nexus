@@ -5,8 +5,6 @@
 #include <string>
 #include <vector>
 
-#include "MessageLogger.h"
-
 namespace Nexus {
 
 	struct ApplicationSettings {
@@ -45,8 +43,7 @@ namespace Nexus {
 		
 		float DeltaTime = 0.0f;
 		float LastTime = 0.0f;
-
-		MessageLogger Logger;
+		
 		ApplicationSettings Settings;
 		
 	private:
