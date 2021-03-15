@@ -13,11 +13,11 @@ namespace Nexus {
 		Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr);
 		~Shader();
 
-		void Bind() const {
+		void Use() const {
 			glUseProgram(this->ID);
 		}
 
-		void Unbind() const {
+		void Unused() const {
 			glUseProgram(0);
 		}
 

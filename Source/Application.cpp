@@ -1,16 +1,39 @@
 #include "Application.h"
 #include "Logger.h"
+#include "OldShader.h"
 
 #include <iostream>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+
+
 namespace Nexus {
 
+	unsigned int triangleVAO, triangleVBO;
+	std::vector<float> triangleVertices;
+	
 	int Application::Run() {
+		
 		InitializeBase();
 		Initialize();
+		OldShader myShader("Shaders/testing.vert", "Shaders/testing.frag");
+
+		triangleVertices = {
+			-0.5f, -0.5f, 0.0f,
+			 0.5f, -0.5f, 0.0f,
+			 0.0f,  0.5f, 0.0f
+		};
+
+		glGenVertexArrays(1, &triangleVAO);
+		glGenBuffers(1, &triangleVBO);
+		glBindVertexArray(triangleVAO);
+			glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
+			glBufferData(GL_ARRAY_BUFFER, triangleVertices.size() * sizeof(float), triangleVertices.data(), GL_STATIC_DRAW);
+			glEnableVertexAttribArray(0);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+		glBindVertexArray(0);
 
 		while(!glfwWindowShouldClose(Window)) {
 
@@ -28,6 +51,14 @@ namespace Nexus {
 			ImGui::NewFrame();
 
 			// Display
+			glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			
+			myShader.use();
+			glBindVertexArray(triangleVAO);
+			glDrawArrays(GL_TRIANGLES, 0, 3);
+
+			ImGui::ShowDemoWindow();
 			Update();
 
 			// Render imgui on the screen
@@ -40,6 +71,10 @@ namespace Nexus {
 		}
 
 		return 0;
+	}
+
+	void Application::Update() {
+		
 	}
 
 	void Application::GLFWFrameBufferSizeCallback(GLFWwindow* window, int width, int height) {
@@ -103,7 +138,6 @@ namespace Nexus {
 	void Application::GLFWScrollCallback(GLFWwindow* window, double xpos, double ypos) {
 		OnMouseScroll((float)ypos);
 	}
-
 
 	void Application::InitializeBase() {
 		

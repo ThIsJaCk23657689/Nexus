@@ -10,9 +10,10 @@ set(NEXUS_INCLUDE_DIRS
 
 set(NEXUS_SOURCE
 	"${CMAKE_CURRENT_SOURCE_DIR}/Source/Application.cpp"
-	"${CMAKE_CURRENT_SOURCE_DIR}/Source/Logger.cpp"
-	"${CMAKE_CURRENT_SOURCE_DIR}/Source/Shader.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/Source/Camera.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/Source/Logger.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/Source/Mesh.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/Source/Shader.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/External/stb_image/stb_image.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/External/stb_image/stb_image_write.cpp")
 

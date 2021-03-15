@@ -90,12 +90,14 @@ namespace Nexus {
 			ShaderFile.close();
 		} catch (std::ifstream::failure& e) {
 			// Handle Failure
-			Logger::Message(LOG_ERROR, "[ERROR] Failed to load shader files, type: " + this->GetShaderTypeString(type) + ", filepath: " + path);
+			Logger::Message(LOG_ERROR, "Failed to load shader files, type: " + this->GetShaderTypeString(type) + ", filepath: " + path);
 			return GLuint(-1);
 		}
 		
 		const std::string& ShaderSource = ShaderStream.str();
 		const char* ShaderCode = ShaderSource.c_str();
+
+		// Logger::Message(LOG_DEBUG, "\n" + ShaderSource);
 		
 		GLenum CurrentShaderType = GL_VERTEX_SHADER;
 		switch (type) {
@@ -116,6 +118,7 @@ namespace Nexus {
 			return GLuint(-1);
 		}
 
+		Logger::Message(LOG_DEBUG, "Load shader successful, type: " + this->GetShaderTypeString(type) + ", filepath: " + path);
 		return Shader;
 	}
 
@@ -144,6 +147,7 @@ namespace Nexus {
 				Logger::Message(LOG_ERROR, infoLog);
 				return true;
 			}
+			Logger::Message(LOG_DEBUG, "Create shader program successful.");
 		} else {
 			glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 			if (!success) {

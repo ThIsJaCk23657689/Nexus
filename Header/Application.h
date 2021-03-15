@@ -23,9 +23,11 @@ namespace Nexus {
 	class Application {
 	public:
 		virtual void Initialize() = 0;
-		virtual void Update() = 0;
+		virtual void Update();
 
-		virtual ~Application() {}
+		virtual ~Application() {
+			glfwTerminate();
+		}
 
 		int Run();
 
