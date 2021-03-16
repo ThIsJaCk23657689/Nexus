@@ -1,40 +1,24 @@
 #include "Application.h"
 #include "Logger.h"
-#include "OldShader.h"
 
 #include <iostream>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
-
-
 namespace Nexus {
 
-	unsigned int triangleVAO, triangleVBO;
-	std::vector<float> triangleVertices;
-	
 	int Application::Run() {
 		
 		InitializeBase();
 		Initialize();
-		OldShader myShader("Shaders/testing.vert", "Shaders/testing.frag");
 
-		triangleVertices = {
-			-0.5f, -0.5f, 0.0f,
-			 0.5f, -0.5f, 0.0f,
-			 0.0f,  0.5f, 0.0f
-		};
-
-		glGenVertexArrays(1, &triangleVAO);
-		glGenBuffers(1, &triangleVBO);
-		glBindVertexArray(triangleVAO);
-			glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
-			glBufferData(GL_ARRAY_BUFFER, triangleVertices.size() * sizeof(float), triangleVertices.data(), GL_STATIC_DRAW);
-			glEnableVertexAttribArray(0);
-			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-		glBindVertexArray(0);
-
+		// Show version info
+		const GLubyte* opengl_vendor = glGetString(GL_VENDOR);
+		const GLubyte* opengl_renderer = glGetString(GL_RENDERER);
+		const GLubyte* opengl_version = glGetString(GL_VERSION);
+		Logger::ShowInitInfo(opengl_vendor, opengl_renderer, opengl_version);
+		
 		while(!glfwWindowShouldClose(Window)) {
 
 			// Calculate the delta time
@@ -51,14 +35,6 @@ namespace Nexus {
 			ImGui::NewFrame();
 
 			// Display
-			glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			
-			myShader.use();
-			glBindVertexArray(triangleVAO);
-			glDrawArrays(GL_TRIANGLES, 0, 3);
-
-			ImGui::ShowDemoWindow();
 			Update();
 
 			// Render imgui on the screen
@@ -69,12 +45,8 @@ namespace Nexus {
 			glfwSwapBuffers(Window);
 			glfwPollEvents();
 		}
-
-		return 0;
-	}
-
-	void Application::Update() {
 		
+		return 0;
 	}
 
 	void Application::GLFWFrameBufferSizeCallback(GLFWwindow* window, int width, int height) {
@@ -140,14 +112,16 @@ namespace Nexus {
 	}
 
 	void Application::InitializeBase() {
+
+		Logger::ShowMe();
 		
 		// Initialize GLFW
 		if (!glfwInit()) {
-			Logger::Message(LOG_ERROR, "Failed to initialize GLFW.");
+			Logger::Message(LOG_ERROR, "Oops! Failed to initialize GLFW. :(");
 			glfwTerminate();
 			exit(-1);
 		}
-		Logger::Message(LOG_DEBUG, "Initialize GLFW successful.");
+		Logger::Message(LOG_DEBUG, "Initialize GLFW successfully.");
 		
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -161,11 +135,11 @@ namespace Nexus {
 		// Create a window
 		Window = glfwCreateWindow(Settings.Width, Settings.Height, Settings.WindowTitle.c_str(), nullptr, nullptr);
 		if (!Window) {
-			Logger::Message(LOG_ERROR, "Failed to create GLFW window :(");
+			Logger::Message(LOG_ERROR, "Oops! Failed to create a GLFW window. :(");
 			glfwTerminate();
 			exit(-1);
 		}
-		Logger::Message(LOG_DEBUG, "Create GLFW window successful.");
+		Logger::Message(LOG_DEBUG, "Create a GLFW window successfully.");
 
 		// Register callbacks and settings
 		glfwMakeContextCurrent(Window);
@@ -183,7 +157,7 @@ namespace Nexus {
 			glfwTerminate();
 			exit(-1);
 		}
-		Logger::Message(LOG_DEBUG, "Initialize GLAD successful.");
+		Logger::Message(LOG_DEBUG, "Initialize GLAD successfully.");
 
 		// Initialize ImGui and bind to GLFW and OpenGL3(glad)
 		std::string glsl_version = "#version 330";
@@ -194,16 +168,9 @@ namespace Nexus {
 		ImGui_ImplGlfw_InitForOpenGL(Window, true);
 		ImGui_ImplOpenGL3_Init(glsl_version.c_str());
 
-		// Show version info
-		const GLubyte* opengl_vendor = glGetString(GL_VENDOR);
-		const GLubyte* opengl_renderer = glGetString(GL_RENDERER);
-		const GLubyte* opengl_version = glGetString(GL_VERSION);
-		Logger::ShowInitInfo(opengl_vendor, opengl_renderer, opengl_version);
-
 		// Mouse Initialize
 		lastX = (float)Settings.Width / 2.0f;
 		lastY = (float)Settings.Height / 2.0f;
-		
 	}
 	
 	void Application::GLFWFrameBufferSizeCallbackHelper(GLFWwindow* window, int width, int height) {

@@ -1,5 +1,7 @@
 #include "Mesh.h"
 
+#include <iostream>
+
 namespace Nexus {
 	VertexBuffer::VertexBuffer(void* vertices, std::size_t size) {
 		glGenBuffers(1, &this->ID);
@@ -23,7 +25,7 @@ namespace Nexus {
 		glDeleteBuffers(1, &this->ID);
 	}
 
-	VertexArray::VertexArray(VertexBuffer* vbo, VertexAttribute* attribs, GLuint attribsCount, GLsizei stride, IndexBuffer* ebo) {
+	VertexArray::VertexArray(VertexBuffer* vbo, VertexAttributes* attribs, GLuint attribs_count, GLsizei stride, IndexBuffer* ebo) {
 
 		glGenVertexArrays(1, &this->ID);
 
@@ -33,7 +35,8 @@ namespace Nexus {
 			ebo->Bind();
 		}
 
-		for (GLuint i = 0; i < attribsCount; i++) {
+		for (GLuint i = 0; i < attribs_count; i++) {
+			// std::cout << attribs[i].Dims << "\t" << stride << "\t" << attribs[i].Offset << std::endl;
 			glVertexAttribPointer(i, attribs[i].Dims, GL_FLOAT, GL_FALSE, stride, (const GLvoid*)attribs[i].Offset);
 			glEnableVertexAttribArray(i);
 		}

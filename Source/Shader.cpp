@@ -90,14 +90,12 @@ namespace Nexus {
 			ShaderFile.close();
 		} catch (std::ifstream::failure& e) {
 			// Handle Failure
-			Logger::Message(LOG_ERROR, "Failed to load shader files, type: " + this->GetShaderTypeString(type) + ", filepath: " + path);
+			Logger::Message(LOG_ERROR, "Failed to load " + this->GetShaderTypeString(type) +" shader files. Filepath: " + path);
 			return GLuint(-1);
 		}
 		
 		const std::string& ShaderSource = ShaderStream.str();
 		const char* ShaderCode = ShaderSource.c_str();
-
-		// Logger::Message(LOG_DEBUG, "\n" + ShaderSource);
 		
 		GLenum CurrentShaderType = GL_VERTEX_SHADER;
 		switch (type) {
@@ -118,7 +116,9 @@ namespace Nexus {
 			return GLuint(-1);
 		}
 
-		Logger::Message(LOG_DEBUG, "Load shader successful, type: " + this->GetShaderTypeString(type) + ", filepath: " + path);
+		// Print the shader code on the screen. (Debug use)
+		// Logger::Message(LOG_DEBUG, "The Shader Code: \n" + ShaderSource);
+		
 		return Shader;
 	}
 
@@ -129,7 +129,7 @@ namespace Nexus {
 
 		GLint location = glGetUniformLocation(this->ID, name);
 		if (location == -1) {
-			Logger::Message(LOG_WARNING, "The uniform <" + std::string(name) + "> doesn't exist!");
+			Logger::Message(LOG_WARNING, "The uniform variable <" + std::string(name) + "> doesn't exist.");
 		}
 
 		UniformLocationCache[name] = location;
@@ -143,35 +143,36 @@ namespace Nexus {
 			if (!success) {
 				char infoLog[1024];
 				glGetProgramInfoLog(shader, 1024, nullptr, infoLog);
-				Logger::Message(LOG_ERROR, "Failed to link shader program, type: " + this->GetShaderTypeString(type));
+				Logger::Message(LOG_ERROR, "Failed to link a shader program. :(");
 				Logger::Message(LOG_ERROR, infoLog);
 				return true;
 			}
-			Logger::Message(LOG_DEBUG, "Create shader program successful.");
+			Logger::Message(LOG_DEBUG, "Created a shader program successfully.");
 		} else {
 			glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 			if (!success) {
 				char infoLog[1024];
 				glGetShaderInfoLog(shader, 1024, nullptr, infoLog);
-				Logger::Message(LOG_ERROR, "Failed to compile shader, type: " + this->GetShaderTypeString(type) + ", filepath: " + filePath);
+				Logger::Message(LOG_ERROR, "Failed to compile a " + this->GetShaderTypeString(type) + " shader. Filepath: " + filePath);
 				Logger::Message(LOG_ERROR, infoLog);
 				return true;
 			}
+			Logger::Message(LOG_DEBUG, "Compiled a " + this->GetShaderTypeString(type) + " shader successfully.");
 		}
 		return false;
 	}
 
 	std::string Shader::GetShaderTypeString(ShaderType type) {
-		std::string result = "Vertex";
+		std::string result = "vertex";
 		switch (type) {
 		case ShaderType::Fragment:
-			result = "Fragment";
+			result = "fragment";
 			break;
 		case ShaderType::Geometry:
-			result = "Geometry";
+			result = "geometry";
 			break;
 		case ShaderType::Program:
-			result = "Program";
+			result = "program";
 			break;
 		}
 

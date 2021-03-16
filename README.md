@@ -1,6 +1,13 @@
 # Nexus
 This is a framework allows you to develop a OpenGL applications quickly and more efficiently.
 
-»y¨¥¡G`C++`
-±M®×ºÞ²z¡G¨Ï¥Î `CMake`¡B`Vcpkg` ©M `Git`¡C
-®M¥ó¨Ï¥Î¡G`GLFW`¡B`GLM`¡B`GLAD`¡B`ImGUI`¡B`Stb Image`¡C
+ï¿½yï¿½ï¿½ï¿½G`C++`
+ï¿½Mï¿½×ºÞ²zï¿½Gï¿½Ï¥ï¿½ `CMake`ï¿½B`Vcpkg` ï¿½M `Git`ï¿½C
+ï¿½Mï¿½ï¿½Ï¥Î¡G`GLFW`ï¿½B`GLM`ï¿½B`GLAD`ï¿½B`ImGUI`ï¿½B`Stb Image`ï¿½C
+
+Version
+0.1.0 Application
+0.1.1 Logger
+0.1.2 Shader
+0.1.3 Mesh
+0.1.4 Object

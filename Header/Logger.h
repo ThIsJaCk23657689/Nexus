@@ -5,6 +5,8 @@
 
 namespace Nexus {
 
+	const std::string NexusVerison = "0.1.3";
+	
 	// This is for the argument "type" which in the message().
 	enum LogLevel {
 		LOG_DEBUG,
@@ -17,6 +19,7 @@ namespace Nexus {
 	public:
 		static void Message(LogLevel type, std::string message);
 		static void ShowInitInfo(const GLubyte* vendor, const GLubyte* renderer, const GLubyte* version);
+		static void ShowMe();
 		static std::string GetTimestamp();
 
 	};

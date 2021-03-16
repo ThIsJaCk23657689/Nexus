@@ -9,7 +9,9 @@
 #include "Application.h"
 #include "Camera.h"
 #include "Mesh.h"
+#include "Object.h"
 #include "Shader.h"
+#include "Triangle.h"
 
 #include <vector>
 #include <iostream>
@@ -17,6 +19,7 @@
 #include <cmath>
 #include <ctime>
 #include <random>
+
 
 #define PI 3.14159265359f
 
@@ -38,31 +41,28 @@ public:
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		// Create shader program
-		// myShader = std::make_unique<Nexus::Shader>("Shaders/testing.vert", "Shaders/testing.frag");
+		myShader = std::make_unique<Nexus::Shader>("Shaders/testing.vert", "Shaders/testing.frag");
 		
 		// Create Camera
 		camera = std::make_unique<Nexus::Camera>(glm::vec3(0.0f, 2.0f, 10.0f));
 
 		// Create object data
+		triangle = std::make_unique<Nexus::Triangle>();
 
 		// Loading textures
 
 		// Initial Light Setting
 	}
 	
-	/*
 	void Update() override {
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		triangle->Draw(myShader.get());
 		
-		myShader->Use();
-		// triangleVAO->Bind();
-		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-		
+		// ImGui::ShowDemoWindow();
 	}
-	*/
 	
 	void OnProcessInput(int key) override {
 		
@@ -95,8 +95,7 @@ public:
 private:
 	std::unique_ptr<Nexus::Shader> myShader = nullptr;
 	std::unique_ptr<Nexus::Camera> camera = nullptr;
-	
-
+	std::unique_ptr<Nexus::Triangle> triangle = nullptr;
 };
 
 int main() {

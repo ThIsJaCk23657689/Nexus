@@ -31,15 +31,14 @@ namespace Nexus {
 
 	};
 
-	class VertexAttribute {
-	public:
+	struct VertexAttributes {
 		GLuint Dims;
 		uint64_t Offset;
 	};
 
 	class VertexArray {
 	public:
-		VertexArray(VertexBuffer* vbo, VertexAttribute* attribs, GLuint attribsCount, GLsizei stride, IndexBuffer* ebo = nullptr);
+		VertexArray(VertexBuffer* vbo, VertexAttributes* attribs, GLuint attribs_count, GLsizei stride, IndexBuffer* ebo = nullptr);
 		~VertexArray();
 
 		inline void Bind() const { glBindVertexArray(this->ID); }
