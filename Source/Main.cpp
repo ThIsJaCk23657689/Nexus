@@ -49,7 +49,7 @@ public:
 		triangle->setWireFrameMode(true);
 		
 		square = std::make_unique<Nexus::Square>();
-		square->setWireFrameMode(true);
+		// square->setWireFrameMode(true);
 		
 		// Loading textures
 

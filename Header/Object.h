@@ -96,6 +96,7 @@ namespace Nexus {
 		unsigned int VertexCount = 0;
 
 		bool EnableWireFrameMode = false;
+		glm::vec3 Color = glm::vec3(0.5f, 0.4f, 0.3f);
 
 		std::unique_ptr<Nexus::VertexArray> VAO;
 		std::unique_ptr<Nexus::VertexBuffer> VBO;

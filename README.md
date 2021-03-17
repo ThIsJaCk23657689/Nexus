@@ -13,5 +13,3 @@ This is a framework allows you to develop a OpenGL applications quickly and more
 * 0.1.5 MatrixStack
 * 0.1.6 Camera
 * 0.1.7 Texture
-
-嗨哈

@@ -53,11 +53,15 @@ namespace Nexus {
 		}
 
 		void Draw(Nexus::Shader* shader) override {
+
 			shader->Use();
+			shader->SetVec3("Color", this->Color);
+			
 			this->VAO->Bind();
 			if(this->EnableWireFrameMode) {
 				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			}
+			
 			glDrawElements(GL_TRIANGLES, (GLsizei)this->Indices.size(), GL_UNSIGNED_INT, 0);
 		}
 	};
