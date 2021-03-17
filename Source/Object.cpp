@@ -3,6 +3,50 @@
 #include "Object.h"
 
 namespace Nexus {
+
+	VertexBuffer::VertexBuffer(void* vertices, std::size_t size) {
+		glGenBuffers(1, &this->ID);
+		this->Bind();
+		glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
+		this->Unbind();
+	}
+
+	VertexBuffer::~VertexBuffer() {
+		glDeleteBuffers(1, &this->ID);
+	}
+
+	IndexBuffer::IndexBuffer(void* indices, std::size_t size) {
+		glGenBuffers(1, &this->ID);
+		this->Bind();
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, indices, GL_STATIC_DRAW);
+		this->Unbind();
+	}
+
+	IndexBuffer::~IndexBuffer() {
+		glDeleteBuffers(1, &this->ID);
+	}
+
+	VertexArray::VertexArray(VertexBuffer* vbo, VertexAttributes* attribs, GLuint attribs_count, GLsizei stride, IndexBuffer* ebo) {
+
+		glGenVertexArrays(1, &this->ID);
+		this->Bind();
+		
+		vbo->Bind();
+		if (ebo != nullptr) {
+			ebo->Bind();
+		}
+		
+		for (GLuint i = 0; i < attribs_count; i++) {
+			glEnableVertexAttribArray(i);
+			glVertexAttribPointer(i, attribs[i].Dims, GL_FLOAT, GL_FALSE, stride, (const GLvoid*)attribs[i].Offset);
+		}
+		this->Unbind();
+	}
+
+	VertexArray::~VertexArray() {
+		glDeleteVertexArrays(1, &this->ID);
+	}
+	
 	void Object::addPosition(float x, float y, float z) {
 		this->Position.push_back(x);
 		this->Position.push_back(y);
@@ -11,7 +55,6 @@ namespace Nexus {
 		this->Vertices.push_back(x);
 		this->Vertices.push_back(y);
 		this->Vertices.push_back(z);
-		// std::cout << "x:" << x << ", y:" << y << ", z:" << z << std::endl;
 	}
 
 	void Object::addNormal(float nx, float ny, float nz) {
@@ -36,6 +79,5 @@ namespace Nexus {
 		this->Indices.push_back(i1);
 		this->Indices.push_back(i2);
 		this->Indices.push_back(i3);
-		// std::cout << "i1:" << i1 << ", i2:" << i2 << ", i3:" << i3 << std::endl;
 	}
 }

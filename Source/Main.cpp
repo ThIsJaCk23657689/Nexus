@@ -8,10 +8,9 @@
 
 #include "Application.h"
 #include "Camera.h"
-#include "Mesh.h"
-#include "Object.h"
 #include "Shader.h"
 #include "Triangle.h"
+#include "Square.h"
 
 #include <vector>
 #include <iostream>
@@ -19,7 +18,6 @@
 #include <cmath>
 #include <ctime>
 #include <random>
-
 
 #define PI 3.14159265359f
 
@@ -48,7 +46,11 @@ public:
 
 		// Create object data
 		triangle = std::make_unique<Nexus::Triangle>();
-
+		triangle->setWireFrameMode(true);
+		
+		square = std::make_unique<Nexus::Square>();
+		square->setWireFrameMode(true);
+		
 		// Loading textures
 
 		// Initial Light Setting
@@ -60,6 +62,7 @@ public:
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		triangle->Draw(myShader.get());
+		square->Draw(myShader.get());
 		
 		// ImGui::ShowDemoWindow();
 	}
@@ -96,6 +99,7 @@ private:
 	std::unique_ptr<Nexus::Shader> myShader = nullptr;
 	std::unique_ptr<Nexus::Camera> camera = nullptr;
 	std::unique_ptr<Nexus::Triangle> triangle = nullptr;
+	std::unique_ptr<Nexus::Square> square = nullptr;
 };
 
 int main() {
