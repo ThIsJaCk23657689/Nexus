@@ -11,6 +11,7 @@
 #include "Shader.h"
 #include "Triangle.h"
 #include "Square.h"
+#include "FileLoader.h"
 
 #include <vector>
 #include <iostream>
@@ -18,6 +19,9 @@
 #include <cmath>
 #include <ctime>
 #include <random>
+
+#include "Logger.h"
+
 
 #define PI 3.14159265359f
 
@@ -54,14 +58,36 @@ public:
 		// Loading textures
 
 		// Initial Light Setting
+		
+
+
+		std::unordered_map<unsigned int, unsigned int> histogram;
+		std::vector<unsigned char> Testing = Nexus::FileLoader::load("C:/Users/user/Desktop/Scalar/engine.raw");
+		for (unsigned int i = 0; i < Testing.size(); i++) {
+			if (histogram.find(Testing[i]) != histogram.end()) {
+				histogram[Testing[i]]++;
+			} else {
+				histogram[Testing[i]] = 1;
+			}
+		}
+
+		unsigned int total = 0;
+		for (auto it : histogram) {
+			std::cout << " " << it.first << ":" << it.second << std::endl;
+			total += it.second;
+		}
+		std::cout << "Total:" << total << std::endl;
+		
+		
 	}
 	
 	void Update() override {
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+		
 		triangle->Draw(myShader.get());
+		square->setColor(glm::vec3(0.5, 0.1, 0.9));
 		square->Draw(myShader.get());
 		
 		// ImGui::ShowDemoWindow();

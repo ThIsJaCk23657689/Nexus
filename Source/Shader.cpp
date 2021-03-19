@@ -90,7 +90,7 @@ namespace Nexus {
 			ShaderFile.close();
 		} catch (std::ifstream::failure& e) {
 			// Handle Failure
-			Logger::Message(LOG_ERROR, "Failed to load " + this->GetShaderTypeString(type) +" shader files. Filepath: " + path);
+			Logger::Message(LOG_ERROR, "Failed to load " + this->GetShaderTypeString(type) + " shader files. Filepath: " + path);
 			return GLuint(-1);
 		}
 		

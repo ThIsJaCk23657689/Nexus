@@ -80,6 +80,14 @@ namespace Nexus {
 		void setWireFrameMode(bool enable) {
 			this->EnableWireFrameMode = enable;
 		}
+
+		void setColor(glm::vec3 color) {
+			this->Color = color;
+		}
+
+		void setColor(float r, float g, float b) {
+			this->Color = glm::vec3(r, g, b);
+		}
 		
 		unsigned int getVertexCount() const { return (unsigned int)this->Vertices.size() / 8; }
 		unsigned int getPositionCount() const { return (unsigned int)this->Position.size() / 3; }

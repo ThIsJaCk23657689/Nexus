@@ -55,7 +55,7 @@ namespace Nexus {
 		void Draw(Nexus::Shader* shader) override {
 
 			shader->Use();
-			shader->SetVec3("Color", this->Color);
+			shader->SetVec3("color", this->Color);
 			
 			this->VAO->Bind();
 			if(this->EnableWireFrameMode) {
