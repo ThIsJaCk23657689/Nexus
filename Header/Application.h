@@ -25,6 +25,8 @@ namespace Nexus {
 		virtual void Initialize() = 0;
 		virtual void Update() = 0;
 
+		void SetCursorDisable(bool enable);
+
 		virtual ~Application() {
 			glfwTerminate();
 		}
@@ -43,6 +45,7 @@ namespace Nexus {
 
 		GLFWwindow* Window = nullptr;
 		
+		float CurrentTime = 0.0f;
 		float DeltaTime = 0.0f;
 		float LastTime = 0.0f;
 		
@@ -65,8 +68,8 @@ namespace Nexus {
 		static void GLFWScrollCallbackHelper(GLFWwindow* window, double xpos, double ypos);
 		
 		bool FirstMouse = true;
-		float lastX = 0.0f;
-		float lastY = 0.0f;
+		float LastX = 0.0f;
+		float LastY = 0.0f;
 	};
 	
 }

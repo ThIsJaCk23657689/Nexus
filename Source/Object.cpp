@@ -47,7 +47,7 @@ namespace Nexus {
 		glDeleteVertexArrays(1, &this->ID);
 	}
 	
-	void Object::addPosition(float x, float y, float z) {
+	void Object::AddPosition(float x, float y, float z) {
 		this->Position.push_back(x);
 		this->Position.push_back(y);
 		this->Position.push_back(z);
@@ -57,7 +57,7 @@ namespace Nexus {
 		this->Vertices.push_back(z);
 	}
 
-	void Object::addNormal(float nx, float ny, float nz) {
+	void Object::AddNormal(float nx, float ny, float nz) {
 		this->Normal.push_back(nx);
 		this->Normal.push_back(ny);
 		this->Normal.push_back(nz);
@@ -67,7 +67,7 @@ namespace Nexus {
 		this->Vertices.push_back(nz);
 	}
 
-	void Object::addTexCoord(float u, float v) {
+	void Object::AddTexCoord(float u, float v) {
 		this->TexCoord.push_back(u);
 		this->TexCoord.push_back(v);
 
@@ -75,7 +75,7 @@ namespace Nexus {
 		this->Vertices.push_back(v);
 	}
 
-	void Object::addIndices(unsigned int i1, unsigned int i2, unsigned int i3) {
+	void Object::AddIndices(unsigned int i1, unsigned int i2, unsigned int i3) {
 		this->Indices.push_back(i1);
 		this->Indices.push_back(i2);
 		this->Indices.push_back(i3);

@@ -14,17 +14,17 @@ namespace Nexus {
 		Initialize();
 
 		// Show version info
-		const GLubyte* opengl_vendor = glGetString(GL_VENDOR);
-		const GLubyte* opengl_renderer = glGetString(GL_RENDERER);
-		const GLubyte* opengl_version = glGetString(GL_VERSION);
-		Logger::ShowInitInfo(opengl_vendor, opengl_renderer, opengl_version);
+		const GLubyte* OpenGLVender = glGetString(GL_VENDOR);
+		const GLubyte* OpenGLRenderer = glGetString(GL_RENDERER);
+		const GLubyte* OpenGLVersion = glGetString(GL_VERSION);
+		Logger::ShowInitInfo(OpenGLVender, OpenGLRenderer, OpenGLVersion);
 		
 		while(!glfwWindowShouldClose(Window)) {
 
 			// Calculate the delta time
-			float currentTime = (float)glfwGetTime();
-			DeltaTime = currentTime - LastTime;
-			LastTime = currentTime;
+			CurrentTime = (float)glfwGetTime();
+			DeltaTime = CurrentTime - LastTime;
+			LastTime = CurrentTime;
 
 			// Process Input (Moving camera)
 			GLFWProcessInput(Window);
@@ -47,6 +47,14 @@ namespace Nexus {
 		}
 		
 		return 0;
+	}
+
+	void Application::SetCursorDisable(bool enable) {
+		if (enable) {
+			glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		} else {
+			glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		}
 	}
 
 	void Application::GLFWFrameBufferSizeCallback(GLFWwindow* window, int width, int height) {
@@ -85,18 +93,18 @@ namespace Nexus {
 	void Application::GLFWMouseCallback(GLFWwindow* window, double xpos, double ypos) {
 		// In the first time u create a window, ur cursor may not in the middle of the window.
 		if (FirstMouse) {
-			lastX = xpos;
-			lastY = ypos;
+			LastX = xpos;
+			LastY = ypos;
 			FirstMouse = false;
 		}
 		
-		float xoffset = xpos - lastX;
-		float yoffset = lastY - ypos;
+		float xoffset = xpos - LastX;
+		float yoffset = LastY - ypos;
+
+		LastX = (float)xpos;
+		LastY = (float)ypos;
 		
 		OnMouseMove(xoffset, yoffset);
-		
-		lastX = (float)xpos;
-		lastY = (float)ypos;
 	}
 	
 	void Application::GLFWMouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
@@ -169,8 +177,8 @@ namespace Nexus {
 		ImGui_ImplOpenGL3_Init(glsl_version.c_str());
 
 		// Mouse Initialize
-		lastX = (float)Settings.Width / 2.0f;
-		lastY = (float)Settings.Height / 2.0f;
+		LastX = (float)Settings.Width / 2.0f;
+		LastY = (float)Settings.Height / 2.0f;
 	}
 	
 	void Application::GLFWFrameBufferSizeCallbackHelper(GLFWwindow* window, int width, int height) {

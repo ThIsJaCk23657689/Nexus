@@ -77,23 +77,23 @@ namespace Nexus {
 		
 		virtual ~Object() {}
 
-		void setWireFrameMode(bool enable) {
+		void SetWireFrameMode(bool enable) {
 			this->EnableWireFrameMode = enable;
 		}
 
-		void setColor(glm::vec3 color) {
+		void SetColor(glm::vec3 color) {
 			this->Color = color;
 		}
 
-		void setColor(float r, float g, float b) {
+		void SetColor(float r, float g, float b) {
 			this->Color = glm::vec3(r, g, b);
 		}
 		
-		unsigned int getVertexCount() const { return (unsigned int)this->Vertices.size() / 8; }
-		unsigned int getPositionCount() const { return (unsigned int)this->Position.size() / 3; }
-		unsigned int getNormalCount() const { return (unsigned int)this->Normal.size() / 3; }
-		unsigned int getTexCoordCount() const { return (unsigned int)this->TexCoord.size() / 2; }
-		unsigned int getIndexCount() const { return (unsigned int)this->Indices.size(); }
+		unsigned int GetVertexCount() const { return (unsigned int)this->Vertices.size() / 8; }
+		unsigned int GetPositionCount() const { return (unsigned int)this->Position.size() / 3; }
+		unsigned int GetNormalCount() const { return (unsigned int)this->Normal.size() / 3; }
+		unsigned int GetTexCoordCount() const { return (unsigned int)this->TexCoord.size() / 2; }
+		unsigned int GetIndexCount() const { return (unsigned int)this->Indices.size(); }
 		
 	protected:
 		std::vector<float> Vertices;
@@ -110,9 +110,9 @@ namespace Nexus {
 		std::unique_ptr<Nexus::VertexBuffer> VBO;
 		std::unique_ptr<Nexus::IndexBuffer> EBO;
 
-		void addPosition(float x, float y, float z);
-		void addNormal(float nx, float ny, float nz);
-		void addTexCoord(float u, float v);
-		void addIndices(unsigned int i1, unsigned int i2, unsigned int i3);
+		void AddPosition(float x, float y, float z);
+		void AddNormal(float nx, float ny, float nz);
+		void AddTexCoord(float u, float v);
+		void AddIndices(unsigned int i1, unsigned int i2, unsigned int i3);
 	};
 }

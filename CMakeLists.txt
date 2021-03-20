@@ -7,6 +7,7 @@ set(MY_LIBRARY "Nexus")
 set(NEXUS_INCLUDE_DIRS
 	"Header"
 	"Header/Geometry/2D"
+	"Header/Geometry/3D"
 	"External/stb_image")
 
 set(SOURCE_DIRS
