@@ -18,6 +18,7 @@
 #include <string>
 #include <cmath>
 #include <ctime>
+#include <map>
 #include <random>
 
 #include "Logger.h"
@@ -61,7 +62,7 @@ public:
 		
 
 
-		std::unordered_map<unsigned int, unsigned int> histogram;
+		std::map<unsigned int, unsigned int> histogram;
 		std::vector<unsigned char> Testing = Nexus::FileLoader::load("C:/Users/user/Desktop/Scalar/engine.raw");
 		for (unsigned int i = 0; i < Testing.size(); i++) {
 			if (histogram.find(Testing[i]) != histogram.end()) {
