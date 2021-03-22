@@ -10,8 +10,8 @@ namespace Nexus {
 		this->Set(glm::vec3(posX, posY, posZ), glm::vec3(upX, upY, upZ), yaw, pitch);
 	}
 	
-	void Camera::ProcessKeyboard(CameraMovement direction, float deltaTime) {
-		float velocity = this->MovementSpeed * deltaTime;
+	void Camera::ProcessKeyboard(CameraMovement direction, float delta_time) {
+		float velocity = this->MovementSpeed * delta_time;
 		if (direction == CAMERA_FORWARD) {
 			this->Position += this->Front * velocity;
 		}
@@ -75,8 +75,8 @@ namespace Nexus {
 		this->Set(position, this->WorldUp, this->Yaw, this->Pitch);
 	}
 	
-	void Camera::SetWorldUp(glm::vec3 worldup) {
-		this->Set(this->Position, worldup, this->Yaw, this->Pitch);
+	void Camera::SetWorldUp(glm::vec3 world_up) {
+		this->Set(this->Position, world_up, this->Yaw, this->Pitch);
 	}
 	
 	void Camera::SetYaw(float yaw) {
@@ -113,7 +113,8 @@ namespace Nexus {
 		this->Up = glm::normalize(glm::cross(this->Right, this->Front));
 	}
 	
-	glm::mat4 Camera::CalcLookAtMatrix(glm::vec3 positon, glm::vec3 target, glm::vec3 worldUp) const {
+	glm::mat4 Camera::CalcLookAtMatrix(glm::vec3 positon, glm::vec3 target, glm::vec3 world_up) const {
+		// Notice the zaxis faces to positive z.
 		glm::vec3 zaxis = glm::normalize(positon - target);
 		glm::vec3 xaxis = glm::normalize(glm::cross(glm::normalize(this->WorldUp), zaxis));
 		glm::vec3 yaxis = glm::normalize(glm::cross(zaxis, xaxis));

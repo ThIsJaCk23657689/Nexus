@@ -1,6 +1,6 @@
-#pragma once
-
 #include "Object.h"
+
+#include <iostream>
 
 namespace Nexus {
 
@@ -46,8 +46,51 @@ namespace Nexus {
 	VertexArray::~VertexArray() {
 		glDeleteVertexArrays(1, &this->ID);
 	}
+
+	void Object::Debug() {
+		std::cout << "===== " + this->ShapeName + " =====\n"
+			<< "Vertex Count: " << GetVertexCount() << std::endl
+			<< "Position Count: " << GetPositionCount() << std::endl
+			<< "Normal Count: " << GetNormalCount() << std::endl
+			<< "TexCoord Count: " << GetTexCoordCount() << std::endl
+			<< "Index Count: " << GetIndexCount() << std::endl;
+	}
+
+	void Object::Draw(Nexus::Shader* shader) {
+		shader->Use();
+		shader->SetBool("enable_texture", this->EnableTextureFill);
+		if (this->EnableTextureFill) {
+			shader->SetInt("texture0", 0);
+
+			for (int i = 0; i < this->Texture.size(); i++) {
+				if (this->Texture[i] == nullptr) {
+					continue;
+				}
+				this->Texture[i]->Bind();
+
+			}
+		} else {
+			shader->SetVec3("color", this->Color);
+		}
+
+		this->VAO->Bind();
+		if (this->EnableWireFrameMode) {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		}
+
+		glDrawElements(GL_TRIANGLES, (GLsizei)this->Indices.size(), GL_UNSIGNED_INT, 0);
+
+		if (this->EnableTextureFill) {
+			for (int i = 0; i < this->Texture.size(); i++) {
+				if (this->Texture[i] == nullptr) {
+					continue;
+				}
+				this->Texture[i]->Unbind();
+			}
+		}
+	}
 	
-	void Object::addPosition(float x, float y, float z) {
+	void Object::AddPosition(float x, float y, float z) {
 		this->Position.push_back(x);
 		this->Position.push_back(y);
 		this->Position.push_back(z);
@@ -57,7 +100,7 @@ namespace Nexus {
 		this->Vertices.push_back(z);
 	}
 
-	void Object::addNormal(float nx, float ny, float nz) {
+	void Object::AddNormal(float nx, float ny, float nz) {
 		this->Normal.push_back(nx);
 		this->Normal.push_back(ny);
 		this->Normal.push_back(nz);
@@ -67,7 +110,7 @@ namespace Nexus {
 		this->Vertices.push_back(nz);
 	}
 
-	void Object::addTexCoord(float u, float v) {
+	void Object::AddTexCoord(float u, float v) {
 		this->TexCoord.push_back(u);
 		this->TexCoord.push_back(v);
 
@@ -75,7 +118,7 @@ namespace Nexus {
 		this->Vertices.push_back(v);
 	}
 
-	void Object::addIndices(unsigned int i1, unsigned int i2, unsigned int i3) {
+	void Object::AddIndices(unsigned int i1, unsigned int i2, unsigned int i3) {
 		this->Indices.push_back(i1);
 		this->Indices.push_back(i2);
 		this->Indices.push_back(i3);

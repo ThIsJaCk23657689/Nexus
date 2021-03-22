@@ -7,6 +7,7 @@ set(MY_LIBRARY "Nexus")
 set(NEXUS_INCLUDE_DIRS
 	"Header"
 	"Header/Geometry/2D"
+	"Header/Geometry/3D"
 	"External/stb_image")
 
 set(SOURCE_DIRS
@@ -36,3 +37,5 @@ target_link_libraries(${MY_PROJECT} PUBLIC ${MY_LIBRARY})
 # Copy these shader files
 add_custom_command(TARGET ${MY_PROJECT} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
 	${CMAKE_SOURCE_DIR}/Shaders/ ${CMAKE_BINARY_DIR}/Shaders/)
+add_custom_command(TARGET ${MY_PROJECT} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
+	${CMAKE_SOURCE_DIR}/Resource/ ${CMAKE_BINARY_DIR}/Resource/)

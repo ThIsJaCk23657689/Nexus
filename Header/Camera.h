@@ -21,11 +21,13 @@ namespace Nexus {
 	
 	class Camera {
 	public:
+		glm::vec3 Position;
+
 		Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
 		Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch);
 		virtual ~Camera() {}
 
-		void ProcessKeyboard(CameraMovement direction, float deltaTime);
+		void ProcessKeyboard(CameraMovement direction, float delta_time);
 		void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true);
 		void ProcessMouseScroll(float yoffset);
 
@@ -39,20 +41,19 @@ namespace Nexus {
 		float GetPitch() const { return this->Pitch; }
 		float GetMovementSpeed() const { return this->MovementSpeed; }
 		float GetMouseSensitivity() const { return this->MouseSensitivity; }
-		float GetZoom() const { return this->Zoom; }
+		float GetFOV() const { return this->Zoom; }
 		
 		// Setter
 		void Set(glm::vec3 position, glm::vec3 up, float yaw, float pitch);
 		void SetPosition(glm::vec3 position);
-		void SetWorldUp(glm::vec3 worldup);
+		void SetWorldUp(glm::vec3 world_up);
 		void SetYaw(float yaw);
 		void SetPitch(float pitch);
 		void SetMovementSpeed(float speed);
 		void SetMouseSensitivity(float sensitivity);
 		void SetZoom(float zoom);
-		
-	protected:
-		glm::vec3 Position;
+
+	private:
 		glm::vec3 Front;
 		glm::vec3 Up;
 		glm::vec3 Right;
@@ -63,9 +64,8 @@ namespace Nexus {
 		float MovementSpeed;
 		float MouseSensitivity;
 		float Zoom;
-		
-	private:
+
 		void UpdateCameraVectors();
-		glm::mat4 CalcLookAtMatrix(glm::vec3 positon, glm::vec3 target, glm::vec3 worldUp) const;
+		glm::mat4 CalcLookAtMatrix(glm::vec3 positon, glm::vec3 target, glm::vec3 world_up) const;
 	};
 }

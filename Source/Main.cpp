@@ -7,10 +7,14 @@
 #include <imgui.h>
 
 #include "Application.h"
+#include "Logger.h"
 #include "Camera.h"
 #include "Shader.h"
+#include "MatrixStack.h"
+#include "Texture2D.h"
 #include "Triangle.h"
 #include "Square.h"
+#include "Cube.h"
 #include "FileLoader.h"
 
 #include <vector>
@@ -21,7 +25,7 @@
 #include <map>
 #include <random>
 
-#include "Logger.h"
+
 
 
 #define PI 3.14159265359f
@@ -47,23 +51,32 @@ public:
 		myShader = std::make_unique<Nexus::Shader>("Shaders/testing.vert", "Shaders/testing.frag");
 		
 		// Create Camera
-		camera = std::make_unique<Nexus::Camera>(glm::vec3(0.0f, 2.0f, 10.0f));
+		camera = std::make_unique<Nexus::Camera>(glm::vec3(0.0f, 0.0f, 5.0f));
+
+		// Create Matrix Stack
+		model = std::make_unique<Nexus::MatrixStack>();
+		view = std::make_unique<Nexus::MatrixStack>();
+		projection = std::make_unique<Nexus::MatrixStack>();
 
 		// Create object data
 		triangle = std::make_unique<Nexus::Triangle>();
-		triangle->setWireFrameMode(true);
+		// triangle->SetWireFrameMode(true);
 		
 		square = std::make_unique<Nexus::Square>();
-		// square->setWireFrameMode(true);
+		// square->SetWireFrameMode(true);
+
+		cube = std::make_unique<Nexus::Cube>();
+		// cube->Debug();
 		
 		// Loading textures
+		smile_texture = Nexus::Texture2D::CreateFromFile("Resource/Textures/container.jpg", true);
 
 		// Initial Light Setting
 		
+		/*
+		std::unordered_map<unsigned int, unsigned int> histogram;
+		std::vector<unsigned char> Testing = Nexus::FileLoader::Load("C:/Users/y3939/Desktop/OpenGL/Scalar/engine.raw");
 
-
-		std::map<unsigned int, unsigned int> histogram;
-		std::vector<unsigned char> Testing = Nexus::FileLoader::load("C:/Users/user/Desktop/Scalar/engine.raw");
 		for (unsigned int i = 0; i < Testing.size(); i++) {
 			if (histogram.find(Testing[i]) != histogram.end()) {
 				histogram[Testing[i]]++;
@@ -78,55 +91,111 @@ public:
 			total += it.second;
 		}
 		std::cout << "Total:" << total << std::endl;
-		
-		
+		*/
 	}
 	
 	void Update() override {
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		projection->Save(glm::perspective(glm::radians(camera->GetFOV()), (float)(Settings.Width / Settings.Height), 0.1f, 100.0f));
+		view->Save(camera->GetViewMatrix());
+		myShader->SetMat4("projection", projection->Top());
+		myShader->SetMat4("view", view->Top());
 		
-		triangle->Draw(myShader.get());
-		square->setColor(glm::vec3(0.5, 0.1, 0.9));
-		square->Draw(myShader.get());
+		model->Push();
+			// model->Save(glm::rotate(model->Top(), CurrentTime * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f)));
+			model->Save(glm::translate(model->Top(), glm::vec3(0.0f, 0.0f, -5.0f)));
+			myShader->SetMat4("model", model->Top());
+			triangle->SetColor(glm::vec3(0.1, 0.8, 0.2));
+			triangle->SetTexture(0, smile_texture.get());
+			triangle->Draw(myShader.get());
+			
+			model->Push();
+				model->Save(glm::translate(model->Top(), glm::vec3(0.0f, 5.0f, 0.0f)));
+				myShader->SetMat4("model", model->Top());
+				square->SetColor(glm::vec3(0.9, 0.1, 0.2));
+				square->SetTexture(0, smile_texture.get());
+				square->Draw(myShader.get());
+			model->Pop();
+		model->Pop();
+
+		model->Push();
+			model->Save(glm::rotate(model->Top(), CurrentTime * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f)));
+			myShader->SetMat4("model", model->Top());
+			cube->SetColor(glm::vec3(0.2, 0.2, 0.9));
+			cube->SetTexture(0, smile_texture.get());
+			cube->Draw(myShader.get());
+		model->Pop();
 		
 		// ImGui::ShowDemoWindow();
 	}
 	
 	void OnProcessInput(int key) override {
-		
+		if (key == GLFW_KEY_W) {
+			camera->ProcessKeyboard(Nexus::CAMERA_FORWARD, DeltaTime);
+		}
+		if (key == GLFW_KEY_S) {
+			camera->ProcessKeyboard(Nexus::CAMERA_BACKWARD, DeltaTime);
+		}
+		if (key == GLFW_KEY_A) {
+			camera->ProcessKeyboard(Nexus::CAMERA_LEFT, DeltaTime);
+		}
+		if (key == GLFW_KEY_D) {
+			camera->ProcessKeyboard(Nexus::CAMERA_RIGHT, DeltaTime);
+		}
 	}
 	
 	void OnKeyPress(int key) override {
-
+		if (key == GLFW_KEY_LEFT_SHIFT) {
+			camera->SetMovementSpeed(25.0f);
+		}
 	}
 	
 	void OnKeyRelease(int key) override {
-
+		if (key == GLFW_KEY_LEFT_SHIFT) {
+			camera->SetMovementSpeed(10.0f);
+		}
 	}
 	
 	void OnMouseMove(int xoffset, int yoffset) override {
-
+		if (!Settings.EnableCursor) {
+			camera->ProcessMouseMovement(xoffset, yoffset);
+		}
 	}
 	
 	void OnMouseButtonPress(int button) override {
-
+		if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+			SetCursorDisable(true);
+			Settings.EnableCursor = false;
+		} 
 	}
 	
 	void OnMouseButtonRelease(int button) override {
-
+		if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+			SetCursorDisable(false);
+			Settings.EnableCursor = true;
+		}
 	}
 	
 	void OnMouseScroll(int yoffset) override {
-
+		camera->ProcessMouseScroll(yoffset);
 	}
 
 private:
 	std::unique_ptr<Nexus::Shader> myShader = nullptr;
 	std::unique_ptr<Nexus::Camera> camera = nullptr;
+	
+	std::unique_ptr<Nexus::MatrixStack> model = nullptr;
+	std::unique_ptr<Nexus::MatrixStack> view = nullptr;
+	std::unique_ptr<Nexus::MatrixStack> projection = nullptr;
+
 	std::unique_ptr<Nexus::Triangle> triangle = nullptr;
 	std::unique_ptr<Nexus::Square> square = nullptr;
+	std::unique_ptr<Nexus::Cube> cube = nullptr;
+
+	std::unique_ptr<Nexus::Texture2D> smile_texture = nullptr;
 };
 
 int main() {
