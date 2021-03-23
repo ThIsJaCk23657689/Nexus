@@ -50,10 +50,10 @@ namespace Nexus {
 		};
 
 		GLuint ID;
-		std::unordered_map<const char*, GLuint> UniformLocationCache;
+		std::unordered_map<std::string, GLuint> UniformLocationCache;
 		
 		GLuint CreateShader(const char* path, ShaderType type);
-		GLint GetUniformLocation(const char* name);
+		GLint GetUniformLocation(const std::string& name);
 		bool CheckCompileErrors(GLuint shader, ShaderType type, const char* filePath);
 		std::string GetShaderTypeString(ShaderType type);
 	};

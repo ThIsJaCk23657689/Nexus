@@ -12,7 +12,7 @@ struct Material {
 	sampler2D specular_texture;
 	sampler2D emission_texture;
 
-	bool enableColorTexture;
+	bool enableDiffuseTexture;
     bool enableSpecularTexture;
 	bool enableEmission;
     bool enableEmissionTexture;
@@ -48,8 +48,8 @@ struct Fog {
 	vec4 color;
 };
 
-// 0 Direction Light; 1 ~ 4 Point Light; 5 Spot Light;
-#define NUM_LIGHTS 6
+// 0 Direction Light; 1 ~ 5 Point Light; 6 Spot Light;
+#define NUM_LIGHTS 7
 
 in VS_OUT {
 	vec3 NaviePos;
@@ -163,7 +163,7 @@ void main() {
 		texel_ambient = texture(skybox, normalize(fs_in.NaviePos));
 		texel_diffuse = texture(skybox, normalize(fs_in.NaviePos));
 		texel_specular = texture(skybox, normalize(fs_in.NaviePos));
-	} else if (useDiffuseTexture && material.enableColorTexture) {
+	} else if (useDiffuseTexture && material.enableDiffuseTexture) {
 		// 如果有開啟顯示材質 且 該物體有材質貼圖時 => 對圖片取樣
 		texel_ambient = texture(material.diffuse_texture, fs_in.TexCoords);
 		texel_diffuse = texture(material.diffuse_texture, fs_in.TexCoords);

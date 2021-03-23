@@ -41,43 +41,43 @@ namespace Nexus {
 	}
 
 	void Shader::SetBool(const std::string& name, GLboolean value) {
-		glUniform1i(this->GetUniformLocation(name.c_str()), value);
+		glUniform1i(GetUniformLocation(name), value);
 	}
 
 	void Shader::SetInt(const std::string& name, GLint value) {
-		glUniform1i(this->GetUniformLocation(name.c_str()), value);
+		glUniform1i(GetUniformLocation(name), value);
 	}
 
 	void Shader::SetUnsignedInt(const std::string& name, GLuint value) {
-		glUniform1i(this->GetUniformLocation(name.c_str()), value);
+		glUniform1i(GetUniformLocation(name), value);
 	}
 
 	void Shader::SetFloat(const std::string& name, GLfloat value) {
-		glUniform1f(this->GetUniformLocation(name.c_str()), value);
+		glUniform1f(GetUniformLocation(name), value);
 	}
 
 	void Shader::SetVec3(const std::string& name, glm::vec3 vector) {
-		glUniform3fv(this->GetUniformLocation(name.c_str()), 1, &vector[0]);
+		glUniform3fv(GetUniformLocation(name), 1, &vector[0]);
 	}
 
 	void Shader::SetVec3(const std::string& name, GLfloat x, GLfloat y, GLfloat z) {
-		glUniform3f(this->GetUniformLocation(name.c_str()), x, y, z);
+		glUniform3f(GetUniformLocation(name), x, y, z);
 	}
 
 	void Shader::SetVec4(const std::string& name, glm::vec4 vector) {
-		glUniform4fv(this->GetUniformLocation(name.c_str()), 1, &vector[0]);
+		glUniform4fv(GetUniformLocation(name), 1, &vector[0]);
 	}
 
 	void Shader::SetVec4(const std::string& name, GLfloat x, GLfloat y, GLfloat z, GLfloat w) {
-		glUniform4f(this->GetUniformLocation(name.c_str()), x, y, z, w);
+		glUniform4f(GetUniformLocation(name), x, y, z, w);
 	}
 
 	void Shader::SetMat3(const std::string& name, glm::mat3 matrices) {
-		glUniformMatrix3fv(this->GetUniformLocation(name.c_str()), 1, GL_FALSE, &matrices[0][0]);
+		glUniformMatrix3fv(GetUniformLocation(name.c_str()), 1, GL_FALSE, &matrices[0][0]);
 	}
 
 	void Shader::SetMat4(const std::string& name, glm::mat4 matrices) {
-		glUniformMatrix4fv(this->GetUniformLocation(name.c_str()), 1, GL_FALSE, &matrices[0][0]);
+		glUniformMatrix4fv(GetUniformLocation(name.c_str()), 1, GL_FALSE, &matrices[0][0]);
 	}
 
 	GLuint Shader::CreateShader(const char* path, ShaderType type) {
@@ -112,14 +112,14 @@ namespace Nexus {
 		return Shader;
 	}
 
-	GLint Shader::GetUniformLocation(const char* name) {
+	GLint Shader::GetUniformLocation(const std::string& name) {
 		if (UniformLocationCache.find(name) != UniformLocationCache.end()) {
 			return UniformLocationCache[name];
 		}
 
-		GLint location = glGetUniformLocation(this->ID, name);
+		GLint location = glGetUniformLocation(this->ID, name.c_str());
 		if (location == -1) {
-			Logger::Message(LOG_WARNING, "The uniform variable <" + std::string(name) + "> doesn't exist.");
+			Logger::Message(LOG_WARNING, "The uniform variable <" + name + "> doesn't exist.");
 		}
 
 		UniformLocationCache[name] = location;

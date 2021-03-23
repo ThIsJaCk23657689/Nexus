@@ -4,6 +4,9 @@
 #include <ctime>
 
 namespace Nexus {
+
+	const std::string NexusVerison = "0.2.7";
+	
 	void Logger::Message(LogLevel type, std::string message) {
 		switch (type) {
 			case LOG_DEBUG:

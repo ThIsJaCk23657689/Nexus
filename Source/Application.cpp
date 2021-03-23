@@ -34,6 +34,8 @@ namespace Nexus {
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
 
+			ShowDebugUI();
+
 			// Display
 			Update();
 

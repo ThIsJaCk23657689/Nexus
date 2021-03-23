@@ -1,5 +1,7 @@
 #include "Object.h"
 
+#include "Logger.h"
+
 #include <iostream>
 
 namespace Nexus {
@@ -56,23 +58,31 @@ namespace Nexus {
 			<< "Index Count: " << GetIndexCount() << std::endl;
 	}
 
-	void Object::Draw(Nexus::Shader* shader) {
-		shader->Use();
-		shader->SetBool("enable_texture", this->EnableTextureFill);
-		if (this->EnableTextureFill) {
-			shader->SetInt("texture0", 0);
+	void Object::Draw(Nexus::Shader* shader, glm::mat4 model) {
 
-			for (int i = 0; i < this->Texture.size(); i++) {
+		shader->Use();
+		shader->SetBool("isCubeMap", false);
+		shader->SetBool("material.enableDiffuseTexture", this->EnableDiffuseTexture);
+		shader->SetBool("material.enableSpecularTexture", this->EnableSpecularTexture);
+		shader->SetBool("material.enableEmission", this->EnableEmission);
+		shader->SetBool("material.enableEmissionTexture", this->EnableEmissionTexture);
+
+		if (this->EnableDiffuseTexture) {
+			
+			
+			for (unsigned int i = 0; i < this->Texture.size(); i++) {
 				if (this->Texture[i] == nullptr) {
 					continue;
 				}
-				this->Texture[i]->Bind();
-
+				this->Texture[i]->Bind(i);
 			}
 		} else {
-			shader->SetVec3("color", this->Color);
+			shader->SetVec4("material.ambient", this->Ambient);
+			shader->SetVec4("material.diffuse", this->Diffiuse);
+			shader->SetVec4("material.specular", this->Specular);
 		}
-
+		shader->SetMat4("model", model);
+		
 		this->VAO->Bind();
 		if (this->EnableWireFrameMode) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -80,7 +90,8 @@ namespace Nexus {
 
 		glDrawElements(GL_TRIANGLES, (GLsizei)this->Indices.size(), GL_UNSIGNED_INT, 0);
 
-		if (this->EnableTextureFill) {
+		/*
+		if (this->EnableColorTexture) {
 			for (int i = 0; i < this->Texture.size(); i++) {
 				if (this->Texture[i] == nullptr) {
 					continue;
@@ -88,6 +99,7 @@ namespace Nexus {
 				this->Texture[i]->Unbind();
 			}
 		}
+		*/
 	}
 
 	void Object::BufferInitialize() {

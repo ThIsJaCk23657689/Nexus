@@ -16,8 +16,17 @@ namespace Nexus {
 		bool EnableCursor = true;
 		bool EnableFullScreen = false;
 		bool EnableDebugCallback = true;
-		bool EnableGhostMode = false;
+		bool EnableGhostMode = true;
 		bool ShowOriginAnd3Axes = false;
+
+		bool UseBlinnPhongShading = true;
+		bool UseSpotExponent = false;
+		bool UseLighting = true;
+		bool UseDiffuseTexture = true;
+		bool UseSpecularTexture = true;
+		bool UseEmission = true;
+		bool UseGamma = false;
+		float GammaValue = 1.0f / 2.2f;
 	};
 
 	class Application {
@@ -32,6 +41,7 @@ namespace Nexus {
 		}
 
 		int Run();
+		virtual void ShowDebugUI() {}
 
 	protected:
 		virtual void OnWindowResize(int width, int height) {}

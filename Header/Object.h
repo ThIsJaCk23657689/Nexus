@@ -78,32 +78,52 @@ namespace Nexus {
 			this->Texture.resize(16, nullptr);
 		}
 
-		void Draw(Nexus::Shader* shader);
+		void Draw(Nexus::Shader* shader, glm::mat4 model = glm::mat4(1.0f));
 		void Debug();
 		
 		virtual ~Object() {}
 
+		void SetShininess(float shininess) {
+			this->Shininess = shininess;
+		}
+		
 		void SetWireFrameMode(bool enable) {
 			this->EnableWireFrameMode = enable;
 		}
 
-		void SetTextureFill(bool enable) {
-			this->EnableTextureFill = enable;
+		void SetEnableColorTexture(bool enable) {
+			this->EnableDiffuseTexture = enable;
 		}
 
-		void SetColor(glm::vec3 color) {
-			this->Color = color;
-			this->EnableTextureFill = false;
+		void SetEnableSpecularTexture(bool enable) {
+			this->EnableSpecularTexture = enable;
 		}
 
-		void SetColor(float r, float g, float b) {
-			this->Color = glm::vec3(r, g, b);
-			this->EnableTextureFill = false;
+		void SetEnableEmission(bool enable) {
+			this->EnableEmission = enable;
+		}
+
+		void SetEnableEmissionTexture(bool enable) {
+			this->EnableEmissionTexture = enable;
+		}
+
+		void SetMaterialColor(glm::vec3 color) {
+			this->Ambient = glm::vec4(color.x * 0.2, color.y * 0.2, color.z * 0.2, 1.0f);
+			this->Diffiuse = glm::vec4(color.x, color.y, color.z, 1.0f);
+			this->Specular = glm::vec4(color.x * 0.4, color.y * 0.4, color.z * 0.4, 1.0f);
+			this->EnableDiffuseTexture = false;
+		}
+
+		void SetMaterialColor(glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular) {
+			this->Ambient = glm::vec4(ambient.x, ambient.y, ambient.z, 1.0f);
+			this->Diffiuse = glm::vec4(diffuse.x, diffuse.y, diffuse.z, 1.0f);
+			this->Specular = glm::vec4(specular.x, specular.y, specular.z, 1.0f);
+			this->EnableDiffuseTexture = false;
 		}
 
 		void SetTexture(GLenum unit, Texture2D* texture) {
 			this->Texture[unit] = texture;
-			this->EnableTextureFill = true;
+			this->EnableDiffuseTexture = true;
 		}
 		
 		unsigned int GetVertexCount() const { return (unsigned int)this->Vertices.size() / 8; }
@@ -122,9 +142,17 @@ namespace Nexus {
 
 		std::string ShapeName;
 		bool EnableWireFrameMode = false;
-		bool EnableTextureFill = false;
-		glm::vec3 Color = glm::vec3(0.5f, 0.4f, 0.3f);
+		
+		bool EnableDiffuseTexture = false;
+		bool EnableSpecularTexture = false;
+		bool EnableEmission = false;
+		bool EnableEmissionTexture = false;
+		
 		std::vector<Texture2D*> Texture;
+		glm::vec4 Ambient = glm::vec4(0.1f);
+		glm::vec4 Diffiuse = glm::vec4(0.7f);
+		glm::vec4 Specular = glm::vec4(0.4f);
+		float Shininess = 32.0f;
 
 		std::unique_ptr<Nexus::VertexArray> VAO;
 		std::unique_ptr<Nexus::VertexBuffer> VBO;
