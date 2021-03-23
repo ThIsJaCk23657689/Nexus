@@ -5,7 +5,7 @@
 
 namespace Nexus {
 
-	const std::string NexusVerison = "0.1.7";
+	const std::string NexusVerison = "0.1.9";
 	
 	// This is for the argument "type" which in the message().
 	enum LogLevel {

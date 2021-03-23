@@ -4,6 +4,8 @@
 #include <fstream>
 #include <sstream>
 
+#include "FileLoader.h"
+
 namespace Nexus {
 	Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath) {
 
@@ -80,19 +82,7 @@ namespace Nexus {
 
 	GLuint Shader::CreateShader(const char* path, ShaderType type) {
 
-		std::ifstream ShaderFile;
-		std::stringstream ShaderStream;
-		ShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-		try {
-			// Open files and loaded.
-			ShaderFile.open(path);
-			ShaderStream << ShaderFile.rdbuf();
-			ShaderFile.close();
-		} catch (std::ifstream::failure& e) {
-			// Handle Failure
-			Logger::Message(LOG_ERROR, "Failed to load " + this->GetShaderTypeString(type) + " shader files. Filepath: " + path);
-			return GLuint(-1);
-		}
+		std::stringstream ShaderStream = FileLoader::LoadShaderFile(path, this->GetShaderTypeString(type));
 		
 		const std::string& ShaderSource = ShaderStream.str();
 		const char* ShaderCode = ShaderSource.c_str();

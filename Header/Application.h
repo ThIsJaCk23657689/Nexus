@@ -17,7 +17,7 @@ namespace Nexus {
 		bool EnableFullScreen = false;
 		bool EnableDebugCallback = true;
 		bool EnableGhostMode = false;
-		bool ShowAxis = false;
+		bool ShowOriginAnd3Axes = false;
 	};
 
 	class Application {

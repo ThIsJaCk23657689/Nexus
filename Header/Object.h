@@ -14,6 +14,8 @@
 #include <vector>
 #include <memory>
 
+constexpr float PI = 3.14159265359f;
+
 namespace Nexus {
 
 	struct Vertex {
@@ -75,8 +77,7 @@ namespace Nexus {
 		Object() {
 			this->Texture.resize(16, nullptr);
 		}
-		
-		virtual void Initialize() = 0;
+
 		void Draw(Nexus::Shader* shader);
 		void Debug();
 		
@@ -129,6 +130,14 @@ namespace Nexus {
 		std::unique_ptr<Nexus::VertexBuffer> VBO;
 		std::unique_ptr<Nexus::IndexBuffer> EBO;
 
+		void Initialize() {
+			this->GenerateVertices();
+			this->BufferInitialize();
+		}
+		
+		virtual void GenerateVertices() = 0;
+		virtual void BufferInitialize();
+		
 		void AddPosition(float x, float y, float z);
 		void AddNormal(float nx, float ny, float nz);
 		void AddTexCoord(float u, float v);

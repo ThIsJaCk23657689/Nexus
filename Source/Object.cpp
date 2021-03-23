@@ -89,6 +89,14 @@ namespace Nexus {
 			}
 		}
 	}
+
+	void Object::BufferInitialize() {
+		this->VBO = std::make_unique<Nexus::VertexBuffer>(this->Vertices.data(), this->GetVertexCount() * sizeof(Vertex));
+		this->EBO = std::make_unique<Nexus::IndexBuffer>(this->Indices.data(), this->Indices.size() * sizeof(unsigned int));
+
+		Nexus::VertexAttributes Attribs[] = { {3, 0}, {3, offsetof(Vertex, Normal)}, {2, offsetof(Vertex, TexCoord)} };
+		this->VAO = std::make_unique<Nexus::VertexArray>(this->VBO.get(), Attribs, 3, (GLsizei)sizeof(Vertex), this->EBO.get());
+	}
 	
 	void Object::AddPosition(float x, float y, float z) {
 		this->Position.push_back(x);

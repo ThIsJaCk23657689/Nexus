@@ -15,7 +15,8 @@
 #include "Triangle.h"
 #include "Square.h"
 #include "Cube.h"
-#include "FileLoader.h"
+#include "Sphere.h"
+#include "Cylinder.h"
 
 #include <vector>
 #include <iostream>
@@ -24,9 +25,6 @@
 #include <ctime>
 #include <map>
 #include <random>
-
-
-
 
 #define PI 3.14159265359f
 
@@ -67,6 +65,14 @@ public:
 
 		cube = std::make_unique<Nexus::Cube>();
 		// cube->Debug();
+
+		sphere = std::make_unique<Nexus::Sphere>();
+		// sphere->Debug();
+
+		cylinder = std::make_unique<Nexus::Cylinder>(1.0f, 0.1f, 3.0f);
+		cylinder->Debug();
+
+		
 		
 		// Loading textures
 		smile_texture = Nexus::Texture2D::CreateFromFile("Resource/Textures/container.jpg", true);
@@ -103,6 +109,10 @@ public:
 		view->Save(camera->GetViewMatrix());
 		myShader->SetMat4("projection", projection->Top());
 		myShader->SetMat4("view", view->Top());
+
+		if (Settings.ShowOriginAnd3Axes) {
+			this->DrawOriginAnd3Axes(myShader.get());
+		}
 		
 		model->Push();
 			// model->Save(glm::rotate(model->Top(), CurrentTime * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f)));
@@ -122,14 +132,75 @@ public:
 		model->Pop();
 
 		model->Push();
+			model->Save(glm::translate(model->Top(), glm::vec3(0.0f, 10.0f, 0.0f)));
 			model->Save(glm::rotate(model->Top(), CurrentTime * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f)));
 			myShader->SetMat4("model", model->Top());
 			cube->SetColor(glm::vec3(0.2, 0.2, 0.9));
 			cube->SetTexture(0, smile_texture.get());
 			cube->Draw(myShader.get());
 		model->Pop();
+
+		model->Push();
+			model->Save(glm::translate(model->Top(), glm::vec3(0.0f, 5.0f, 0.0f)));
+			model->Save(glm::rotate(model->Top(), CurrentTime * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f)));
+			myShader->SetMat4("model", model->Top());
+			sphere->SetColor(glm::vec3(0.2, 0.8, 0.9));
+			// sphere->SetTexture(0, smile_texture.get());
+			sphere->Draw(myShader.get());
+		model->Pop();
+
+		model->Push();
+			model->Save(glm::translate(model->Top(), glm::vec3(0.0f, 3.0f, 5.0f)));
+			model->Save(glm::rotate(model->Top(), CurrentTime * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f)));
+			myShader->SetMat4("model", model->Top());
+			cylinder->SetColor(glm::vec3(0.2, 0.8, 0.9));
+			// sphere->SetTexture(0, smile_texture.get());
+			cylinder->Draw(myShader.get());
+
+			model->Save(glm::translate(model->Top(), glm::vec3(3.0f, 0.0f, 0.0f)));
+			myShader->SetMat4("model", model->Top());
+			cylinder->SetColor(glm::vec3(0.9, 0.0, 0.0));
+			cylinder->Draw(myShader.get());
+		model->Pop();
 		
 		// ImGui::ShowDemoWindow();
+	}
+
+	void DrawOriginAnd3Axes(Nexus::Shader* shader) const {
+		// 繪製世界坐標系原點（0, 0, 0）
+		model->Push();
+			model->Save(glm::scale(model->Top(), glm::vec3(0.2f, 0.2f, 0.2f)));
+			shader->SetMat4("model", model->Top());
+			sphere->SetColor(glm::vec3(0.1f, 0.1f, 0.1f));
+			sphere->Draw(shader);
+		model->Pop();
+
+		// 繪製三個軸
+		model->Push();
+			model->Push();
+				model->Save(glm::translate(model->Top(), glm::vec3(1.5f, 0.0f, 0.0f)));
+				model->Save(glm::scale(model->Top(), glm::vec3(3.0f, 0.1f, 0.1f)));
+				shader->SetMat4("model", model->Top());
+				cube->SetColor(glm::vec3(1.0f, 0.0f, 0.0f));
+				cube->Draw(shader);
+			model->Pop();
+
+			model->Push();
+				model->Save(glm::translate(model->Top(), glm::vec3(0.0f, 1.5f, 0.0f)));
+				model->Save(glm::scale(model->Top(), glm::vec3(0.1f, 3.0f, 0.1f)));
+				shader->SetMat4("model", model->Top());
+				cube->SetColor(glm::vec3(0.0f, 1.0f, 0.0f));
+				cube->Draw(shader);
+			model->Pop();
+
+			model->Push();
+				model->Save(glm::translate(model->Top(), glm::vec3(0.0f, 0.0f, 1.5f)));
+				model->Save(glm::scale(model->Top(), glm::vec3(0.1f, 0.1f, 3.0f)));
+				shader->SetMat4("model", model->Top());
+				cube->SetColor(glm::vec3(0.0f, 0.0f, 1.0f));
+				cube->Draw(shader);
+			model->Pop();
+		model->Pop();
 	}
 	
 	void OnProcessInput(int key) override {
@@ -150,6 +221,16 @@ public:
 	void OnKeyPress(int key) override {
 		if (key == GLFW_KEY_LEFT_SHIFT) {
 			camera->SetMovementSpeed(25.0f);
+		}
+
+		if (key == GLFW_KEY_X) {
+			if (Settings.ShowOriginAnd3Axes) {
+				Settings.ShowOriginAnd3Axes = false;
+				Nexus::Logger::Message(Nexus::LOG_INFO, "World coordinate origin and 3 axes: [Hide].");
+			} else {
+				Settings.ShowOriginAnd3Axes = true;
+				Nexus::Logger::Message(Nexus::LOG_INFO, "World coordinate origin and 3 axes: [Show].");
+			}
 		}
 	}
 	
@@ -194,6 +275,8 @@ private:
 	std::unique_ptr<Nexus::Triangle> triangle = nullptr;
 	std::unique_ptr<Nexus::Square> square = nullptr;
 	std::unique_ptr<Nexus::Cube> cube = nullptr;
+	std::unique_ptr<Nexus::Sphere> sphere = nullptr;
+	std::unique_ptr<Nexus::Cylinder> cylinder = nullptr;
 
 	std::unique_ptr<Nexus::Texture2D> smile_texture = nullptr;
 };

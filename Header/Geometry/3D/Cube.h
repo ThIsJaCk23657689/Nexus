@@ -11,10 +11,12 @@ namespace Nexus {
 	public:
 
 		Cube() {
-
 			this->ShapeName = "Cube";
-			this->VertexCount = 24;
-
+			this->Initialize();
+		}
+	private:
+		
+		void GenerateVertices() override {
 			// ========== Front ==========
 			this->AddPosition(-0.5f, -0.5f, 0.5f);
 			this->AddNormal(0.0f, 0.0f, 1.0f);
@@ -130,17 +132,6 @@ namespace Nexus {
 			this->AddIndices(16, 18, 19);
 			this->AddIndices(20, 21, 22);
 			this->AddIndices(20, 22, 23);
-
-			Initialize();
-		}
-
-		void Initialize() override {
-
-			this->VBO = std::make_unique<Nexus::VertexBuffer>(this->Vertices.data(), this->GetVertexCount() * sizeof(Vertex));
-			this->EBO = std::make_unique<Nexus::IndexBuffer>(this->Indices.data(), this->Indices.size() * sizeof(unsigned int));
-
-			Nexus::VertexAttributes Attribs[] = { {3, 0}, {3, offsetof(Vertex, Normal)}, {2, offsetof(Vertex, TexCoord)} };
-			this->VAO = std::make_unique<Nexus::VertexArray>(this->VBO.get(), Attribs, 3, (GLsizei)sizeof(Vertex), this->EBO.get());
 		}
 	};
 }
