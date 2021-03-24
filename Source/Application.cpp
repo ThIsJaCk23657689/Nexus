@@ -59,9 +59,16 @@ namespace Nexus {
 		}
 	}
 
+	void Application::SetViewport(Nexus::DisplayMode monitor_type) {
+		glViewport(0, 0, Settings.Width, Settings.Height);
+	}
+
 	void Application::GLFWFrameBufferSizeCallback(GLFWwindow* window, int width, int height) {
-		glViewport(0, 0, width, height);
-		OnWindowResize(width, height);
+		// Set new width and height
+		Settings.Width = width;
+		Settings.Height = height;
+		SetViewport(Settings.CurrentDisplyMode);
+		OnWindowResize();
 	}
 
 	void Application::GLFWProcessInput(GLFWwindow* window) {
@@ -181,6 +188,58 @@ namespace Nexus {
 		// Mouse Initialize
 		LastX = (float)Settings.Width / 2.0f;
 		LastY = (float)Settings.Height / 2.0f;
+	}
+
+	glm::mat4 Application::GetPerspectiveProjMatrix(float fovy, float ascept, float znear, float zfar) const {
+		glm::mat4 proj = glm::mat4(1.0f);
+
+		proj[0][0] = 1 / (tan(fovy / 2) * ascept);
+		proj[1][0] = 0;
+		proj[2][0] = 0;
+		proj[3][0] = 0;
+
+		proj[0][1] = 0;
+		proj[1][1] = 1 / (tan(fovy / 2));
+		proj[2][1] = 0;
+		proj[3][1] = 0;
+
+		proj[0][2] = 0;
+		proj[1][2] = 0;
+		proj[2][2] = -(zfar + znear) / (zfar - znear);
+		proj[3][2] = (-2 * zfar * znear) / (zfar - znear);
+
+		proj[0][3] = 0;
+		proj[1][3] = 0;
+		proj[2][3] = -1;
+		proj[3][3] = 0;
+
+		return proj;
+	}
+	
+	glm::mat4 Application::GetOrthoProjMatrix(float left, float right, float bottom, float top, float near, float far) const {
+		glm::mat4 proj = glm::mat4(1.0f);
+
+		proj[0][0] = 2 / (right - left);
+		proj[1][0] = 0;
+		proj[2][0] = 0;
+		proj[3][0] = -(right + left) / (right - left);
+
+		proj[0][1] = 0;
+		proj[1][1] = 2 / (top - bottom);
+		proj[2][1] = 0;
+		proj[3][1] = -(top + bottom) / (top - bottom);
+
+		proj[0][2] = 0;
+		proj[1][2] = 0;
+		proj[2][2] = -2 / (far - near);
+		proj[3][2] = -(far + near) / (far - near);
+
+		proj[0][3] = 0;
+		proj[1][3] = 0;
+		proj[2][3] = 0;
+		proj[3][3] = 1;
+
+		return proj;
 	}
 	
 	void Application::GLFWFrameBufferSizeCallbackHelper(GLFWwindow* window, int width, int height) {

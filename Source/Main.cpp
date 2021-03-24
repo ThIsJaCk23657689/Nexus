@@ -38,7 +38,22 @@ public:
 		Settings.Height = 600;
 		Settings.WindowTitle = "NexusDemo | Nexus";
 		Settings.EnableDebugCallback = true;
-		Settings.EnableCursor = true;
+		Settings.EnableFullScreen = false;
+		Settings.EnableDebugCallback = true;
+		Settings.EnableGhostMode = true;
+		Settings.ShowOriginAnd3Axes = false;
+		Settings.UseBlinnPhongShading = true;
+		Settings.UseSpotExponent = false;
+		Settings.UseLighting = true;
+		Settings.UseDiffuseTexture = true;
+		Settings.UseSpecularTexture = true;
+		Settings.UseEmission = true;
+		Settings.UseGamma = false;
+		Settings.GammaValue = 1.0f / 2.2f;
+
+		// Projection Settings Initalize
+		ProjectionSettings.AspectHW = (float)Settings.Height / (float)Settings.Width;
+		ProjectionSettings.AspectHW = (float)Settings.Width / (float)Settings.Height;
 	}
 
 	void Initialize() override {
@@ -58,8 +73,6 @@ public:
 
 		// Create Matrix Stack
 		model = std::make_unique<Nexus::MatrixStack>();
-		view = std::make_unique<Nexus::MatrixStack>();
-		projection = std::make_unique<Nexus::MatrixStack>();
 
 		// Create object data
 		triangle = std::make_unique<Nexus::Triangle>();
@@ -91,11 +104,11 @@ public:
 			new Nexus::DirectionalLight(glm::vec3(-0.2f, -1.0f, -0.3f), true)
 		};
 		PointLights = {
-			new Nexus::PointLight(glm::vec3(10.0f, 10.0f, 35.0f), true),
-			new Nexus::PointLight(glm::vec3(-45.0f, 5.0f, 30.0f), true),
-			new Nexus::PointLight(glm::vec3(38.0f, 2.0f, -40.0f), true),
-			new Nexus::PointLight(glm::vec3(-50.0f, 15.0f, -45.0f), true),
-			new Nexus::PointLight(glm::vec3(0.0f, 10.0f, 0.0f), true)
+			new Nexus::PointLight(glm::vec3(10.0f, 10.0f, 35.0f), false),
+			new Nexus::PointLight(glm::vec3(-45.0f, 5.0f, 30.0f), false),
+			new Nexus::PointLight(glm::vec3(38.0f, 2.0f, -40.0f), false),
+			new Nexus::PointLight(glm::vec3(-50.0f, 15.0f, -45.0f), false),
+			new Nexus::PointLight(glm::vec3(0.0f, 10.0f, 0.0f), false)
 		};
 		SpotLights = {
 			new Nexus::SpotLight(camera->GetPosition(), camera->GetFront(), false)
@@ -130,10 +143,11 @@ public:
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		projection->Save(glm::perspective(glm::radians(camera->GetFOV()), (float)(Settings.Width / Settings.Height), 0.1f, 100.0f));
-		view->Save(camera->GetViewMatrix());
+		SetViewMatrix(Nexus::DISPLAY_MODE_DEFAULT);
+		SetProjectionMatrix(Nexus::DISPLAY_MODE_DEFAULT);
 
-		
+		// view = camera->GetViewMatrix();
+		// projection = glm::perspective(glm::radians(camera->GetFOV()), ProjectionSettings.AspectWH, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
 
 		myShader->Use();
 		myShader->SetInt("material.diffuse_texture", 0);
@@ -141,11 +155,10 @@ public:
 		myShader->SetInt("material.emission_texture", 2);
 		myShader->SetInt("skybox", 3);
 
-		myShader->SetMat4("view", view->Top());
-		myShader->SetMat4("projection", projection->Top());
+		myShader->SetMat4("view", view);
+		myShader->SetMat4("projection", projection);
 		myShader->SetVec3("viewPos", camera->GetPosition());
 
-		
 		myShader->SetBool("useBlinnPhong", Settings.UseBlinnPhongShading);
 		myShader->SetBool("useSpotExponent", Settings.UseSpotExponent);
 		myShader->SetBool("useLighting", Settings.UseLighting);
@@ -367,20 +380,19 @@ public:
 				}
 				ImGui::EndTabItem();
 			}
-			/*
 			if (ImGui::BeginTabItem("Projection")) {
 
-				ImGui::TextColored(ImVec4(1.0f, 0.5f, 1.0f, 1.0f), (isPerspective) ? "Perspective Projection" : "Orthogonal Projection");
+				ImGui::TextColored(ImVec4(1.0f, 0.5f, 1.0f, 1.0f), (ProjectionSettings.IsPerspective) ? "Perspective Projection" : "Orthogonal Projection");
 				ImGui::Text("Parameters");
-				ImGui::BulletText("FoV = %.2f deg, Aspect = %.2f", (isGhost) ? camera.Zoom : followCamera.Zoom, aspect_wh);
-				ImGui::BulletText("left: %.2f, right: %.2f ", global_left, global_right);
-				ImGui::BulletText("bottom: %.2f, top: %.2f ", global_bottom, global_top);
-				ImGui::SliderFloat("Near", &global_near, 0.1, 10);
-				ImGui::SliderFloat("Far", &global_far, 10, 250);
+				ImGui::BulletText("FoV = %.2f deg, Aspect = %.2f", camera->GetFOV(), ProjectionSettings.AspectWH);
+				ImGui::BulletText("left: %.2f, right: %.2f ", ProjectionSettings.ClippingLeft, ProjectionSettings.ClippingTop);
+				ImGui::BulletText("bottom: %.2f, top: %.2f ", ProjectionSettings.ClippingBottom, ProjectionSettings.ClippingTop);
+				ImGui::SliderFloat("Near", &ProjectionSettings.ClippingNear, 0.1, 10);
+				ImGui::SliderFloat("Far", &ProjectionSettings.ClippingFar, 10, 250);
 				ImGui::Spacing();
 
 				if (ImGui::TreeNode("Projection Matrix")) {
-					setProjectionMatrix(3);
+					SetProjectionMatrix(Nexus::DISPLAY_MODE_DEFAULT);
 					glm::mat4 proj = projection;
 
 					ImGui::Columns(4, "mycolumns");
@@ -397,7 +409,7 @@ public:
 					ImGui::TreePop();
 				}
 				ImGui::Spacing();
-
+				/*
 				if (ImGui::TreeNode("View Volume Vertices")) {
 					ImGui::BulletText("rtnp: (%.2f, %.2f, %.2f)", nearPlaneVertex[0].x, nearPlaneVertex[0].y, nearPlaneVertex[0].z);
 					ImGui::BulletText("ltnp: (%.2f, %.2f, %.2f)", nearPlaneVertex[1].x, nearPlaneVertex[1].y, nearPlaneVertex[1].z);
@@ -409,11 +421,12 @@ public:
 					ImGui::BulletText("lbfp: (%.2f, %.2f, %.2f)", farPlaneVertex[3].x, farPlaneVertex[3].y, farPlaneVertex[3].z);
 					ImGui::TreePop();
 				}
+				
 				ImGui::Spacing();
+				*/
 
 				ImGui::EndTabItem();
 			}
-			*/
 
 
 			
@@ -569,6 +582,80 @@ public:
 			model->Pop();
 		model->Pop();
 	}
+
+	void SetViewMatrix(Nexus::DisplayMode monitor_type) {
+		if (Settings.EnableGhostMode) {
+			switch (monitor_type) {
+				case Nexus::DISPLAY_MODE_ORTHOGONAL_X:
+					view = glm::lookAt(camera->GetPosition() + glm::vec3(5.0, 0.0, 0.0), camera->GetPosition(), glm::vec3(0.0, 1.0, 0.0));
+					break;
+				case Nexus::DISPLAY_MODE_ORTHOGONAL_Y:
+					view = glm::lookAt(camera->GetPosition() + glm::vec3(0.0, 5.0, 0.0), camera->GetPosition(), glm::vec3(0.0, 0.0, -1.0));
+					break;
+				case Nexus::DISPLAY_MODE_ORTHOGONAL_Z:
+					view = glm::lookAt(camera->GetPosition() + glm::vec3(0.0, 0.0, 5.0), camera->GetPosition(), glm::vec3(0.0, 1.0, 0.0));
+					break;
+				case Nexus::DISPLAY_MODE_DEFAULT:
+					view = camera->GetViewMatrix();
+					break;
+			}
+		}
+	}
+
+	void SetProjectionMatrix(Nexus::DisplayMode monitor_type) {
+		ProjectionSettings.AspectWH = (float)Settings.Width / (float)Settings.Height;
+		ProjectionSettings.AspectHW = (float)Settings.Height / (float)Settings.Width;
+
+		if (monitor_type == Nexus::DISPLAY_MODE_DEFAULT) {
+			if (Settings.EnableGhostMode) {
+				if (ProjectionSettings.IsPerspective) {
+					projection = GetPerspectiveProjMatrix(glm::radians(camera->GetFOV()), ProjectionSettings.AspectWH, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
+				} else {
+					float length = tan(glm::radians(camera->GetFOV() / 2)) * ProjectionSettings.ClippingNear * 50;
+					if (Settings.Width > Settings.Height) {
+						projection = GetOrthoProjMatrix(-length, length, -length * ProjectionSettings.AspectHW, length * ProjectionSettings.AspectWH, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
+					} else {
+						projection = GetOrthoProjMatrix(-length * ProjectionSettings.AspectWH, length * ProjectionSettings.AspectWH, -length, length, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
+					}
+				}
+			} 
+		} else {
+			if (Settings.Width > Settings.Height) {
+				projection = GetOrthoProjMatrix(-5.0, 5.0, -5.0 * ProjectionSettings.AspectHW, 5.0 * ProjectionSettings.AspectHW, 0.1f, 250.0f);
+			} else {
+				projection = GetOrthoProjMatrix(-5.0 * ProjectionSettings.AspectWH, 5.0 * ProjectionSettings.AspectWH, -5.0, 5.0, 0.1f, 250.0f);
+			}
+		}
+	}
+
+	void SetViewport(Nexus::DisplayMode monitor_type) override {
+		if (Settings.CurrentDisplyMode == Nexus::DISPLAY_MODE_3O1P) {
+			switch (monitor_type) {
+				case Nexus::DISPLAY_MODE_ORTHOGONAL_X:
+					glViewport(0, Settings.Height / 2, Settings.Width / 2, Settings.Height / 2);
+					break;
+				case Nexus::DISPLAY_MODE_ORTHOGONAL_Y:
+					glViewport(Settings.Width / 2, Settings.Height / 2, Settings.Width / 2, Settings.Height / 2);
+					break;
+				case Nexus::DISPLAY_MODE_ORTHOGONAL_Z:
+					glViewport(0, 0, Settings.Width / 2, Settings.Height / 2);
+					break;
+				case Nexus::DISPLAY_MODE_DEFAULT:
+					glViewport(Settings.Width / 2, 0, Settings.Width / 2, Settings.Height / 2);
+					break;
+			}
+		} else {
+			glViewport(0, 0, Settings.Width, Settings.Height);
+		}
+	}
+	
+	void OnWindowResize() override {
+		ProjectionSettings.AspectWH = (float)Settings.Width / (float)Settings.Height;
+		ProjectionSettings.AspectHW = (float)Settings.Height / (float)Settings.Width;
+
+		// Reset viewport
+		SetViewport(Nexus::DISPLAY_MODE_DEFAULT);
+	}
 	
 	void OnProcessInput(int key) override {
 		if (key == GLFW_KEY_W) {
@@ -636,8 +723,8 @@ private:
 	std::unique_ptr<Nexus::Camera> camera = nullptr;
 	
 	std::unique_ptr<Nexus::MatrixStack> model = nullptr;
-	std::unique_ptr<Nexus::MatrixStack> view = nullptr;
-	std::unique_ptr<Nexus::MatrixStack> projection = nullptr;
+	glm::mat4 view = glm::mat4(1.0f);
+	glm::mat4 projection = glm::mat4(1.0f);
 
 	std::unique_ptr<Nexus::Triangle> triangle = nullptr;
 	std::unique_ptr<Nexus::Rectangle> floor = nullptr;

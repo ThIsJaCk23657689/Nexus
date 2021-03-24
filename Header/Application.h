@@ -2,10 +2,23 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <string>
 #include <vector>
 
 namespace Nexus {
+
+	enum DisplayMode {
+		DISPLAY_MODE_ORTHOGONAL_X = 1,
+		DISPLAY_MODE_ORTHOGONAL_Y = 2,
+		DISPLAY_MODE_ORTHOGONAL_Z = 3,
+		DISPLAY_MODE_DEFAULT = 4,
+		DISPLAY_MODE_3O1P = 5
+	};
 
 	struct ApplicationSettings {
 		std::string WindowTitle = "Nexus";
@@ -27,6 +40,20 @@ namespace Nexus {
 		bool UseEmission = true;
 		bool UseGamma = false;
 		float GammaValue = 1.0f / 2.2f;
+
+		DisplayMode CurrentDisplyMode = DISPLAY_MODE_DEFAULT;
+	};
+
+	struct ProjectionSettings {
+		bool IsPerspective = true;
+		float AspectWH = 0;
+		float AspectHW = 0;
+		float ClippingLeft = 0.0f;
+		float ClippingRight = 0.0f;
+		float ClippingBottom = 0.0f;
+		float ClippingTop = 0.0f;
+		float ClippingNear = 0.1f;
+		float ClippingFar = 250.0f;
 	};
 
 	class Application {
@@ -44,7 +71,7 @@ namespace Nexus {
 		virtual void ShowDebugUI() {}
 
 	protected:
-		virtual void OnWindowResize(int width, int height) {}
+		virtual void OnWindowResize() {}
 		virtual void OnProcessInput(int key) {}
 		virtual void OnKeyPress(int key) {}
 		virtual void OnKeyRelease(int key) {}
@@ -52,6 +79,9 @@ namespace Nexus {
 		virtual void OnMouseButtonPress(int button) {}
 		virtual void OnMouseButtonRelease(int button) {}
 		virtual void OnMouseScroll(int yoffset) {}
+		virtual void SetViewport(Nexus::DisplayMode monitor_type);
+		glm::mat4 GetPerspectiveProjMatrix(float fovy, float ascept, float znear, float zfar) const;
+		glm::mat4 GetOrthoProjMatrix(float left, float right, float bottom, float top, float near, float far) const;
 
 		GLFWwindow* Window = nullptr;
 		
@@ -60,6 +90,7 @@ namespace Nexus {
 		float LastTime = 0.0f;
 		
 		ApplicationSettings Settings;
+		ProjectionSettings ProjectionSettings;
 		
 	private:
 		void InitializeBase();
