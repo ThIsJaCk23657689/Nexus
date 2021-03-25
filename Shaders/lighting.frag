@@ -203,7 +203,7 @@ void main() {
 		}
 
 		// 開啟自發光
-		if (useEmission && material.enableEmission) {
+		if (material.enableEmission) {
 			// 有開啟自發光選項 且 該物體有開啟自發光
 			if (material.enableEmissionTexture) {
 				// 使用自發光材質

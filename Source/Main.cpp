@@ -39,10 +39,10 @@ public:
 		Settings.WindowTitle = "NexusDemo | Nexus";
 		Settings.EnableDebugCallback = true;
 		Settings.EnableFullScreen = false;
-		Settings.EnableDebugCallback = true;
+
 		Settings.EnableGhostMode = true;
 		Settings.ShowOriginAnd3Axes = false;
-		Settings.UseBlinnPhongShading = true;
+		Settings.UseBlinnPhongShading = false;
 		Settings.UseSpotExponent = false;
 		Settings.UseLighting = true;
 		Settings.UseDiffuseTexture = true;
@@ -63,10 +63,13 @@ public:
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+
+		
 		
 		// Create shader program
 		// myShader = std::make_unique<Nexus::Shader>("Shaders/testing.vert", "Shaders/testing.frag");
 		myShader = std::make_unique<Nexus::Shader>("Shaders/lighting.vert", "Shaders/lighting.frag");
+		normalShader = std::make_unique<Nexus::Shader>("Shaders/normal_visualization.vs", "Shaders/normal_visualization.fs", "Shaders/normal_visualization.gs");
 		
 		// Create Camera
 		camera = std::make_unique<Nexus::Camera>(glm::vec3(0.0f, 2.0f, 10.0f));
@@ -209,6 +212,7 @@ public:
 
 		
 		
+		
 		myShader->SetVec4("fog.color", fog->GetColor());
 		myShader->SetFloat("fog.density", fog->GetDensity());
 		myShader->SetInt("fog.mode", fog->GetMode());
@@ -216,6 +220,17 @@ public:
 		myShader->SetBool("fog.enable", fog->GetEnable());
 		myShader->SetFloat("fog.f_start", fog->GetFogStart());
 		myShader->SetFloat("fog.f_end", fog->GetFogEnd());
+
+		/*
+		normalShader->Use();
+		normalShader->SetMat4("view", view);
+		normalShader->SetMat4("projection", projection);
+		model->Push();
+			model->Save(glm::translate(model->Top(), glm::vec3(8.0f, 1.0f, 0.0f)));
+			cube->SetTexture(0, texture_sea.get());
+			cube->Draw(normalShader.get(), model->Top());
+		model->Pop();
+		*/
 		
 
 		// ==================== Draw origin and 3 axes ====================
@@ -306,11 +321,16 @@ public:
 		// ==================== Draw obstacles ====================
 		model->Push();
 			model->Save(glm::translate(model->Top(), glm::vec3(0.0f, 0.0f, 0.0f)));
+			cube->SetEnableSpecularTexture(true);
 			cube->SetTexture(0, texture_box.get());
-			cube->SetTexture(1, texture_box.get());
+			cube->SetTexture(1, texture_box_spec.get());
 			cube->SetShininess(64.0f);
 			cube->Draw(myShader.get(), model->Top());
+			cube->SetEnableSpecularTexture(false);
 		model->Pop();
+		
+
+		
 		
 		// ==================== Draw plastic object ====================
 		model->Push();
@@ -563,6 +583,7 @@ public:
 			model->Push();
 				model->Save(glm::translate(model->Top(), glm::vec3(1.5f, 0.0f, 0.0f)));
 				model->Save(glm::scale(model->Top(), glm::vec3(3.0f, 0.1f, 0.1f)));
+				cube->SetEnableEmission(true);
 				cube->SetMaterialColor(glm::vec3(1.0f, 0.0f, 0.0f));
 				cube->Draw(shader, model->Top());
 			model->Pop();
@@ -579,6 +600,7 @@ public:
 				model->Save(glm::scale(model->Top(), glm::vec3(0.1f, 0.1f, 3.0f)));
 				cube->SetMaterialColor(glm::vec3(0.0f, 0.0f, 1.0f));
 				cube->Draw(shader, model->Top());
+				cube->SetEnableEmission(false);
 			model->Pop();
 		model->Pop();
 	}
@@ -720,6 +742,7 @@ public:
 
 private:
 	std::unique_ptr<Nexus::Shader> myShader = nullptr;
+	std::unique_ptr<Nexus::Shader> normalShader = nullptr;
 	std::unique_ptr<Nexus::Camera> camera = nullptr;
 	
 	std::unique_ptr<Nexus::MatrixStack> model = nullptr;
