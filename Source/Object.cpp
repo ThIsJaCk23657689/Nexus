@@ -42,6 +42,7 @@ namespace Nexus {
 			glEnableVertexAttribArray(i);
 			glVertexAttribPointer(i, attribs[i].Dims, GL_FLOAT, GL_FALSE, stride, (const GLvoid*)attribs[i].Offset);
 		}
+		
 		this->Unbind();
 	}
 
@@ -59,28 +60,7 @@ namespace Nexus {
 	}
 
 	void Object::Draw(Nexus::Shader* shader, glm::mat4 model) {
-
 		shader->Use();
-		shader->SetBool("isCubeMap", false);
-		shader->SetBool("material.enableDiffuseTexture", this->EnableDiffuseTexture);
-		shader->SetBool("material.enableSpecularTexture", this->EnableSpecularTexture);
-		shader->SetBool("material.enableEmission", this->EnableEmission);
-		shader->SetBool("material.enableEmissionTexture", this->EnableEmissionTexture);
-
-		if (this->EnableDiffuseTexture) {
-			
-			
-			for (unsigned int i = 0; i < this->Texture.size(); i++) {
-				if (this->Texture[i] == nullptr) {
-					continue;
-				}
-				this->Texture[i]->Bind(i);
-			}
-		} else {
-			shader->SetVec4("material.ambient", this->Ambient);
-			shader->SetVec4("material.diffuse", this->Diffiuse);
-			shader->SetVec4("material.specular", this->Specular);
-		}
 		shader->SetMat4("model", model);
 		
 		this->VAO->Bind();
@@ -89,17 +69,36 @@ namespace Nexus {
 		}
 
 		glDrawElements(GL_TRIANGLES, (GLsizei)this->Indices.size(), GL_UNSIGNED_INT, 0);
+	}
 
-		/*
-		if (this->EnableColorTexture) {
-			for (int i = 0; i < this->Texture.size(); i++) {
-				if (this->Texture[i] == nullptr) {
-					continue;
-				}
-				this->Texture[i]->Unbind();
-			}
-		}
-		*/
+	void Object::DrawInstancing(Nexus::Shader* shader, std::vector<glm::mat4>& models) {
+
+		shader->Use();
+		
+		this->VAO->Bind();
+		
+		unsigned int buffer;
+		GLsizei vec4Size = sizeof(glm::vec4);
+		glGenBuffers(1, &buffer);
+		glBindBuffer(GL_ARRAY_BUFFER, buffer);
+		glBufferData(GL_ARRAY_BUFFER, models.size() * sizeof(glm::mat4), models.data(), GL_STATIC_DRAW);
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
+		glEnableVertexAttribArray(4);
+		glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(vec4Size));
+		glEnableVertexAttribArray(5);
+		glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(2 * vec4Size));
+		glEnableVertexAttribArray(6);
+		glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(3 * vec4Size));
+		glVertexAttribDivisor(3, 1);
+		glVertexAttribDivisor(4, 1);
+		glVertexAttribDivisor(5, 1);
+		glVertexAttribDivisor(6, 1);
+		
+
+		glDrawElementsInstanced(GL_TRIANGLES, (GLsizei)this->Indices.size(), GL_UNSIGNED_INT, 0, 1000);
+
+		glBindVertexArray(0);
 	}
 
 	void Object::BufferInitialize() {
