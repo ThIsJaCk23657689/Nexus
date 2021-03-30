@@ -1,10 +1,7 @@
 #pragma once
 
 #include <glad.h>
-
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 #include "Shader.h"
 
@@ -92,16 +89,14 @@ namespace Nexus {
 		unsigned int GetIndexCount() const { return (unsigned int)this->Indices.size(); }
 		
 	protected:
+		std::string ShapeName;
 		std::vector<float> Vertices;
 		std::vector<float> Position;
 		std::vector<float> Normal;
 		std::vector<float> TexCoord;
 		std::vector<unsigned int> Indices;
 		unsigned int VertexCount = 0;
-
-		std::string ShapeName;
 		bool EnableWireFrameMode = false;
-
 		bool EnableInstancing = false;
 
 		std::unique_ptr<Nexus::VertexArray> VAO;

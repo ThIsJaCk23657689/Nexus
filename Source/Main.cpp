@@ -237,7 +237,7 @@ public:
 		if (Settings.ShowOriginAnd3Axes) {
 			this->DrawOriginAnd3Axes(myShader.get());
 		}
-
+		/*
 		model->Push();
 			model->Save(glm::translate(model->Top(), glm::vec3(-5.0f, 1.0f, 0.0f)));
 			triangle->SetMaterialColor(glm::vec3(0.8f, 0.2f, 0.8f));
@@ -371,6 +371,7 @@ public:
 				sphere->SetEnableEmission(false);
 			model->Pop();
 		}
+		*/
 
 		// ImGui::ShowDemoWindow();
 	}
@@ -571,6 +572,7 @@ public:
 	}
 
 	void DrawOriginAnd3Axes(Nexus::Shader* shader) const {
+		/*
 		// 繪製世界坐標系原點（0, 0, 0）
 		model->Push();
 			model->Save(glm::scale(model->Top(), glm::vec3(0.2f, 0.2f, 0.2f)));
@@ -603,6 +605,7 @@ public:
 				cube->SetEnableEmission(false);
 			model->Pop();
 		model->Pop();
+		*/
 	}
 
 	void SetViewMatrix(Nexus::DisplayMode monitor_type) {
