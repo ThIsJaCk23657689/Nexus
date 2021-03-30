@@ -31,6 +31,7 @@ namespace Nexus {
 		bool EnableDebugCallback = true;
 		bool EnableGhostMode = true;
 		bool ShowOriginAnd3Axes = false;
+		bool NormalVisualize = false;
 
 		bool UseBlinnPhongShading = true;
 		bool UseSpotExponent = false;
@@ -44,10 +45,11 @@ namespace Nexus {
 		DisplayMode CurrentDisplyMode = DISPLAY_MODE_DEFAULT;
 	};
 
-	struct ProjectionSettings {
+	struct ProjectionConfig {
 		bool IsPerspective = true;
 		float AspectWH = 0;
 		float AspectHW = 0;
+		float Length = 200.0f;
 		float ClippingLeft = 0.0f;
 		float ClippingRight = 0.0f;
 		float ClippingBottom = 0.0f;
@@ -90,7 +92,7 @@ namespace Nexus {
 		float LastTime = 0.0f;
 		
 		ApplicationSettings Settings;
-		ProjectionSettings ProjectionSettings;
+		ProjectionConfig ProjectionSettings;
 		
 	private:
 		void InitializeBase();

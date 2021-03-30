@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Logger.h"
-
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -10,8 +9,14 @@ namespace Nexus {
 	class FileLoader {
 	public:
 		static std::vector<unsigned char> LoadRawFile(const std::string& path) {
+			std::vector<unsigned char> buffer;
 			std::ifstream file(path, std::ios::binary);
-			std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(file), {});
+			if (file.good()) {
+				buffer = std::vector<unsigned char>(std::istreambuf_iterator<char>(file), {});
+			} else {
+				Nexus::Logger::Message(LOG_ERROR, "Failed to load raw file, file path: " + path);
+				exit(-1);
+			}
 			file.close();
 			return buffer;
 		}

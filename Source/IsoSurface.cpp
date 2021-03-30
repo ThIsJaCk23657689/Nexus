@@ -1,7 +1,9 @@
 #include "IsoSurface.h"
+
 #include "FileLoader.h"
 #include <iostream>
-#include <map>
+#include <chrono>
+#include <ctime>
 
 namespace Nexus {
 	IsoSurface::IsoSurface(const std::string& info_path, const std::string& raw_path) {
@@ -10,6 +12,9 @@ namespace Nexus {
 		Settings.Resolution[1] = 208;
 		Settings.Resolution[2] = 110;
 		Settings.DataType = "unsigned char";
+
+		this->RawDataFilePath = raw_path;
+		this->InfDataFilePath = info_path;
 
 		// Loading Volume Data
 		this->RawData = Nexus::FileLoader::LoadRawFile(raw_path);
@@ -38,32 +43,44 @@ namespace Nexus {
 	}
 	
 	void IsoSurface::ConvertToPolygon(float iso_value) {
+
+		// Get the start time.
+		auto start = std::chrono::system_clock::now();
+
+		// Initialize and clean the vector;
 		this->IsReadyToDraw = false;
 		std::vector<float>().swap(this->Vertices);
 		std::vector<float>().swap(this->Position);
 		std::vector<float>().swap(this->Normal);
-		
+
 		// Input the data set and iso-value
 		this->GenerateVertices(iso_value);
 
 		// Send the position and normal of these vertices to the GPU
 		this->BufferInitialize();
 
+		// Ready to draw
 		this->IsReadyToDraw = true;
 
-		Logger::Message(LOG_DEBUG, "2.0");
+		auto end = std::chrono::system_clock::now();
+		this->ElapsedSeconds = end - start;
 	}
 	
 	void IsoSurface::Debug() {
-		std::cout << "===== Iso Surface =====\n"
+		std::cout << "===== Iso Surface Information =====\n"
+			<< "Raw File Path: " << this->RawDataFilePath << std::endl
+			<< "Construct Method: March Cube Meh" << std::endl
 			<< "Voxel Count: " << GetVoxelCount() << std::endl
 			<< "Triangle Count: " << GetTriangleCount() << std::endl
 			<< "Vertex Count: " << GetVertexCount() << std::endl
 			<< "Position Count: " << GetPositionCount() << std::endl
-			<< "Normal Count: " << GetNormalCount() << std::endl;
+			<< "Normal Count: " << GetNormalCount() << std::endl
+			<< "Elapsed time: " << this->ElapsedSeconds.count() << " (seconds)" << std::endl;
 	}
 
 	void IsoSurface::Draw(Nexus::Shader* shader, glm::mat4 model) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		
 		if (!this->IsReadyToDraw) {
 			return;
 		}
@@ -75,9 +92,11 @@ namespace Nexus {
 		glBindVertexArray(VAO);
 		if (this->EnableWireFrameMode) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		} else {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
 
-		glDrawArrays(GL_TRIANGLES, 0, this->Vertices.size());
+		glDrawArrays(GL_TRIANGLES, 0, this->GetPositionCount());
 		glBindVertexArray(0);
 	}
 
@@ -210,7 +229,7 @@ namespace Nexus {
 		for (unsigned int i = 0; this->TriangleTable[cube_index][i] != -1; i += 3) {
 			for (unsigned int offset = 0; offset < 3; offset++) {
 				this->AddPosition(position_list[this->TriangleTable[cube_index][i + offset]]);
-				this->AddNormal(normal_list[this->TriangleTable[cube_index][i + offset]]);
+				this->AddNormal(glm::normalize(normal_list[this->TriangleTable[cube_index][i + offset]]));
 			}
 		}
 	}

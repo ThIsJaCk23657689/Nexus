@@ -1,12 +1,9 @@
 #pragma once
 
 #include <glm/glm.hpp>
-
 #include "Shader.h"
-#include "Object.h"
-
+#include <chrono>
 #include <vector>
-#include <memory>
 
 namespace Nexus {
 	
@@ -40,8 +37,16 @@ namespace Nexus {
 		
 		~IsoSurface() {};
 
+		bool GetWireFrameMode() const {
+			return this->EnableWireFrameMode;
+		}
+
 		void SetWireFrameMode(bool enable) {
 			this->EnableWireFrameMode = enable;
+		}
+		
+		bool* WireFrameModeHelper() {
+			return &this->EnableWireFrameMode;
 		}
 
 		void ConvertToPolygon(float iso_value);
@@ -344,9 +349,12 @@ namespace Nexus {
 			{0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 			{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}
 		};
-		
+
+		std::string RawDataFilePath;
+		std::string InfDataFilePath;
 		std::vector<unsigned char> RawData;
 		std::vector<glm::vec3> GridNormals;
+		std::chrono::duration<double> ElapsedSeconds;
 		
 		std::vector<float> Vertices;
 		std::vector<float> Position;

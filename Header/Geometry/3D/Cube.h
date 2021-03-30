@@ -1,10 +1,7 @@
 #pragma once
 
 #include <iostream>
-
-#include "Logger.h"
 #include "Object.h"
-#include "Shader.h"
 
 namespace Nexus {
 	class Cube : public Object {

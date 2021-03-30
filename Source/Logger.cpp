@@ -1,6 +1,7 @@
 #include "Logger.h"
 
 #include <iostream>
+#include <chrono>
 #include <ctime>
 
 namespace Nexus {
@@ -54,11 +55,12 @@ namespace Nexus {
 
 	// Generate timestamp for logging
 	std::string Logger::GetTimestamp() {
-		time_t timer = std::time(0);
-		std::tm bt{};
-		localtime_s(&bt, &timer);
+		std::time_t now = std::time(0);
+		struct tm  tstruct;
+		char buffer[80];
+		tstruct = *localtime(&now);
+		std::strftime(buffer, sizeof(buffer), "%F %T ", &tstruct);
 
-		char buffer[64];
-		return { buffer, std::strftime(buffer, sizeof(buffer), "%F %T ", &bt) };
+		return buffer;
 	}
 }

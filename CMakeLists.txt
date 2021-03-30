@@ -28,7 +28,7 @@ find_package(glm CONFIG REQUIRED)
 find_package(glad CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(Assimp CONFIG REQUIRED)
-target_link_libraries(${MY_LIBRARY} PUBLIC glfw glm glad::glad imgui::imgui assimp::assimp)
+target_link_libraries(${MY_LIBRARY} PUBLIC glfw glm::glm glad::glad imgui::imgui assimp::assimp)
 
 # Excecutable file setting
 add_executable(${MY_PROJECT} Source/VolumeRendering.cpp)

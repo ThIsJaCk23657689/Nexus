@@ -1,10 +1,8 @@
 #pragma once
 
-#include <glad.h>
+#include <glad/glad.h>
 #include <glm/glm.hpp>
-
 #include "Shader.h"
-
 #include <cstdint>
 #include <cstddef>
 #include <vector>

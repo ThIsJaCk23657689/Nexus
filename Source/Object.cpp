@@ -69,10 +69,10 @@ namespace Nexus {
 		}
 
 		glDrawElements(GL_TRIANGLES, (GLsizei)this->Indices.size(), GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
 	}
 
 	void Object::DrawInstancing(Nexus::Shader* shader, std::vector<glm::mat4>& models) {
-
 		shader->Use();
 		
 		this->VAO->Bind();
@@ -95,9 +95,7 @@ namespace Nexus {
 		glVertexAttribDivisor(5, 1);
 		glVertexAttribDivisor(6, 1);
 		
-
 		glDrawElementsInstanced(GL_TRIANGLES, (GLsizei)this->Indices.size(), GL_UNSIGNED_INT, 0, 1000);
-
 		glBindVertexArray(0);
 	}
 

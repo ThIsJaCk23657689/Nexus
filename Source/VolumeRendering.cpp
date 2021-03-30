@@ -1,9 +1,3 @@
-#include <glad/glad.h>
-
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
 #include <imgui.h>
 
 #include "Application.h"
@@ -32,7 +26,7 @@ public:
 
 		// Projection Settings Initalize
 		ProjectionSettings.IsPerspective = false;
-		ProjectionSettings.ClippingNear = 0.0001f;
+		ProjectionSettings.ClippingNear = 0.1f;
 		ProjectionSettings.ClippingFar = 500.0f;
 		ProjectionSettings.AspectHW = (float)Settings.Height / (float)Settings.Width;
 		ProjectionSettings.AspectHW = (float)Settings.Width / (float)Settings.Height;
@@ -41,6 +35,7 @@ public:
 	void Initialize() override {
 
 		// Setting OpenGL
+		glEnable(GL_MULTISAMPLE);
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -59,13 +54,10 @@ public:
 		model = std::make_unique<Nexus::MatrixStack>();
 
 		// Create object data
-		engine = std::make_unique<Nexus::IsoSurface>("C:/Users/user/Desktop/OpenGL/Scalar/engine.inf", "C:/Users/user/Desktop/OpenGL/Scalar/engine.raw");
+		engine = std::make_unique<Nexus::IsoSurface>("C:/Users/y3939/Desktop/OpenGL/Scalar/engine.inf", "C:/Users/y3939/Desktop/OpenGL/Scalar/engine.raw");
 		
-		// cube = std::make_unique<Nexus::Cube>();
-		// cube->Debug();
-
-		// sphere = std::make_unique<Nexus::Sphere>();
-		// sphere->Debug();
+		cube = std::make_unique<Nexus::Cube>();
+		sphere = std::make_unique<Nexus::Sphere>();
 
 		// Loading Volume Data
 		/*
@@ -86,6 +78,7 @@ public:
 
 		
 		
+		
 		/*
 		unsigned int total = 0;
 		for (auto it : histogram) {
@@ -100,7 +93,7 @@ public:
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+		
 		SetViewMatrix(Nexus::DISPLAY_MODE_DEFAULT);
 		SetProjectionMatrix(Nexus::DISPLAY_MODE_DEFAULT);
 
@@ -118,6 +111,12 @@ public:
 		if (Settings.ShowOriginAnd3Axes) {
 			this->DrawOriginAnd3Axes(myShader.get());
 		}
+		
+		model->Push();
+		model->Save(glm::scale(model->Top(), glm::vec3(50.f)));
+		myShader->SetVec3("objectColor", glm::vec3(0.8f, 0.2f, 0.6f));
+		sphere->Draw(myShader.get(), model->Top());
+		model->Pop();
 
 		/*
 		model->Push();
@@ -133,55 +132,47 @@ public:
 		sphere->Draw(myShader.get(), model->Top());
 		model->Pop();
 		*/
+
 		
 
 		model->Push();
 		// model->Save(glm::translate(model->Top(), glm::vec3(-RESOLUTION_X / 2.0f, -RESOLUTION_Y / 2.0f, -RESOLUTION_Z / 2.0f)));
 		myShader->SetVec3("objectColor", glm::vec3(0.482352941, 0.68627451, 0.929411765));
 		engine->Draw(myShader.get(), model->Top());
+		if (Settings.NormalVisualize) {
+			normalShader->Use();
+			normalShader->SetMat4("view", view);
+			normalShader->SetMat4("projection", projection);
+			// model->Save(glm::translate(model->Top(), glm::vec3(-RESOLUTION_X / 2.0f, -RESOLUTION_Y / 2.0f, -RESOLUTION_Z / 2.0f)));
+			engine->Draw(normalShader.get(), model->Top());
+		}
 		model->Pop();
-
-		/*
-		normalShader->Use();
-		normalShader->SetMat4("view", view);
-		normalShader->SetMat4("projection", projection);
-		model->Push();
-		// model->Save(glm::translate(model->Top(), glm::vec3(-RESOLUTION_X / 2.0f, -RESOLUTION_Y / 2.0f, -RESOLUTION_Z / 2.0f)));
-		glBindVertexArray(vdVAO);
-		normalShader->SetMat4("model", model->Top());
-		glDrawArrays(GL_TRIANGLES, 0, iso_surface_vertices.size());
-		glBindVertexArray(0);
-		model->Pop();
-		*/
 
 		// ImGui::ShowDemoWindow();
 	}
 
 	void ShowDebugUI() override {
-		ImGui::Begin("Control Panel");
+		ImGui::Begin("Iso Surface");
+		ImGui::InputText("Volume Data Path", VolumeDataFolderPath, IM_ARRAYSIZE(VolumeDataFolderPath));
+		ImGui::InputText("Volume Data Name", VolumeDataName, IM_ARRAYSIZE(VolumeDataName));
+		ImGui::SliderFloat("Iso Value", &iso_value, 0, 255);
+		if (ImGui::Button("Generate")) {
+			engine->ConvertToPolygon(iso_value);
+			engine->Debug();
+		}
+		ImGui::Spacing();
+
+		ImGui::Checkbox("Normal Visualize", &Settings.NormalVisualize);
+		ImGui::SameLine();
+		ImGui::Checkbox("Wire Frame Mode", engine->WireFrameModeHelper());
+		ImGui::End();
+		
+
+		ImGui::Begin("Setting");
 		ImGuiTabBarFlags tab_bar_flags = ImGuiBackendFlags_None;
 		if (ImGui::BeginTabBar("MyTabBar", tab_bar_flags)) {
-			if (ImGui::BeginTabItem("Iso Surface")) {
-				ImGui::SliderFloat("Iso Value", &iso_value, 0, 255);
-				if(ImGui::Button("Generate")) {
-					engine->ConvertToPolygon(iso_value);
-					engine->Debug();
-				}
-				ImGui::Spacing();
-
-				ImGui::EndTabItem();
-			}
-			/*
-			if (ImGui::BeginTabItem("ROV")) {
-				ImGui::Text("Position = (%.2f, %.2f, %.2f)", ROVPosition.x, ROVPosition.y, ROVPosition.z);
-				ImGui::Text("Front = (%.2f, %.2f, %.2f)", ROVFront.x, ROVFront.y, ROVFront.z);
-				ImGui::Text("Right = (%.2f, %.2f, %.2f)", ROVRight.x, ROVRight.y, ROVRight.z);
-				ImGui::Text("Pitch = %.2f deg", ROVYaw);
-				ImGui::SliderFloat("Speed", &ROVMovementSpeed, 1, 20);
-				ImGui::EndTabItem();
-			}
-			*/
 			if (ImGui::BeginTabItem("Camera")) {
+				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 				if (Settings.EnableGhostMode) {
 					ImGui::TextColored(ImVec4(1.0f, 0.5f, 1.0f, 1.0f), "Ghost Camera");
 					ImGui::Text("Position = (%.2f, %.2f, %.2f)", camera->GetPosition().x, camera->GetPosition().y, camera->GetPosition().z);
@@ -197,10 +188,11 @@ public:
 				ImGui::TextColored(ImVec4(1.0f, 0.5f, 1.0f, 1.0f), (ProjectionSettings.IsPerspective) ? "Perspective Projection" : "Orthogonal Projection");
 				ImGui::Text("Parameters");
 				ImGui::BulletText("FoV = %.2f deg, Aspect = %.2f", camera->GetFOV(), ProjectionSettings.AspectWH);
+				ImGui::SliderFloat("Length", &ProjectionSettings.Length, 100.0f, 1000.0f);
 				ImGui::BulletText("left: %.2f, right: %.2f ", ProjectionSettings.ClippingLeft, ProjectionSettings.ClippingTop);
 				ImGui::BulletText("bottom: %.2f, top: %.2f ", ProjectionSettings.ClippingBottom, ProjectionSettings.ClippingTop);
-				ImGui::SliderFloat("Near", &ProjectionSettings.ClippingNear, 0.1, 10);
-				ImGui::SliderFloat("Far", &ProjectionSettings.ClippingFar, 10, 250);
+				ImGui::SliderFloat("Near", &ProjectionSettings.ClippingNear, 0.001f, 10.0f);
+				ImGui::SliderFloat("Far", &ProjectionSettings.ClippingFar, 10.0f, 1000.0f);
 				ImGui::Spacing();
 
 				if (ImGui::TreeNode("Projection Matrix")) {
@@ -269,16 +261,6 @@ public:
 
 				ImGui::EndTabItem();
 			}
-			
-			/*
-			if (ImGui::BeginTabItem("Texture")) {
-				ImGui::Checkbox("Billboard", &enableBillboard);
-				ImGui::SliderInt(std::string("Key Frame Rate").c_str(), &keyFrameRate, 0, 24);
-				ImGui::Spacing();
-
-				ImGui::EndTabItem();
-			}
-			*/
 			ImGui::EndTabBar();
 		}
 		ImGui::Spacing();
@@ -287,36 +269,33 @@ public:
 	}
 
 	void DrawOriginAnd3Axes(Nexus::Shader* shader) const {
-
-		shader->SetBool("material.enableDiffuseTexture", false);
-		
 		// 繪製世界坐標系原點（0, 0, 0）
 		model->Push();
-		model->Save(glm::scale(model->Top(), glm::vec3(0.2f, 0.2f, 0.2f)));
-		shader->SetVec4("material.diffuse", glm::vec4(0.2f, 0.2f, 0.2f, 1.0f));
+		model->Save(glm::scale(model->Top(), glm::vec3(0.8f, 0.8f, 0.8f)));
+		shader->SetVec3("objectColor", glm::vec3(0.2f, 0.2f, 0.2f));
 		sphere->Draw(shader, model->Top());
 		model->Pop();
 
 		// 繪製三個軸
 		model->Push();
 		model->Push();
-		model->Save(glm::translate(model->Top(), glm::vec3(1.5f, 0.0f, 0.0f)));
-		model->Save(glm::scale(model->Top(), glm::vec3(3.0f, 0.1f, 0.1f)));
-		shader->SetVec4("material.diffuse", glm::vec4(1.0f, 0.0f, 0.0f, 1.0));
+		model->Save(glm::translate(model->Top(), glm::vec3(100.0f, 0.0f, 0.0f)));
+		model->Save(glm::scale(model->Top(), glm::vec3(200.0f, 1.0f, 1.0f)));
+		shader->SetVec3("objectColor", glm::vec3(1.0f, 0.0f, 0.0f));
 		cube->Draw(shader, model->Top());
 		model->Pop();
 
 		model->Push();
-		model->Save(glm::translate(model->Top(), glm::vec3(0.0f, 1.5f, 0.0f)));
-		model->Save(glm::scale(model->Top(), glm::vec3(0.1f, 3.0f, 0.1f)));
-		shader->SetVec4("material.diffuse", glm::vec4(0.0f, 1.0f, 0.0f, 1.0));
+		model->Save(glm::translate(model->Top(), glm::vec3(0.0f, 100.0f, 0.0f)));
+		model->Save(glm::scale(model->Top(), glm::vec3(1.0f, 200.0f, 1.0f)));
+		shader->SetVec3("objectColor", glm::vec3(0.0f, 1.0f, 0.0f));
 		cube->Draw(shader, model->Top());
 		model->Pop();
 
 		model->Push();
-		model->Save(glm::translate(model->Top(), glm::vec3(0.0f, 0.0f, 1.5f)));
-		model->Save(glm::scale(model->Top(), glm::vec3(0.1f, 0.1f, 3.0f)));
-		shader->SetVec4("material.diffuse", glm::vec4(0.0f, 0.0f, 1.0f, 1.0));
+		model->Save(glm::translate(model->Top(), glm::vec3(0.0f, 0.0f, 100.0f)));
+		model->Save(glm::scale(model->Top(), glm::vec3(1.0f, 1.0f, 200.0f)));
+		shader->SetVec3("objectColor", glm::vec3(0.0f, 0.0f, 1.0f));
 		cube->Draw(shader, model->Top());
 		model->Pop();
 		model->Pop();
@@ -350,11 +329,10 @@ public:
 				if (ProjectionSettings.IsPerspective) {
 					projection = GetPerspectiveProjMatrix(glm::radians(camera->GetFOV()), ProjectionSettings.AspectWH, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
 				} else {
-					float length = 200;
 					if (Settings.Width > Settings.Height) {
-						projection = GetOrthoProjMatrix(-length, length, -length * ProjectionSettings.AspectHW, length * ProjectionSettings.AspectHW, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
+						projection = GetOrthoProjMatrix(-ProjectionSettings.Length, ProjectionSettings.Length, -ProjectionSettings.Length * ProjectionSettings.AspectHW, ProjectionSettings.Length * ProjectionSettings.AspectHW, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
 					} else {
-						projection = GetOrthoProjMatrix(-length * ProjectionSettings.AspectWH, length * ProjectionSettings.AspectWH, -length, length, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
+						projection = GetOrthoProjMatrix(-ProjectionSettings.Length * ProjectionSettings.AspectWH, ProjectionSettings.Length * ProjectionSettings.AspectWH, -ProjectionSettings.Length, ProjectionSettings.Length, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
 					}
 				}
 			}
@@ -383,8 +361,7 @@ public:
 				glViewport(Settings.Width / 2, 0, Settings.Width / 2, Settings.Height / 2);
 				break;
 			}
-		}
-		else {
+		} else {
 			glViewport(0, 0, Settings.Width, Settings.Height);
 		}
 	}
@@ -420,10 +397,10 @@ public:
 		if (key == GLFW_KEY_X) {
 			if (Settings.ShowOriginAnd3Axes) {
 				Settings.ShowOriginAnd3Axes = false;
-				Nexus::Logger::Message(Nexus::LOG_INFO, "World coordinate origin and 3 axes: [Hide].");
+				Nexus::Logger::Message(Nexus::LOG_INFO, "World coordinate origin and 3 axes: [Hide]");
 			} else {
 				Settings.ShowOriginAnd3Axes = true;
-				Nexus::Logger::Message(Nexus::LOG_INFO, "World coordinate origin and 3 axes: [Show].");
+				Nexus::Logger::Message(Nexus::LOG_INFO, "World coordinate origin and 3 axes: [Show]");
 			}
 		}
 
@@ -482,7 +459,10 @@ private:
 	std::unique_ptr<Nexus::Sphere> sphere = nullptr;
 
 	std::unique_ptr<Nexus::IsoSurface> engine = nullptr;
-	
+
+	bool EnableWireMode = false;
+	char VolumeDataFolderPath[1024] = "C:/Users/y3939/Desktop/OpenGL/Scalar";
+	char VolumeDataName[512] = "engine";
 	float iso_value = 80.0;
 };
 
