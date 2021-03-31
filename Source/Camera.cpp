@@ -1,48 +1,9 @@
 #include "Camera.h"
+#include <imgui.h>
 
 namespace Nexus {
 
-	Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM) {
-		this->Set(position, up, yaw, pitch);
-	}
-
-	Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM) {
-		this->Set(glm::vec3(posX, posY, posZ), glm::vec3(upX, upY, upZ), yaw, pitch);
-	}
-	
-	void Camera::ProcessKeyboard(CameraMovement direction, float delta_time) {
-		float velocity = this->MovementSpeed * delta_time;
-		if (direction == CAMERA_FORWARD) {
-			this->Position += this->Front * velocity;
-		}
-		if (direction == CAMERA_BACKWARD) {
-			this->Position -= this->Front * velocity;
-		}
-		if (direction == CAMERA_LEFT) {
-			this->Position -= this->Right * velocity;
-		}
-		if (direction == CAMERA_RIGHT) {
-			this->Position += this->Right * velocity;
-		}
-	}
-	
-	void Camera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch) {
-		xoffset *= this->MouseSensitivity;
-		yoffset *= this->MouseSensitivity;
-
-		this->Yaw += xoffset;
-		this->Pitch += yoffset;
-
-		if (constrainPitch) {
-			if (this->Pitch > 89.0f) {
-				this->Pitch = 89.0f;
-			}
-			if (this->Pitch < -89.0f) {
-				this->Pitch = -89.0f;
-			}
-		}
-
-		this->UpdateCameraVectors();
+	Camera::Camera() : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM) {
 	}
 	
 	void Camera::ProcessMouseScroll(float yoffset) {
@@ -63,30 +24,6 @@ namespace Nexus {
 	}
 
 	// Setter
-	void Camera::Set(glm::vec3 position, glm::vec3 up, float yaw, float pitch) {
-		this->Position = position;
-		this->WorldUp = up;
-		this->Yaw = yaw;
-		this->Pitch = pitch;
-		this->UpdateCameraVectors();
-	}
-	
-	void Camera::SetPosition(glm::vec3 position) {
-		this->Set(position, this->WorldUp, this->Yaw, this->Pitch);
-	}
-	
-	void Camera::SetWorldUp(glm::vec3 world_up) {
-		this->Set(this->Position, world_up, this->Yaw, this->Pitch);
-	}
-	
-	void Camera::SetYaw(float yaw) {
-		this->Set(this->Position, this->WorldUp, yaw, this->Pitch);
-	}
-	
-	void Camera::SetPitch(float pitch) {
-		this->Set(this->Position, this->WorldUp, this->Yaw, pitch);
-	}
-	
 	void Camera::SetMovementSpeed(float speed) {
 		this->MovementSpeed = speed;
 	}
@@ -99,6 +36,16 @@ namespace Nexus {
 		this->Zoom = zoom;
 	}
 
+	void Camera::ShowDebugUI(const char* camera_name) {
+		ImGui::TextColored(ImVec4(1.0f, 0.5f, 1.0f, 1.0f), camera_name);
+		ImGui::Text("Position = (%.2f, %.2f, %.2f)", this->GetPosition().x, this->GetPosition().y, this->GetPosition().z);
+		ImGui::Text("Target = (%.2f, %.2f, %.2f)", this->GetTarget().x, this->GetTarget().y, this->GetTarget().z);
+		ImGui::Text("Front = (%.2f, %.2f, %.2f)", this->GetFront().x, this->GetFront().y, this->GetFront().z);
+		ImGui::Text("Right = (%.2f, %.2f, %.2f)", this->GetRight().x, this->GetRight().y, this->GetRight().z);
+		ImGui::Text("Up = (%.2f, %.2f, %.2f)", this->GetUp().x, this->GetUp().y, this->GetUp().z);
+		ImGui::Text("Pitch = %.2f deg, Yaw = %.2f deg", this->GetPitch(), this->GetYaw());
+	}
+	
 	void Camera::UpdateCameraVectors() {
 		glm::mat4 rotateMatrix = glm::mat4(1.0f);
 		rotateMatrix = glm::rotate(rotateMatrix, glm::radians(-this->Yaw), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -111,6 +58,8 @@ namespace Nexus {
 		this->Front = glm::normalize(glm::vec3(front.x, front.y, front.z));
 		this->Right = glm::normalize(glm::cross(this->Front, this->WorldUp));
 		this->Up = glm::normalize(glm::cross(this->Right, this->Front));
+
+		this->Target = this->Position + this->Front;
 	}
 	
 	glm::mat4 Camera::CalcLookAtMatrix(glm::vec3 positon, glm::vec3 target, glm::vec3 world_up) const {

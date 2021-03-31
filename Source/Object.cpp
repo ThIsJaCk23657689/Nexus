@@ -66,6 +66,8 @@ namespace Nexus {
 		this->VAO->Bind();
 		if (this->EnableWireFrameMode) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		} else {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
 
 		glDrawElements(GL_TRIANGLES, (GLsizei)this->Indices.size(), GL_UNSIGNED_INT, 0);

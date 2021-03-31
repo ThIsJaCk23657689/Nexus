@@ -4,6 +4,7 @@
 #include "Shader.h"
 #include <chrono>
 #include <vector>
+#include <map>
 
 namespace Nexus {
 	
@@ -30,12 +31,21 @@ namespace Nexus {
 
 	class IsoSurface {
 	public:
+		IsoSurface() {};
 		IsoSurface(const std::string& info_path, const std::string& raw_path);
 		
 		void Draw(Nexus::Shader* shader, glm::mat4 model = glm::mat4(1.0f));
 		void Debug();
 		
 		~IsoSurface() {};
+
+		bool GetIsInitialize() const {
+			return this->IsInitialize;
+		}
+
+		bool GetIsReadyToDraw() const {
+			return this->IsReadyToDraw;
+		}
 
 		bool GetWireFrameMode() const {
 			return this->EnableWireFrameMode;
@@ -49,6 +59,8 @@ namespace Nexus {
 			return &this->EnableWireFrameMode;
 		}
 
+		std::vector<float> IsoSurface::GetnHistogramData();
+		void Initialize(const std::string& info_path, const std::string& raw_path);
 		void ConvertToPolygon(float iso_value);
 		unsigned int GetVoxelCount() const{ return (unsigned int)this->RawData.size(); }
 		unsigned int GetTriangleCount() const{ return (unsigned int)this->Vertices.size() / 3; }
@@ -362,6 +374,7 @@ namespace Nexus {
 		unsigned int VertexCount = 0;
 
 		bool EnableWireFrameMode = false;
+		bool IsInitialize = false;
 		bool IsReadyToDraw = false;
 		IsoSurfaceSettings Settings;
 		unsigned int VAO;

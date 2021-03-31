@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <string>
 
 namespace Nexus {
 	
@@ -21,17 +22,17 @@ namespace Nexus {
 	
 	class Camera {
 	public:
-		Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
-		Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch);
-		virtual ~Camera() {}
+		Camera();
+		virtual ~Camera() = default;
 
-		void ProcessKeyboard(CameraMovement direction, float delta_time);
-		void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true);
-		void ProcessMouseScroll(float yoffset);
+		virtual void ProcessKeyboard(CameraMovement direction, float delta_time) {};
+		virtual void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true) {};
+		virtual void ProcessMouseScroll(float yoffset);
 
 		// Getter
-		glm::mat4 GetViewMatrix();
+		virtual glm::mat4 GetViewMatrix();
 		glm::vec3 GetPosition() const { return this->Position; }
+		glm::vec3 GetTarget() const { return this->Target; }
 		glm::vec3 GetFront() const { return this->Front; }
 		glm::vec3 GetUp() const { return this->Up; }
 		glm::vec3 GetRight() const { return this->Right; }
@@ -42,18 +43,19 @@ namespace Nexus {
 		float GetFOV() const { return this->Zoom; }
 		
 		// Setter
-		void Set(glm::vec3 position, glm::vec3 up, float yaw, float pitch);
-		void SetPosition(glm::vec3 position);
-		void SetWorldUp(glm::vec3 world_up);
-		void SetYaw(float yaw);
-		void SetPitch(float pitch);
+		virtual void SetPosition(glm::vec3 position) {};
+		virtual void SetWorldUp(glm::vec3 world_up) {};
+		virtual void SetYaw(float yaw) {};
+		virtual void SetPitch(float pitch) {};
 		void SetMovementSpeed(float speed);
 		void SetMouseSensitivity(float sensitivity);
 		void SetZoom(float zoom);
 
-	private:
+		virtual void ShowDebugUI(const char* camera_name);
+
+	protected:
 		glm::vec3 Position;
-		
+		glm::vec3 Target;
 		glm::vec3 Front;
 		glm::vec3 Up;
 		glm::vec3 Right;
@@ -65,7 +67,7 @@ namespace Nexus {
 		float MouseSensitivity;
 		float Zoom;
 
-		void UpdateCameraVectors();
+		virtual void UpdateCameraVectors();
 		glm::mat4 CalcLookAtMatrix(glm::vec3 positon, glm::vec3 target, glm::vec3 world_up) const;
 	};
 }

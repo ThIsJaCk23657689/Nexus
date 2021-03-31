@@ -1,13 +1,16 @@
 #include "IsoSurface.h"
-
+#include "Logger.h"
 #include "FileLoader.h"
 #include <iostream>
-#include <chrono>
-#include <ctime>
 
 namespace Nexus {
 	IsoSurface::IsoSurface(const std::string& info_path, const std::string& raw_path) {
-		// Only Loading Files and do some basic settings.
+		this->Initialize(info_path, raw_path);
+	}
+
+	void IsoSurface::Initialize(const std::string& info_path, const std::string& raw_path) {
+		Logger::Message(LOG_INFO, "Starting loading volume data: " + raw_path);
+		this->IsInitialize = false;
 		Settings.Resolution[0] = 149;
 		Settings.Resolution[1] = 208;
 		Settings.Resolution[2] = 110;
@@ -18,32 +21,39 @@ namespace Nexus {
 
 		// Loading Volume Data
 		this->RawData = Nexus::FileLoader::LoadRawFile(raw_path);
+		Logger::Message(LOG_INFO, "Starting initialize voxels data...");
+		
+		// Compute the gradient of these all voxels.
+		this->ComputeAllNormals();
+		this->IsInitialize = true;
+	
+		Logger::Message(LOG_INFO, "Initialize voxels data completed.");
+	}
 
-		/*
+	std::vector<float> IsoSurface::GetnHistogramData() {
 		std::map<unsigned int, unsigned int> histogram;
 		for (unsigned int i = 0; i < this->RawData.size(); i++) {
 			if (histogram.find(this->RawData[i]) != histogram.end()) {
 				histogram[this->RawData[i]]++;
-			}
-			else {
+			} else {
 				histogram[this->RawData[i]] = 1;
 			}
 		}
 
-		unsigned int total = 0;
-		for (auto it : histogram) {
-			std::cout << " " << it.first << ":" << it.second << std::endl;
-			total += it.second;
+		std::vector<float> x(256, 0.0f);
+		for (auto it : histogram ) {
+			x[it.first] = static_cast<float>(it.second);
 		}
-		std::cout << "Total:" << total << std::endl;
-		*/
 		
-		// Compute the gradient of these all voxels.
-		this->ComputeAllNormals();
+		return x;
 	}
 	
 	void IsoSurface::ConvertToPolygon(float iso_value) {
-
+		if (!this->IsInitialize) {
+			Logger::Message(LOG_ERROR, "YOU MUST LOAD THE VOLUME DATA FIRST!");
+			return;
+		}
+		
 		// Get the start time.
 		auto start = std::chrono::system_clock::now();
 
@@ -67,7 +77,12 @@ namespace Nexus {
 	}
 	
 	void IsoSurface::Debug() {
-		std::cout << "===== Iso Surface Information =====\n"
+		if (!this->IsInitialize || !this->IsReadyToDraw) {
+			Logger::Message(LOG_ERROR, "YOU MUST LOAD THE VOLUME DATA FIRST and COMPUTE THESE ISO SURFACE VERTICES.");
+			return;
+		}
+		
+		std::cout << "==================== Iso Surface Information ====================" << std::endl
 			<< "Raw File Path: " << this->RawDataFilePath << std::endl
 			<< "Construct Method: March Cube Meh" << std::endl
 			<< "Voxel Count: " << GetVoxelCount() << std::endl
@@ -75,15 +90,17 @@ namespace Nexus {
 			<< "Vertex Count: " << GetVertexCount() << std::endl
 			<< "Position Count: " << GetPositionCount() << std::endl
 			<< "Normal Count: " << GetNormalCount() << std::endl
-			<< "Elapsed time: " << this->ElapsedSeconds.count() << " (seconds)" << std::endl;
+			<< "Elapsed time: " << this->ElapsedSeconds.count() << " (seconds)" << std::endl
+			<< "================================================================================" << std::endl;
 	}
 
 	void IsoSurface::Draw(Nexus::Shader* shader, glm::mat4 model) {
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		
-		if (!this->IsReadyToDraw) {
+		if (!this->IsInitialize || !this->IsReadyToDraw) {
+			Logger::Message(LOG_ERROR, "YOU MUST LOAD THE VOLUME DATA FIRST and COMPUTE THESE ISO SURFACE VERTICES.");
 			return;
 		}
+		
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		
 		shader->Use();
 		shader->SetMat4("model", model);
@@ -191,7 +208,7 @@ namespace Nexus {
 
 		// 先檢查每個方塊上的 Voxel 覆蓋為何，一共有 8 個頂點（使用一個 byte 來代表），如果該 iso value 比較大，就會將該 bits 變成 1。
 		for (unsigned int vertex_index = 0; vertex_index < cell.vertices.size(); vertex_index++) {
-			if (cell.vertices[vertex_index].Value >= iso_value) {
+			if (cell.vertices[vertex_index].Value > iso_value) {
 				cube_index |= (1 << vertex_index);
 			}
 		}

@@ -1,15 +1,17 @@
 #include <imgui.h>
+#include <implot.h>
 
 #include "Application.h"
 #include "Logger.h"
-#include "Camera.h"
+#include "FirsrPersonCamera.h"
+#include "ThirdPersonCamera.h"
 #include "Shader.h"
 #include "MatrixStack.h"
 #include "IsoSurface.h"
 
 #include "Cube.h"
 #include "Sphere.h"
-
+#include <algorithm>
 #include <random>
 
 class VolumeRendering final : public Nexus::Application {
@@ -17,7 +19,7 @@ public:
 	VolumeRendering() {
 		Settings.Width = 800;
 		Settings.Height = 600;
-		Settings.WindowTitle = "VolumeRendering | Nexus";
+		Settings.WindowTitle = "Iso Surface | Nexus";
 		Settings.EnableDebugCallback = true;
 		Settings.EnableFullScreen = false;
 
@@ -48,13 +50,15 @@ public:
 		normalShader = std::make_unique<Nexus::Shader>("Shaders/normal_visualization.vs", "Shaders/normal_visualization.fs", "Shaders/normal_visualization.gs");
 
 		// Create Camera
-		camera = std::make_unique<Nexus::Camera>(glm::vec3(0.0f, 10.0f, 100.0f));
+		first_camera = std::make_unique<Nexus::FirstPersonCamera>(glm::vec3(0.0f, 100.0f, 200.0f));
+		third_camera = std::make_unique<Nexus::ThirdPersonCamera>(glm::vec3(0.0f, 0.0f, 200.0f));
 
 		// Create Matrix Stack
 		model = std::make_unique<Nexus::MatrixStack>();
 
 		// Create object data
-		engine = std::make_unique<Nexus::IsoSurface>("C:/Users/y3939/Desktop/OpenGL/Scalar/engine.inf", "C:/Users/y3939/Desktop/OpenGL/Scalar/engine.raw");
+		engine = std::make_unique<Nexus::IsoSurface>();
+		engine_2 = std::make_unique<Nexus::IsoSurface>();
 		
 		cube = std::make_unique<Nexus::Cube>();
 		sphere = std::make_unique<Nexus::Sphere>();
@@ -71,13 +75,7 @@ public:
 				histogram[Testing[i]] = 1;
 			}
 		}
-		
 		*/
-
-		
-
-		
-		
 		
 		/*
 		unsigned int total = 0;
@@ -100,23 +98,22 @@ public:
 		myShader->Use();
 		myShader->SetMat4("view", view);
 		myShader->SetMat4("projection", projection);
-		myShader->SetVec3("lightPos", camera->GetPosition());
-		myShader->SetVec3("viewPos", camera->GetPosition());
+		myShader->SetVec3("lightPos", Settings.EnableGhostMode? first_camera->GetPosition() : third_camera->GetPosition());
+		myShader->SetVec3("viewPos", Settings.EnableGhostMode ? first_camera->GetPosition() : third_camera->GetPosition());
 		myShader->SetVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
 
-		
-
-		
 		// ==================== Draw origin and 3 axes ====================
 		if (Settings.ShowOriginAnd3Axes) {
 			this->DrawOriginAnd3Axes(myShader.get());
 		}
-		
+
+		/*
 		model->Push();
 		model->Save(glm::scale(model->Top(), glm::vec3(50.f)));
 		myShader->SetVec3("objectColor", glm::vec3(0.8f, 0.2f, 0.6f));
 		sphere->Draw(myShader.get(), model->Top());
 		model->Pop();
+		*/
 
 		/*
 		model->Push();
@@ -134,37 +131,71 @@ public:
 		*/
 
 		
-
-		model->Push();
-		// model->Save(glm::translate(model->Top(), glm::vec3(-RESOLUTION_X / 2.0f, -RESOLUTION_Y / 2.0f, -RESOLUTION_Z / 2.0f)));
-		myShader->SetVec3("objectColor", glm::vec3(0.482352941, 0.68627451, 0.929411765));
-		engine->Draw(myShader.get(), model->Top());
-		if (Settings.NormalVisualize) {
-			normalShader->Use();
-			normalShader->SetMat4("view", view);
-			normalShader->SetMat4("projection", projection);
-			// model->Save(glm::translate(model->Top(), glm::vec3(-RESOLUTION_X / 2.0f, -RESOLUTION_Y / 2.0f, -RESOLUTION_Z / 2.0f)));
-			engine->Draw(normalShader.get(), model->Top());
+		if (engine->GetIsInitialize() && engine->GetIsReadyToDraw()) {
+			model->Push();
+			model->Save(glm::translate(model->Top(), glm::vec3(-149 / 2.0f, -208 / 2.0f, -110 / 2.0f)));
+			myShader->SetVec3("objectColor", glm::vec3(0.482352941, 0.68627451, 0.929411765));
+			engine->Draw(myShader.get(), model->Top());
+			myShader->SetVec3("objectColor", glm::vec3(0.929411765, 0.68627451, 0.482352941));
+			engine_2->Draw(myShader.get(), model->Top());
+			if (Settings.NormalVisualize) {	
+				normalShader->Use();
+				normalShader->SetMat4("view", view);
+				normalShader->SetMat4("projection", projection);
+				// model->Save(glm::translate(model->Top(), glm::vec3(-RESOLUTION_X / 2.0f, -RESOLUTION_Y / 2.0f, -RESOLUTION_Z / 2.0f)));
+				engine->Draw(normalShader.get(), model->Top());
+			}
+			model->Pop();
 		}
-		model->Pop();
 
-		// ImGui::ShowDemoWindow();
+		ImPlot::ShowDemoWindow();
+		ImGui::ShowDemoWindow();
 	}
 
 	void ShowDebugUI() override {
 		ImGui::Begin("Iso Surface");
-		ImGui::InputText("Volume Data Path", VolumeDataFolderPath, IM_ARRAYSIZE(VolumeDataFolderPath));
-		ImGui::InputText("Volume Data Name", VolumeDataName, IM_ARRAYSIZE(VolumeDataName));
+		ImGui::InputText("Volume Data Path", (char*)volume_data_folder_path.c_str(), sizeof(volume_data_folder_path));
+		ImGui::InputText("Volume Data Name", (char*)volume_data_name.c_str(), sizeof(volume_data_folder_path));
+		if (ImGui::Button("Loading Files")) {
+			engine->Initialize(volume_data_folder_path + "/" + volume_data_name + ".inf", volume_data_folder_path + "/" + volume_data_name + ".raw");
+			engine_2->Initialize(volume_data_folder_path + "/" + volume_data_name + ".inf", volume_data_folder_path + "/" + volume_data_name + ".raw");
+			volume_data_histogram = engine->GetnHistogramData();
+
+			volume_data_max = *std::max_element(volume_data_histogram.cbegin(), volume_data_histogram.cend());
+			
+			
+
+			/*
+			unsigned int total = 0;
+			for (auto i : volume_data_histogram) {
+				std::cout << i << std::endl;
+				total += i;
+			}
+			std::cout << total << std::endl;
+			*/
+		}
+		
 		ImGui::SliderFloat("Iso Value", &iso_value, 0, 255);
 		if (ImGui::Button("Generate")) {
-			engine->ConvertToPolygon(iso_value);
-			engine->Debug();
+			if (engine->GetIsInitialize()) {
+				engine->ConvertToPolygon(iso_value);
+				engine->Debug();
+				engine_2->ConvertToPolygon(250.0f);
+				engine_2->Debug();
+			} else {
+				Nexus::Logger::Message(Nexus::LOG_ERROR, "YOU MUST LOAD THE VOLUME DATA FIRST and COMPUTE THESE ISO SURFACE VERTICES.");
+			}
 		}
 		ImGui::Spacing();
 
 		ImGui::Checkbox("Normal Visualize", &Settings.NormalVisualize);
 		ImGui::SameLine();
 		ImGui::Checkbox("Wire Frame Mode", engine->WireFrameModeHelper());
+		if (engine->GetIsInitialize()) {
+			if (ImGui::CollapsingHeader("Histograms")) {
+				ImGui::PlotHistogram("Histogram", volume_data_histogram.data(), volume_data_histogram.size(), 0, NULL, 0.0f, volume_data_max, ImVec2(0, 300));
+			}
+		}
 		ImGui::End();
 		
 
@@ -174,12 +205,10 @@ public:
 			if (ImGui::BeginTabItem("Camera")) {
 				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 				if (Settings.EnableGhostMode) {
-					ImGui::TextColored(ImVec4(1.0f, 0.5f, 1.0f, 1.0f), "Ghost Camera");
-					ImGui::Text("Position = (%.2f, %.2f, %.2f)", camera->GetPosition().x, camera->GetPosition().y, camera->GetPosition().z);
-					ImGui::Text("Front = (%.2f, %.2f, %.2f)", camera->GetFront().x, camera->GetFront().y, camera->GetFront().z);
-					ImGui::Text("Right = (%.2f, %.2f, %.2f)", camera->GetRight().x, camera->GetRight().y, camera->GetRight().z);
-					ImGui::Text("Up = (%.2f, %.2f, %.2f)", camera->GetUp().x, camera->GetUp().y, camera->GetUp().z);
-					ImGui::Text("Pitch = %.2f deg, Yaw = %.2f deg", camera->GetPitch(), camera->GetYaw());
+					first_camera->ShowDebugUI("Person Person Camera");
+				} else {
+					third_camera->ShowDebugUI("Third Person Camera");
+					ImGui::BulletText("Distance: %.2f", third_camera->GetDistance());
 				}
 				ImGui::EndTabItem();
 			}
@@ -187,8 +216,10 @@ public:
 
 				ImGui::TextColored(ImVec4(1.0f, 0.5f, 1.0f, 1.0f), (ProjectionSettings.IsPerspective) ? "Perspective Projection" : "Orthogonal Projection");
 				ImGui::Text("Parameters");
-				ImGui::BulletText("FoV = %.2f deg, Aspect = %.2f", camera->GetFOV(), ProjectionSettings.AspectWH);
-				ImGui::SliderFloat("Length", &ProjectionSettings.Length, 100.0f, 1000.0f);
+				ImGui::BulletText("FoV = %.2f deg, Aspect = %.2f", Settings.EnableGhostMode? first_camera->GetFOV() : third_camera->GetFOV(), ProjectionSettings.AspectWH);
+				if(!ProjectionSettings.IsPerspective) {
+					ImGui::SliderFloat("Length", &ProjectionSettings.OrthogonalWidth, 100.0f, 1000.0f);
+				}
 				ImGui::BulletText("left: %.2f, right: %.2f ", ProjectionSettings.ClippingLeft, ProjectionSettings.ClippingTop);
 				ImGui::BulletText("bottom: %.2f, top: %.2f ", ProjectionSettings.ClippingBottom, ProjectionSettings.ClippingTop);
 				ImGui::SliderFloat("Near", &ProjectionSettings.ClippingNear, 0.001f, 10.0f);
@@ -213,6 +244,7 @@ public:
 					ImGui::TreePop();
 				}
 				ImGui::Spacing();
+				
 				/*
 				if (ImGui::TreeNode("View Volume Vertices")) {
 					ImGui::BulletText("rtnp: (%.2f, %.2f, %.2f)", nearPlaneVertex[0].x, nearPlaneVertex[0].y, nearPlaneVertex[0].z);
@@ -302,21 +334,20 @@ public:
 	}
 
 	void SetViewMatrix(Nexus::DisplayMode monitor_type) {
-		if (Settings.EnableGhostMode) {
-			switch (monitor_type) {
+		glm::vec3 camera_position = Settings.EnableGhostMode ? first_camera->GetPosition() : third_camera->GetPosition();
+		switch (monitor_type) {
 			case Nexus::DISPLAY_MODE_ORTHOGONAL_X:
-				view = glm::lookAt(camera->GetPosition() + glm::vec3(5.0, 0.0, 0.0), camera->GetPosition(), glm::vec3(0.0, 1.0, 0.0));
+				view = glm::lookAt(camera_position + glm::vec3(5.0, 0.0, 0.0), camera_position, glm::vec3(0.0, 1.0, 0.0));
 				break;
 			case Nexus::DISPLAY_MODE_ORTHOGONAL_Y:
-				view = glm::lookAt(camera->GetPosition() + glm::vec3(0.0, 5.0, 0.0), camera->GetPosition(), glm::vec3(0.0, 0.0, -1.0));
+				view = glm::lookAt(camera_position + glm::vec3(0.0, 5.0, 0.0), camera_position, glm::vec3(0.0, 0.0, -1.0));
 				break;
 			case Nexus::DISPLAY_MODE_ORTHOGONAL_Z:
-				view = glm::lookAt(camera->GetPosition() + glm::vec3(0.0, 0.0, 5.0), camera->GetPosition(), glm::vec3(0.0, 1.0, 0.0));
+				view = glm::lookAt(camera_position + glm::vec3(0.0, 0.0, 5.0), camera_position, glm::vec3(0.0, 1.0, 0.0));
 				break;
 			case Nexus::DISPLAY_MODE_DEFAULT:
-				view = camera->GetViewMatrix();
+				view = Settings.EnableGhostMode ? first_camera->GetViewMatrix() : third_camera->GetViewMatrix();
 				break;
-			}
 		}
 	}
 
@@ -325,15 +356,13 @@ public:
 		ProjectionSettings.AspectHW = (float)Settings.Height / (float)Settings.Width;
 
 		if (monitor_type == Nexus::DISPLAY_MODE_DEFAULT) {
-			if (Settings.EnableGhostMode) {
-				if (ProjectionSettings.IsPerspective) {
-					projection = GetPerspectiveProjMatrix(glm::radians(camera->GetFOV()), ProjectionSettings.AspectWH, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
+			if (ProjectionSettings.IsPerspective) {
+				projection = GetPerspectiveProjMatrix(glm::radians(Settings.EnableGhostMode ? first_camera->GetFOV() : third_camera->GetFOV()), ProjectionSettings.AspectWH, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
+			} else {
+				if (Settings.Width > Settings.Height) {
+					projection = GetOrthoProjMatrix(-ProjectionSettings.OrthogonalWidth, ProjectionSettings.OrthogonalWidth, -ProjectionSettings.OrthogonalWidth * ProjectionSettings.AspectHW, ProjectionSettings.OrthogonalWidth * ProjectionSettings.AspectHW, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
 				} else {
-					if (Settings.Width > Settings.Height) {
-						projection = GetOrthoProjMatrix(-ProjectionSettings.Length, ProjectionSettings.Length, -ProjectionSettings.Length * ProjectionSettings.AspectHW, ProjectionSettings.Length * ProjectionSettings.AspectHW, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
-					} else {
-						projection = GetOrthoProjMatrix(-ProjectionSettings.Length * ProjectionSettings.AspectWH, ProjectionSettings.Length * ProjectionSettings.AspectWH, -ProjectionSettings.Length, ProjectionSettings.Length, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
-					}
+					projection = GetOrthoProjMatrix(-ProjectionSettings.OrthogonalWidth * ProjectionSettings.AspectWH, ProjectionSettings.OrthogonalWidth * ProjectionSettings.AspectWH, -ProjectionSettings.OrthogonalWidth, ProjectionSettings.OrthogonalWidth, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
 				}
 			}
 		} else {
@@ -375,23 +404,28 @@ public:
 	}
 
 	void OnProcessInput(int key) override {
-		if (key == GLFW_KEY_W) {
-			camera->ProcessKeyboard(Nexus::CAMERA_FORWARD, DeltaTime);
-		}
-		if (key == GLFW_KEY_S) {
-			camera->ProcessKeyboard(Nexus::CAMERA_BACKWARD, DeltaTime);
-		}
-		if (key == GLFW_KEY_A) {
-			camera->ProcessKeyboard(Nexus::CAMERA_LEFT, DeltaTime);
-		}
-		if (key == GLFW_KEY_D) {
-			camera->ProcessKeyboard(Nexus::CAMERA_RIGHT, DeltaTime);
+		if (Settings.EnableGhostMode) {
+			if (key == GLFW_KEY_W) {
+				first_camera->ProcessKeyboard(Nexus::CAMERA_FORWARD, DeltaTime);
+			}
+			if (key == GLFW_KEY_S) {
+				first_camera->ProcessKeyboard(Nexus::CAMERA_BACKWARD, DeltaTime);
+			}
+			if (key == GLFW_KEY_A) {
+				first_camera->ProcessKeyboard(Nexus::CAMERA_LEFT, DeltaTime);
+			}
+			if (key == GLFW_KEY_D) {
+				first_camera->ProcessKeyboard(Nexus::CAMERA_RIGHT, DeltaTime);
+			}
 		}
 	}
+	
 
 	void OnKeyPress(int key) override {
 		if (key == GLFW_KEY_LEFT_SHIFT) {
-			camera->SetMovementSpeed(500.0f);
+			if (Settings.EnableGhostMode) {
+				first_camera->SetMovementSpeed(500.0f);
+			}
 		}
 
 		if (key == GLFW_KEY_X) {
@@ -413,17 +447,33 @@ public:
 				Nexus::Logger::Message(Nexus::LOG_INFO, "Projection Mode: Perspective");
 			}
 		}
+
+		if (key == GLFW_KEY_G) {
+			if (Settings.EnableGhostMode) {
+				Settings.EnableGhostMode = false;
+				Nexus::Logger::Message(Nexus::LOG_INFO, "Camera Mode: Third Person");
+			} else {
+				Settings.EnableGhostMode = true;
+				Nexus::Logger::Message(Nexus::LOG_INFO, "Camera Mode: First Person");
+			}
+		}
 	}
 
 	void OnKeyRelease(int key) override {
 		if (key == GLFW_KEY_LEFT_SHIFT) {
-			camera->SetMovementSpeed(50.0f);
+			if (Settings.EnableGhostMode) {
+				first_camera->SetMovementSpeed(50.0f);
+			}
 		}
 	}
 
 	void OnMouseMove(int xoffset, int yoffset) override {
 		if (!Settings.EnableCursor) {
-			camera->ProcessMouseMovement(xoffset, yoffset);
+			if (Settings.EnableGhostMode) {
+				first_camera->ProcessMouseMovement(xoffset, yoffset);
+			} else {
+				third_camera->ProcessMouseMovement(xoffset, yoffset);
+			}
 		}
 	}
 
@@ -442,14 +492,35 @@ public:
 	}
 
 	void OnMouseScroll(int yoffset) override {
-		camera->ProcessMouseScroll(yoffset);
+		if (ProjectionSettings.IsPerspective) {
+			if (Settings.EnableGhostMode) {
+				first_camera->ProcessMouseScroll(yoffset);
+			} else {
+				third_camera->AdjustDistance(yoffset);
+			}
+		} else {
+			AdjustOrthogonalProjectionWidth(yoffset);
+		}
+	}
+
+	void AdjustOrthogonalProjectionWidth(float yoffset) {
+		if (ProjectionSettings.OrthogonalWidth >= 100.0f && ProjectionSettings.OrthogonalWidth <= 1000.0f) {
+			ProjectionSettings.OrthogonalWidth -= (float)yoffset * 10.0f;
+		}
+		if (ProjectionSettings.OrthogonalWidth < 100.0f) {
+			ProjectionSettings.OrthogonalWidth = 100.0f;
+		}
+		if (ProjectionSettings.OrthogonalWidth > 1000.0f) {
+			ProjectionSettings.OrthogonalWidth = 1000.0f;
+		}
 	}
 	
 private:
 	std::unique_ptr<Nexus::Shader> myShader = nullptr;
 	std::unique_ptr<Nexus::Shader> normalShader = nullptr;
 	std::unique_ptr<Nexus::Shader> instanceShader = nullptr;
-	std::unique_ptr<Nexus::Camera> camera = nullptr;
+	std::unique_ptr<Nexus::FirstPersonCamera> first_camera = nullptr;
+	std::unique_ptr<Nexus::ThirdPersonCamera> third_camera = nullptr;
 
 	std::unique_ptr<Nexus::MatrixStack> model = nullptr;
 	glm::mat4 view = glm::mat4(1.0f);
@@ -459,10 +530,13 @@ private:
 	std::unique_ptr<Nexus::Sphere> sphere = nullptr;
 
 	std::unique_ptr<Nexus::IsoSurface> engine = nullptr;
+	std::unique_ptr<Nexus::IsoSurface> engine_2 = nullptr;
 
-	bool EnableWireMode = false;
-	char VolumeDataFolderPath[1024] = "C:/Users/y3939/Desktop/OpenGL/Scalar";
-	char VolumeDataName[512] = "engine";
+	bool is_loaded_file = false;
+	std::string volume_data_folder_path = "C:/Users/user/Desktop/OpenGL/Scalar";
+	std::string volume_data_name = "engine";
+	std::vector<float> volume_data_histogram;
+	float volume_data_max;
 	float iso_value = 80.0;
 };
 

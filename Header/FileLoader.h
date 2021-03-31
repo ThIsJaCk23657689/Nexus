@@ -14,7 +14,8 @@ namespace Nexus {
 			if (file.good()) {
 				buffer = std::vector<unsigned char>(std::istreambuf_iterator<char>(file), {});
 			} else {
-				Nexus::Logger::Message(LOG_ERROR, "Failed to load raw file, file path: " + path);
+				Nexus::Logger::Message(LOG_ERROR, "FAILED TO LOAD THE RAW FILE, PLEASE CHECK THE FILE EXISTS IN THE CORRECT PATH");
+				Nexus::Logger::Message(LOG_ERROR, "FILE PATH: " + path);
 				exit(-1);
 			}
 			file.close();
