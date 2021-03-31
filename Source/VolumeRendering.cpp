@@ -1,5 +1,4 @@
 #include <imgui.h>
-#include <implot.h>
 
 #include "Application.h"
 #include "Logger.h"
@@ -23,11 +22,11 @@ public:
 		Settings.EnableDebugCallback = true;
 		Settings.EnableFullScreen = false;
 
-		Settings.EnableGhostMode = true;
+		Settings.EnableGhostMode = false;
 		Settings.ShowOriginAnd3Axes = false;
 
 		// Projection Settings Initalize
-		ProjectionSettings.IsPerspective = false;
+		ProjectionSettings.IsPerspective = true;
 		ProjectionSettings.ClippingNear = 0.1f;
 		ProjectionSettings.ClippingFar = 500.0f;
 		ProjectionSettings.AspectHW = (float)Settings.Height / (float)Settings.Width;
@@ -35,7 +34,6 @@ public:
 	}
 
 	void Initialize() override {
-
 		// Setting OpenGL
 		glEnable(GL_MULTISAMPLE);
 		glEnable(GL_DEPTH_TEST);
@@ -43,15 +41,12 @@ public:
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		// Create shader program
-		// myShader = std::make_unique<Nexus::Shader>("Shaders/testing.vert", "Shaders/testing.frag");
-		// myShader = std::make_unique<Nexus::Shader>("Shaders/lighting.vert", "Shaders/no_lighting.frag");
 		myShader = std::make_unique<Nexus::Shader>("Shaders/simple_lighting.vert", "Shaders/simple_lighting.frag");
-		// instanceShader = std::make_unique<Nexus::Shader>("Shaders/instance.vert", "Shaders/lighting.frag");
 		normalShader = std::make_unique<Nexus::Shader>("Shaders/normal_visualization.vs", "Shaders/normal_visualization.fs", "Shaders/normal_visualization.gs");
 
 		// Create Camera
-		first_camera = std::make_unique<Nexus::FirstPersonCamera>(glm::vec3(0.0f, 100.0f, 200.0f));
-		third_camera = std::make_unique<Nexus::ThirdPersonCamera>(glm::vec3(0.0f, 0.0f, 200.0f));
+		first_camera = std::make_unique<Nexus::FirstPersonCamera>(glm::vec3(0.0f, 0.0f, 430.0f));
+		third_camera = std::make_unique<Nexus::ThirdPersonCamera>(glm::vec3(0.0f, 0.0f, 430.0f));
 
 		// Create Matrix Stack
 		model = std::make_unique<Nexus::MatrixStack>();
@@ -62,29 +57,6 @@ public:
 		
 		cube = std::make_unique<Nexus::Cube>();
 		sphere = std::make_unique<Nexus::Sphere>();
-
-		// Loading Volume Data
-		/*
-		std::map<unsigned int, unsigned int> histogram;
-		std::vector<unsigned char> Testing = Nexus::FileLoader::Load("C:/Users/user/Desktop/OpenGL/Scalar/engine.raw");
-		
-		for (unsigned int i = 0; i < Testing.size(); i++) {
-			if (histogram.find(Testing[i]) != histogram.end()) {
-				histogram[Testing[i]]++;
-			} else {
-				histogram[Testing[i]] = 1;
-			}
-		}
-		*/
-		
-		/*
-		unsigned int total = 0;
-		for (auto it : histogram) {
-			std::cout << " " << it.first << ":" << it.second << std::endl;
-			total += it.second;
-		}
-		std::cout << "Total:" << total << std::endl;
-		*/
 	}
 
 	void Update() override {
@@ -107,30 +79,6 @@ public:
 			this->DrawOriginAnd3Axes(myShader.get());
 		}
 
-		/*
-		model->Push();
-		model->Save(glm::scale(model->Top(), glm::vec3(50.f)));
-		myShader->SetVec3("objectColor", glm::vec3(0.8f, 0.2f, 0.6f));
-		sphere->Draw(myShader.get(), model->Top());
-		model->Pop();
-		*/
-
-		/*
-		model->Push();
-		model->Save(glm::translate(model->Top(), glm::vec3(4.0f, 1.0f, 0.0f)));
-		myShader->SetVec4("material.diffuse", glm::vec4(0.0f, 1.0f, 1.0f, 1.0));
-		cube->Draw(myShader.get(), model->Top());
-		model->Pop();
-		
-
-		model->Push();
-		model->Save(glm::translate(model->Top(), glm::vec3(10.0f, 1.0f, 0.0f)));
-		myShader->SetVec4("material.diffuse", glm::vec4(1.0f, 0.0f, 1.0f, 1.0));
-		sphere->Draw(myShader.get(), model->Top());
-		model->Pop();
-		*/
-
-		
 		if (engine->GetIsInitialize() && engine->GetIsReadyToDraw()) {
 			model->Push();
 			model->Save(glm::translate(model->Top(), glm::vec3(-149 / 2.0f, -208 / 2.0f, -110 / 2.0f)));
@@ -148,8 +96,7 @@ public:
 			model->Pop();
 		}
 
-		ImPlot::ShowDemoWindow();
-		ImGui::ShowDemoWindow();
+		// ImGui::ShowDemoWindow();
 	}
 
 	void ShowDebugUI() override {
@@ -160,11 +107,8 @@ public:
 			engine->Initialize(volume_data_folder_path + "/" + volume_data_name + ".inf", volume_data_folder_path + "/" + volume_data_name + ".raw");
 			engine_2->Initialize(volume_data_folder_path + "/" + volume_data_name + ".inf", volume_data_folder_path + "/" + volume_data_name + ".raw");
 			volume_data_histogram = engine->GetnHistogramData();
-
 			volume_data_max = *std::max_element(volume_data_histogram.cbegin(), volume_data_histogram.cend());
-			
-			
-
+		
 			/*
 			unsigned int total = 0;
 			for (auto i : volume_data_histogram) {
@@ -198,7 +142,6 @@ public:
 		}
 		ImGui::End();
 		
-
 		ImGui::Begin("Setting");
 		ImGuiTabBarFlags tab_bar_flags = ImGuiBackendFlags_None;
 		if (ImGui::BeginTabBar("MyTabBar", tab_bar_flags)) {
@@ -420,7 +363,6 @@ public:
 		}
 	}
 	
-
 	void OnKeyPress(int key) override {
 		if (key == GLFW_KEY_LEFT_SHIFT) {
 			if (Settings.EnableGhostMode) {
