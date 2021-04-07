@@ -29,8 +29,7 @@ public:
 		ProjectionSettings.IsPerspective = true;
 		ProjectionSettings.ClippingNear = 0.1f;
 		ProjectionSettings.ClippingFar = 500.0f;
-		ProjectionSettings.AspectHW = (float)Settings.Height / (float)Settings.Width;
-		ProjectionSettings.AspectHW = (float)Settings.Width / (float)Settings.Height;
+		ProjectionSettings.Aspect = static_cast<float>(Settings.Width) / static_cast<float>(Settings.Height);
 	}
 
 	void Initialize() override {
@@ -159,9 +158,9 @@ public:
 
 				ImGui::TextColored(ImVec4(1.0f, 0.5f, 1.0f, 1.0f), (ProjectionSettings.IsPerspective) ? "Perspective Projection" : "Orthogonal Projection");
 				ImGui::Text("Parameters");
-				ImGui::BulletText("FoV = %.2f deg, Aspect = %.2f", Settings.EnableGhostMode? first_camera->GetFOV() : third_camera->GetFOV(), ProjectionSettings.AspectWH);
+				ImGui::BulletText("FoV = %.2f deg, Aspect = %.2f", Settings.EnableGhostMode? first_camera->GetFOV() : third_camera->GetFOV(), ProjectionSettings.Aspect);
 				if(!ProjectionSettings.IsPerspective) {
-					ImGui::SliderFloat("Length", &ProjectionSettings.OrthogonalWidth, 100.0f, 1000.0f);
+					ImGui::SliderFloat("Length", &ProjectionSettings.OrthogonalHeight, 100.0f, 1000.0f);
 				}
 				ImGui::BulletText("left: %.2f, right: %.2f ", ProjectionSettings.ClippingLeft, ProjectionSettings.ClippingTop);
 				ImGui::BulletText("bottom: %.2f, top: %.2f ", ProjectionSettings.ClippingBottom, ProjectionSettings.ClippingTop);
@@ -295,25 +294,16 @@ public:
 	}
 
 	void SetProjectionMatrix(Nexus::DisplayMode monitor_type) {
-		ProjectionSettings.AspectWH = (float)Settings.Width / (float)Settings.Height;
-		ProjectionSettings.AspectHW = (float)Settings.Height / (float)Settings.Width;
+		ProjectionSettings.Aspect = (float)Settings.Width / (float)Settings.Height;
 
 		if (monitor_type == Nexus::DISPLAY_MODE_DEFAULT) {
 			if (ProjectionSettings.IsPerspective) {
-				projection = GetPerspectiveProjMatrix(glm::radians(Settings.EnableGhostMode ? first_camera->GetFOV() : third_camera->GetFOV()), ProjectionSettings.AspectWH, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
+				projection = GetPerspectiveProjMatrix(glm::radians(Settings.EnableGhostMode ? first_camera->GetFOV() : third_camera->GetFOV()), ProjectionSettings.Aspect, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
 			} else {
-				if (Settings.Width > Settings.Height) {
-					projection = GetOrthoProjMatrix(-ProjectionSettings.OrthogonalWidth, ProjectionSettings.OrthogonalWidth, -ProjectionSettings.OrthogonalWidth * ProjectionSettings.AspectHW, ProjectionSettings.OrthogonalWidth * ProjectionSettings.AspectHW, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
-				} else {
-					projection = GetOrthoProjMatrix(-ProjectionSettings.OrthogonalWidth * ProjectionSettings.AspectWH, ProjectionSettings.OrthogonalWidth * ProjectionSettings.AspectWH, -ProjectionSettings.OrthogonalWidth, ProjectionSettings.OrthogonalWidth, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
-				}
+				projection = GetOrthoProjMatrix(-ProjectionSettings.OrthogonalHeight * ProjectionSettings.Aspect, ProjectionSettings.OrthogonalHeight * ProjectionSettings.Aspect, -ProjectionSettings.OrthogonalHeight, ProjectionSettings.OrthogonalHeight, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
 			}
 		} else {
-			if (Settings.Width > Settings.Height) {
-				projection = GetOrthoProjMatrix(-100.0, 100.0, -100.0 * ProjectionSettings.AspectHW, 100.0 * ProjectionSettings.AspectHW, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
-			} else {
-				projection = GetOrthoProjMatrix(-100.0 * ProjectionSettings.AspectWH, 100.0 * ProjectionSettings.AspectWH, -100.0, 100.0, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
-			}
+			projection = GetOrthoProjMatrix(-100.0f * ProjectionSettings.Aspect, 100.0f * ProjectionSettings.Aspect, -100.0f, 100.0f, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
 		}
 	}
 
@@ -339,8 +329,7 @@ public:
 	}
 
 	void OnWindowResize() override {
-		ProjectionSettings.AspectWH = (float)Settings.Width / (float)Settings.Height;
-		ProjectionSettings.AspectHW = (float)Settings.Height / (float)Settings.Width;
+		ProjectionSettings.Aspect = (float)Settings.Width / (float)Settings.Height;
 
 		// Reset viewport
 		SetViewport(Nexus::DISPLAY_MODE_DEFAULT);
@@ -446,21 +435,21 @@ public:
 	}
 
 	void AdjustOrthogonalProjectionWidth(float yoffset) {
-		if (ProjectionSettings.OrthogonalWidth >= 100.0f && ProjectionSettings.OrthogonalWidth <= 1000.0f) {
-			ProjectionSettings.OrthogonalWidth -= (float)yoffset * 10.0f;
+		if (ProjectionSettings.OrthogonalHeight >= 100.0f && ProjectionSettings.OrthogonalHeight <= 1000.0f) {
+			ProjectionSettings.OrthogonalHeight -= (float)yoffset * 10.0f;
 		}
-		if (ProjectionSettings.OrthogonalWidth < 100.0f) {
-			ProjectionSettings.OrthogonalWidth = 100.0f;
+		if (ProjectionSettings.OrthogonalHeight < 100.0f) {
+			ProjectionSettings.OrthogonalHeight = 100.0f;
 		}
-		if (ProjectionSettings.OrthogonalWidth > 1000.0f) {
-			ProjectionSettings.OrthogonalWidth = 1000.0f;
+		if (ProjectionSettings.OrthogonalHeight > 1000.0f) {
+			ProjectionSettings.OrthogonalHeight = 1000.0f;
 		}
 	}
 	
 private:
 	std::unique_ptr<Nexus::Shader> myShader = nullptr;
 	std::unique_ptr<Nexus::Shader> normalShader = nullptr;
-	std::unique_ptr<Nexus::Shader> instanceShader = nullptr;
+
 	std::unique_ptr<Nexus::FirstPersonCamera> first_camera = nullptr;
 	std::unique_ptr<Nexus::ThirdPersonCamera> third_camera = nullptr;
 

@@ -48,8 +48,8 @@ struct Fog {
 	vec4 color;
 };
 
-// 0 Direction Light; 1 ~ 5 Point Light; 6 Spot Light;
-#define NUM_LIGHTS 7
+// 0 Direction Light; 1 ~ 5 Point Light; 6 ~ 7 Spot Light;
+#define NUM_LIGHTS 8
 
 in VS_OUT {
 	vec3 NaviePos;
@@ -205,7 +205,7 @@ void main() {
 		// 開啟自發光
 		if (material.enableEmission) {
 			// 有開啟自發光選項 且 該物體有開啟自發光
-			if (material.enableEmissionTexture) {
+			if (useEmission && material.enableEmissionTexture) {
 				// 使用自發光材質
 				illumination += texture(material.emission_texture, fs_in.TexCoords).rgb;
 			} else {

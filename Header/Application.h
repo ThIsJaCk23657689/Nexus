@@ -47,9 +47,8 @@ namespace Nexus {
 
 	struct ProjectionConfig {
 		bool IsPerspective = true;
-		float AspectWH = 0;
-		float AspectHW = 0;
-		float OrthogonalWidth = 200.0f;
+		float Aspect = 0;
+		float OrthogonalHeight = 200.0f;
 		float ClippingLeft = 0.0f;
 		float ClippingRight = 0.0f;
 		float ClippingBottom = 0.0f;

@@ -31,7 +31,7 @@ find_package(Assimp CONFIG REQUIRED)
 target_link_libraries(${MY_LIBRARY} PUBLIC glfw glm::glm glad::glad imgui::imgui assimp::assimp)
 
 # Excecutable file setting
-add_executable(${MY_PROJECT} Source/VolumeRendering.cpp)
+add_executable(${MY_PROJECT} Source/Main.cpp)
 target_link_libraries(${MY_PROJECT} PUBLIC ${MY_LIBRARY})
 
 # Copy these shader files

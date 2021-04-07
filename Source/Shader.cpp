@@ -2,6 +2,7 @@
 #include "Logger.h"
 
 #include <fstream>
+#include <iostream>
 #include <sstream>
 
 #include "FileLoader.h"

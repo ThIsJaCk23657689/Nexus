@@ -1,14 +1,9 @@
-#include <glad/glad.h>
-
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
 #include <imgui.h>
 
 #include "Application.h"
 #include "Logger.h"
-#include "Camera.h"
+#include "FirsrPersonCamera.h"
+#include "ThirdPersonCamera.h"
 #include "Shader.h"
 #include "MatrixStack.h"
 #include "Texture2D.h"
@@ -21,16 +16,6 @@
 #include "Sphere.h"
 #include "Cylinder.h"
 
-#include <vector>
-#include <iostream>
-#include <string>
-#include <cmath>
-#include <ctime>
-#include <map>
-#include <random>
-
-#define PI 3.14159265359f
-
 class NexusDemo final : public Nexus::Application {
 public:
 	NexusDemo() {
@@ -42,6 +27,7 @@ public:
 
 		Settings.EnableGhostMode = true;
 		Settings.ShowOriginAnd3Axes = false;
+		
 		Settings.UseBlinnPhongShading = false;
 		Settings.UseSpotExponent = false;
 		Settings.UseLighting = true;
@@ -52,47 +38,40 @@ public:
 		Settings.GammaValue = 1.0f / 2.2f;
 
 		// Projection Settings Initalize
-		ProjectionSettings.AspectHW = (float)Settings.Height / (float)Settings.Width;
-		ProjectionSettings.AspectHW = (float)Settings.Width / (float)Settings.Height;
+		ProjectionSettings.IsPerspective = true;
+		ProjectionSettings.ClippingNear = 0.1f;
+		ProjectionSettings.ClippingFar = 500.0f;
+		ProjectionSettings.Aspect = (float)Settings.Width / (float)Settings.Height;
 	}
 
 	void Initialize() override {
 		
 		// Setting OpenGL
+		glEnable(GL_MULTISAMPLE);
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-
-		
-		
 		// Create shader program
 		// myShader = std::make_unique<Nexus::Shader>("Shaders/testing.vert", "Shaders/testing.frag");
 		myShader = std::make_unique<Nexus::Shader>("Shaders/lighting.vert", "Shaders/lighting.frag");
 		normalShader = std::make_unique<Nexus::Shader>("Shaders/normal_visualization.vs", "Shaders/normal_visualization.fs", "Shaders/normal_visualization.gs");
 		
 		// Create Camera
-		camera = std::make_unique<Nexus::Camera>(glm::vec3(0.0f, 2.0f, 10.0f));
+		first_camera = std::make_unique<Nexus::FirstPersonCamera>(glm::vec3(0.0f, 0.0f, 5.0f));
+		third_camera = std::make_unique<Nexus::ThirdPersonCamera>(glm::vec3(0.0f, 0.0f, 5.0f));
 
 		// Create Matrix Stack
 		model = std::make_unique<Nexus::MatrixStack>();
 
 		// Create object data
 		triangle = std::make_unique<Nexus::Triangle>();
-		// triangle->SetWireFrameMode(true);
-
 		floor = std::make_unique<Nexus::Rectangle>(200.0f, 200.0f, 25.0f, Nexus::POS_Y);
 		plane = std::make_unique<Nexus::Rectangle>();
 		square = std::make_unique<Nexus::Rectangle>(Nexus::POS_X);
-
-		cube = std::make_unique<Nexus::Cube>();
-		// cube->Debug();
-
+		cube = std::make_unique<Nexus::Cube>();;
 		sphere = std::make_unique<Nexus::Sphere>();
-		// sphere->Debug();
-
 		cylinder = std::make_unique<Nexus::Cylinder>(1.0f, 0.1f, 3.0f);
-		// cylinder->Debug();
 
 		// Loading textures
 		texture_sea = Nexus::Texture2D::CreateFromFile("Resource/Textures/sea.jpg", true);
@@ -114,31 +93,12 @@ public:
 			new Nexus::PointLight(glm::vec3(0.0f, 10.0f, 0.0f), false)
 		};
 		SpotLights = {
-			new Nexus::SpotLight(camera->GetPosition(), camera->GetFront(), false)
+			new Nexus::SpotLight(third_camera->GetPosition(), third_camera->GetFront(), false),
+			new Nexus::SpotLight(first_camera->GetPosition(), first_camera->GetFront(), false)
 		};
 
 		// Fog
 		fog = std::make_unique<Nexus::Fog>(glm::vec4(0.266f, 0.5f, 0.609f, 1.0f), false, 0.1f, 100.0f);
-		
-		/*
-		std::unordered_map<unsigned int, unsigned int> histogram;
-		std::vector<unsigned char> Testing = Nexus::FileLoader::Load("C:/Users/y3939/Desktop/OpenGL/Scalar/engine.raw");
-
-		for (unsigned int i = 0; i < Testing.size(); i++) {
-			if (histogram.find(Testing[i]) != histogram.end()) {
-				histogram[Testing[i]]++;
-			} else {
-				histogram[Testing[i]] = 1;
-			}
-		}
-
-		unsigned int total = 0;
-		for (auto it : histogram) {
-			std::cout << " " << it.first << ":" << it.second << std::endl;
-			total += it.second;
-		}
-		std::cout << "Total:" << total << std::endl;
-		*/
 	}
 	
 	void Update() override {
@@ -149,9 +109,6 @@ public:
 		SetViewMatrix(Nexus::DISPLAY_MODE_DEFAULT);
 		SetProjectionMatrix(Nexus::DISPLAY_MODE_DEFAULT);
 
-		// view = camera->GetViewMatrix();
-		// projection = glm::perspective(glm::radians(camera->GetFOV()), ProjectionSettings.AspectWH, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
-
 		myShader->Use();
 		myShader->SetInt("material.diffuse_texture", 0);
 		myShader->SetInt("material.specular_texture", 1);
@@ -160,7 +117,7 @@ public:
 
 		myShader->SetMat4("view", view);
 		myShader->SetMat4("projection", projection);
-		myShader->SetVec3("viewPos", camera->GetPosition());
+		myShader->SetVec3("viewPos", Settings.EnableGhostMode ? first_camera->GetPosition() : third_camera->GetPosition());
 
 		myShader->SetBool("useBlinnPhong", Settings.UseBlinnPhongShading);
 		myShader->SetBool("useSpotExponent", Settings.UseSpotExponent);
@@ -192,8 +149,10 @@ public:
 			myShader->SetInt("lights[" + std::to_string(i + 1) + "].caster", PointLights[i]->GetCaster());
 		}
 
-		SpotLights[0]->SetPosition(camera->GetPosition());
-		SpotLights[0]->SetDirection(camera->GetFront());
+		SpotLights[0]->SetPosition(third_camera->GetPosition());
+		SpotLights[0]->SetDirection(third_camera->GetFront());
+		SpotLights[1]->SetPosition(first_camera->GetPosition());
+		SpotLights[1]->SetDirection(first_camera->GetFront());
 		for (unsigned int i = 0; i < SpotLights.size(); i++) {
 			myShader->SetVec3("lights[" + std::to_string(i + 6) + "].position", SpotLights[i]->GetPosition());
 			myShader->SetVec3("lights[" + std::to_string(i + 6) + "].direction", SpotLights[i]->GetDirection());
@@ -210,9 +169,6 @@ public:
 			myShader->SetInt("lights[" + std::to_string(i + 6) + "].caster", SpotLights[i]->GetCaster());
 		}
 
-		
-		
-		
 		myShader->SetVec4("fog.color", fog->GetColor());
 		myShader->SetFloat("fog.density", fog->GetDensity());
 		myShader->SetInt("fog.mode", fog->GetMode());
@@ -221,6 +177,8 @@ public:
 		myShader->SetFloat("fog.f_start", fog->GetFogStart());
 		myShader->SetFloat("fog.f_end", fog->GetFogEnd());
 
+
+		
 		/*
 		normalShader->Use();
 		normalShader->SetMat4("view", view);
@@ -237,43 +195,25 @@ public:
 		if (Settings.ShowOriginAnd3Axes) {
 			this->DrawOriginAnd3Axes(myShader.get());
 		}
-		/*
-		model->Push();
-			model->Save(glm::translate(model->Top(), glm::vec3(-5.0f, 1.0f, 0.0f)));
-			triangle->SetMaterialColor(glm::vec3(0.8f, 0.2f, 0.8f));
-			triangle->Draw(myShader.get(), model->Top());
-		model->Pop();
 
+		myShader->SetBool("material.enableDiffuseTexture", false);
+		myShader->SetBool("material.enableSpecularTexture", false);
+		myShader->SetBool("material.enableEmission", false);
+		myShader->SetBool("material.enableEmissionTexture", false);
+		myShader->SetVec4("material.ambient", glm::vec4(0.6f, 0.042f, 0.85f, 1.0));
+		myShader->SetVec4("material.diffuse", glm::vec4(0.6f, 0.042f, 0.85f, 1.0));
+		myShader->SetVec4("material.specular", glm::vec4(0.6f, 0.042f, 0.85f, 1.0));
+		myShader->SetFloat("material.shininess", 64.0f);
 		model->Push();
-			model->Save(glm::translate(model->Top(), glm::vec3(4.0f, 1.0f, 0.0f)));
-			cube->SetTexture(0, texture_fish.get());
-			cube->Draw(myShader.get(), model->Top());
+		floor->Draw(myShader.get(), model->Top());
 		model->Pop();
-
-		model->Push();
-			model->Save(glm::translate(model->Top(), glm::vec3(8.0f, 1.0f, 0.0f)));
-			cube->SetTexture(0, texture_sea.get());
-			cube->Draw(myShader.get(), model->Top());
-		model->Pop();
-
-		model->Push();
-			model->Save(glm::translate(model->Top(), glm::vec3(12.0f, 1.0f, 0.0f)));
-			cube->SetMaterialColor(glm::vec3(0.2f, 0.2f, 0.2f));
-			cube->Draw(myShader.get(), model->Top());
-		model->Pop();
-
-		model->Push();
-			model->Save(glm::translate(model->Top(), glm::vec3(16.0f, 1.0f, 0.0f)));
-			cube->SetTexture(0, texture_sand.get());
-			cube->Draw(myShader.get(), model->Top());
-		model->Pop();
-
+		
 		// ==================== Draw Skybox (Using Cubemap) ====================
 
 
 
 		
-
+		/*
 		// ==================== Draw Sea ====================
 		model->Push();
 			floor->SetTexture(0, texture_sea.get());
@@ -319,24 +259,32 @@ public:
 		model->Pop();
 
 		// ==================== Draw obstacles ====================
+		
+		myShader->SetBool("material.enableDiffuseTexture", true);
+		myShader->SetBool("material.enableSpecularTexture", true);
+		myShader->SetBool("material.enableEmission", false);
+		myShader->SetBool("material.enableEmissionTexture", false);
+		myShader->SetFloat("material.shininess", 64.0f);
 		model->Push();
 			model->Save(glm::translate(model->Top(), glm::vec3(0.0f, 0.0f, 0.0f)));
-			cube->SetEnableSpecularTexture(true);
-			cube->SetTexture(0, texture_box.get());
-			cube->SetTexture(1, texture_box_spec.get());
-			cube->SetShininess(64.0f);
 			cube->Draw(myShader.get(), model->Top());
-			cube->SetEnableSpecularTexture(false);
 		model->Pop();
+		*/
 		
 
 		
 		
 		// ==================== Draw plastic object ====================
+		myShader->SetBool("material.enableDiffuseTexture", false);
+		myShader->SetBool("material.enableSpecularTexture", false);
+		myShader->SetBool("material.enableEmission", false);
+		myShader->SetBool("material.enableEmissionTexture", false);
+		myShader->SetVec4("material.ambient", glm::vec4(0.02f, 0.02f, 0.02f, 1.0));
+		myShader->SetVec4("material.diffuse", glm::vec4(0.1f, 0.35f, 0.1f, 1.0));
+		myShader->SetVec4("material.specular", glm::vec4(0.45f, 0.55f, 0.45f, 1.0));
+		myShader->SetFloat("material.shininess", 16.0f);
 		model->Push();
 			model->Save(glm::translate(model->Top(), glm::vec3(3.0f, 0.0f, -3.0f)));
-			cube->SetMaterialColor(glm::vec3(0.1f, 0.35f, 0.1f));
-			cube->SetShininess(16.0f);
 			cube->Draw(myShader.get(), model->Top());
 		model->Pop();
 		
@@ -353,6 +301,10 @@ public:
 
 		
 		// ==================== draw light ball ====================
+		myShader->SetBool("material.enableDiffuseTexture", false);
+		myShader->SetBool("material.enableSpecularTexture", false);
+		myShader->SetBool("material.enableEmission", true);
+		myShader->SetBool("material.enableEmissionTexture", false);
 		for(unsigned int i = 0; i < PointLights.size(); i++) {
 			if (!PointLights[i]->GetEnable()) {
 				continue;
@@ -360,18 +312,14 @@ public:
 			model->Push();
 				model->Save(glm::translate(model->Top(), PointLights[i]->GetPosition()));
 				model->Save(glm::scale(model->Top(), glm::vec3(0.5f)));
-				sphere->SetEnableEmission(true);
-				sphere->SetMaterialColor(
-					PointLights[i]->GetAmbient(),
-					PointLights[i]->GetDiffuse(),
-					PointLights[i]->GetSpecular()
-				);
-				sphere->SetShininess(32.0f);
+				myShader->SetVec4("material.ambient", glm::vec4(PointLights[i]->GetAmbient(), 1.0f));
+				myShader->SetVec4("material.diffuse", glm::vec4(PointLights[i]->GetDiffuse(), 1.0f));
+				myShader->SetVec4("material.specular", glm::vec4(PointLights[i]->GetSpecular(), 1.0f));
+				myShader->SetFloat("material.shininess", 32.0f);
 				sphere->Draw(myShader.get(), model->Top());
-				sphere->SetEnableEmission(false);
 			model->Pop();
 		}
-		*/
+		myShader->SetBool("material.enableEmission", false);
 
 		// ImGui::ShowDemoWindow();
 	}
@@ -391,13 +339,12 @@ public:
 			}
 			*/
 			if (ImGui::BeginTabItem("Camera")) {
+				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 				if (Settings.EnableGhostMode) {
-					ImGui::TextColored(ImVec4(1.0f, 0.5f, 1.0f, 1.0f), "Ghost Camera");
-					ImGui::Text("Position = (%.2f, %.2f, %.2f)", camera->GetPosition().x, camera->GetPosition().y, camera->GetPosition().z);
-					ImGui::Text("Front = (%.2f, %.2f, %.2f)", camera->GetFront().x, camera->GetFront().y, camera->GetFront().z);
-					ImGui::Text("Right = (%.2f, %.2f, %.2f)", camera->GetRight().x, camera->GetRight().y, camera->GetRight().z);
-					ImGui::Text("Up = (%.2f, %.2f, %.2f)", camera->GetUp().x, camera->GetUp().y, camera->GetUp().z);
-					ImGui::Text("Pitch = %.2f deg, Yaw = %.2f deg", camera->GetPitch(), camera->GetYaw());
+					first_camera->ShowDebugUI("Person Person Camera");
+				} else {
+					third_camera->ShowDebugUI("Third Person Camera");
+					ImGui::BulletText("Distance: %.2f", third_camera->GetDistance());
 				}
 				ImGui::EndTabItem();
 			}
@@ -405,7 +352,10 @@ public:
 
 				ImGui::TextColored(ImVec4(1.0f, 0.5f, 1.0f, 1.0f), (ProjectionSettings.IsPerspective) ? "Perspective Projection" : "Orthogonal Projection");
 				ImGui::Text("Parameters");
-				ImGui::BulletText("FoV = %.2f deg, Aspect = %.2f", camera->GetFOV(), ProjectionSettings.AspectWH);
+				ImGui::BulletText("FoV = %.2f deg, Aspect = %.2f", Settings.EnableGhostMode ? first_camera->GetFOV() : third_camera->GetFOV(), ProjectionSettings.Aspect);
+				if (!ProjectionSettings.IsPerspective) {
+					ImGui::SliderFloat("Length", &ProjectionSettings.OrthogonalHeight, 10.0f, 200.0f);
+				}
 				ImGui::BulletText("left: %.2f, right: %.2f ", ProjectionSettings.ClippingLeft, ProjectionSettings.ClippingTop);
 				ImGui::BulletText("bottom: %.2f, top: %.2f ", ProjectionSettings.ClippingBottom, ProjectionSettings.ClippingTop);
 				ImGui::SliderFloat("Near", &ProjectionSettings.ClippingNear, 0.1, 10);
@@ -572,84 +522,84 @@ public:
 	}
 
 	void DrawOriginAnd3Axes(Nexus::Shader* shader) const {
-		/*
+		shader->SetBool("material.enableDiffuseTexture", false);
+		shader->SetBool("material.enableSpecularTexture", false);
+		shader->SetBool("material.enableEmission", true);
+		shader->SetBool("material.enableEmissionTexture", false);
+		
 		// 繪製世界坐標系原點（0, 0, 0）
 		model->Push();
-			model->Save(glm::scale(model->Top(), glm::vec3(0.2f, 0.2f, 0.2f)));
-			sphere->SetMaterialColor(glm::vec3(0.2f, 0.2f, 0.2f));
-			sphere->Draw(shader, model->Top());
+		model->Save(glm::scale(model->Top(), glm::vec3(0.4f, 0.4f, 0.4f)));
+		shader->SetVec4("material.ambient", glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
+		shader->SetVec4("material.diffuse", glm::vec4(0.2f, 0.2f, 0.2f, 1.0f));
+		shader->SetVec4("material.specular", glm::vec4(0.4f, 0.4f, 0.4f, 1.0f));
+		shader->SetFloat("material.shininess", 64.0f);
+		sphere->Draw(shader, model->Top());
 		model->Pop();
 
 		// 繪製三個軸
 		model->Push();
-			model->Push();
-				model->Save(glm::translate(model->Top(), glm::vec3(1.5f, 0.0f, 0.0f)));
-				model->Save(glm::scale(model->Top(), glm::vec3(3.0f, 0.1f, 0.1f)));
-				cube->SetEnableEmission(true);
-				cube->SetMaterialColor(glm::vec3(1.0f, 0.0f, 0.0f));
-				cube->Draw(shader, model->Top());
-			model->Pop();
-
-			model->Push();
-				model->Save(glm::translate(model->Top(), glm::vec3(0.0f, 1.5f, 0.0f)));
-				model->Save(glm::scale(model->Top(), glm::vec3(0.1f, 3.0f, 0.1f)));
-				cube->SetMaterialColor(glm::vec3(0.0f, 1.0f, 0.0f));
-				cube->Draw(shader, model->Top());
-			model->Pop();
-
-			model->Push();
-				model->Save(glm::translate(model->Top(), glm::vec3(0.0f, 0.0f, 1.5f)));
-				model->Save(glm::scale(model->Top(), glm::vec3(0.1f, 0.1f, 3.0f)));
-				cube->SetMaterialColor(glm::vec3(0.0f, 0.0f, 1.0f));
-				cube->Draw(shader, model->Top());
-				cube->SetEnableEmission(false);
-			model->Pop();
+		model->Push();
+		model->Save(glm::translate(model->Top(), glm::vec3(100.0f, 0.0f, 0.0f)));
+		model->Save(glm::scale(model->Top(), glm::vec3(200.0f, 1.0f, 1.0f)));
+		shader->SetVec4("material.ambient", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+		shader->SetVec4("material.diffuse", glm::vec4(1.0f, 0.0f, 0.0f, 1.0));
+		shader->SetVec4("material.specular", glm::vec4(1.0f, 0.0f, 0.0f, 1.0));
+		shader->SetFloat("material.shininess", 64.0f);
+		cube->Draw(shader, model->Top());
 		model->Pop();
-		*/
+
+		model->Push();
+		model->Save(glm::translate(model->Top(), glm::vec3(0.0f, 100.0f, 0.0f)));
+		model->Save(glm::scale(model->Top(), glm::vec3(1.0f, 200.0f, 1.0f)));
+		shader->SetVec4("material.ambient", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+		shader->SetVec4("material.diffuse", glm::vec4(0.0f, 1.0f, 0.0f, 1.0));
+		shader->SetVec4("material.specular", glm::vec4(0.0f, 1.0f, 0.0f, 1.0));
+		shader->SetFloat("material.shininess", 64.0f);
+		cube->Draw(shader, model->Top());
+		model->Pop();
+
+		model->Push();
+		model->Save(glm::translate(model->Top(), glm::vec3(0.0f, 0.0f, 100.0f)));
+		model->Save(glm::scale(model->Top(), glm::vec3(1.0f, 1.0f, 200.0f)));
+		shader->SetVec4("material.ambient", glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+		shader->SetVec4("material.diffuse", glm::vec4(0.0f, 0.0f, 1.0f, 1.0));
+		shader->SetVec4("material.specular", glm::vec4(0.0f, 0.0f, 1.0f, 1.0));
+		shader->SetFloat("material.shininess", 64.0f);
+		cube->Draw(shader, model->Top());
+		model->Pop();
+		model->Pop();
 	}
 
 	void SetViewMatrix(Nexus::DisplayMode monitor_type) {
-		if (Settings.EnableGhostMode) {
-			switch (monitor_type) {
-				case Nexus::DISPLAY_MODE_ORTHOGONAL_X:
-					view = glm::lookAt(camera->GetPosition() + glm::vec3(5.0, 0.0, 0.0), camera->GetPosition(), glm::vec3(0.0, 1.0, 0.0));
-					break;
-				case Nexus::DISPLAY_MODE_ORTHOGONAL_Y:
-					view = glm::lookAt(camera->GetPosition() + glm::vec3(0.0, 5.0, 0.0), camera->GetPosition(), glm::vec3(0.0, 0.0, -1.0));
-					break;
-				case Nexus::DISPLAY_MODE_ORTHOGONAL_Z:
-					view = glm::lookAt(camera->GetPosition() + glm::vec3(0.0, 0.0, 5.0), camera->GetPosition(), glm::vec3(0.0, 1.0, 0.0));
-					break;
-				case Nexus::DISPLAY_MODE_DEFAULT:
-					view = camera->GetViewMatrix();
-					break;
-			}
+		glm::vec3 camera_position = Settings.EnableGhostMode ? first_camera->GetPosition() : third_camera->GetPosition();
+		switch (monitor_type) {
+			case Nexus::DISPLAY_MODE_ORTHOGONAL_X:
+				view = glm::lookAt(camera_position + glm::vec3(5.0, 0.0, 0.0), camera_position, glm::vec3(0.0, 1.0, 0.0));
+				break;
+			case Nexus::DISPLAY_MODE_ORTHOGONAL_Y:
+				view = glm::lookAt(camera_position + glm::vec3(0.0, 5.0, 0.0), camera_position, glm::vec3(0.0, 0.0, -1.0));
+				break;
+			case Nexus::DISPLAY_MODE_ORTHOGONAL_Z:
+				view = glm::lookAt(camera_position + glm::vec3(0.0, 0.0, 5.0), camera_position, glm::vec3(0.0, 1.0, 0.0));
+				break;
+			case Nexus::DISPLAY_MODE_DEFAULT:
+				view = Settings.EnableGhostMode ? first_camera->GetViewMatrix() : third_camera->GetViewMatrix();
+				break;
 		}
 	}
 
 	void SetProjectionMatrix(Nexus::DisplayMode monitor_type) {
-		ProjectionSettings.AspectWH = (float)Settings.Width / (float)Settings.Height;
-		ProjectionSettings.AspectHW = (float)Settings.Height / (float)Settings.Width;
+		ProjectionSettings.Aspect = (float)Settings.Width / (float)Settings.Height;
 
 		if (monitor_type == Nexus::DISPLAY_MODE_DEFAULT) {
-			if (Settings.EnableGhostMode) {
-				if (ProjectionSettings.IsPerspective) {
-					projection = GetPerspectiveProjMatrix(glm::radians(camera->GetFOV()), ProjectionSettings.AspectWH, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
-				} else {
-					float length = tan(glm::radians(camera->GetFOV() / 2)) * ProjectionSettings.ClippingNear * 50;
-					if (Settings.Width > Settings.Height) {
-						projection = GetOrthoProjMatrix(-length, length, -length * ProjectionSettings.AspectHW, length * ProjectionSettings.AspectWH, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
-					} else {
-						projection = GetOrthoProjMatrix(-length * ProjectionSettings.AspectWH, length * ProjectionSettings.AspectWH, -length, length, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
-					}
-				}
-			} 
-		} else {
-			if (Settings.Width > Settings.Height) {
-				projection = GetOrthoProjMatrix(-5.0, 5.0, -5.0 * ProjectionSettings.AspectHW, 5.0 * ProjectionSettings.AspectHW, 0.1f, 250.0f);
+			if (ProjectionSettings.IsPerspective) {
+				projection = GetPerspectiveProjMatrix(glm::radians(Settings.EnableGhostMode ? first_camera->GetFOV() : third_camera->GetFOV()), ProjectionSettings.Aspect, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
 			} else {
-				projection = GetOrthoProjMatrix(-5.0 * ProjectionSettings.AspectWH, 5.0 * ProjectionSettings.AspectWH, -5.0, 5.0, 0.1f, 250.0f);
+				projection = GetOrthoProjMatrix(-ProjectionSettings.OrthogonalHeight * ProjectionSettings.Aspect, ProjectionSettings.OrthogonalHeight * ProjectionSettings.Aspect, -ProjectionSettings.OrthogonalHeight, ProjectionSettings.OrthogonalHeight, ProjectionSettings.ClippingNear, ProjectionSettings.ClippingFar);
 			}
+		} else {
+			projection = GetOrthoProjMatrix(-5.0 * ProjectionSettings.Aspect, 5.0 * ProjectionSettings.Aspect, -5.0, 5.0, 0.1f, 250.0f);
 		}
 	}
 
@@ -675,31 +625,34 @@ public:
 	}
 	
 	void OnWindowResize() override {
-		ProjectionSettings.AspectWH = (float)Settings.Width / (float)Settings.Height;
-		ProjectionSettings.AspectHW = (float)Settings.Height / (float)Settings.Width;
+		ProjectionSettings.Aspect = (float)Settings.Width / (float)Settings.Height;
 
 		// Reset viewport
 		SetViewport(Nexus::DISPLAY_MODE_DEFAULT);
 	}
 	
 	void OnProcessInput(int key) override {
-		if (key == GLFW_KEY_W) {
-			camera->ProcessKeyboard(Nexus::CAMERA_FORWARD, DeltaTime);
-		}
-		if (key == GLFW_KEY_S) {
-			camera->ProcessKeyboard(Nexus::CAMERA_BACKWARD, DeltaTime);
-		}
-		if (key == GLFW_KEY_A) {
-			camera->ProcessKeyboard(Nexus::CAMERA_LEFT, DeltaTime);
-		}
-		if (key == GLFW_KEY_D) {
-			camera->ProcessKeyboard(Nexus::CAMERA_RIGHT, DeltaTime);
+		if (Settings.EnableGhostMode) {
+			if (key == GLFW_KEY_W) {
+				first_camera->ProcessKeyboard(Nexus::CAMERA_FORWARD, DeltaTime);
+			}
+			if (key == GLFW_KEY_S) {
+				first_camera->ProcessKeyboard(Nexus::CAMERA_BACKWARD, DeltaTime);
+			}
+			if (key == GLFW_KEY_A) {
+				first_camera->ProcessKeyboard(Nexus::CAMERA_LEFT, DeltaTime);
+			}
+			if (key == GLFW_KEY_D) {
+				first_camera->ProcessKeyboard(Nexus::CAMERA_RIGHT, DeltaTime);
+			}
 		}
 	}
 	
 	void OnKeyPress(int key) override {
 		if (key == GLFW_KEY_LEFT_SHIFT) {
-			camera->SetMovementSpeed(25.0f);
+			if (Settings.EnableGhostMode) {
+				first_camera->SetMovementSpeed(500.0f);
+			}
 		}
 
 		if (key == GLFW_KEY_X) {
@@ -711,17 +664,67 @@ public:
 				Nexus::Logger::Message(Nexus::LOG_INFO, "World coordinate origin and 3 axes: [Show].");
 			}
 		}
+
+		if (key == GLFW_KEY_P) {
+			if (ProjectionSettings.IsPerspective) {
+				ProjectionSettings.IsPerspective = false;
+				Nexus::Logger::Message(Nexus::LOG_INFO, "Projection Mode: Orthogonal");
+			} else {
+				ProjectionSettings.IsPerspective = true;
+				Nexus::Logger::Message(Nexus::LOG_INFO, "Projection Mode: Perspective");
+			}
+		}
+
+		if (key == GLFW_KEY_G) {
+			if (Settings.EnableGhostMode) {
+				Settings.EnableGhostMode = false;
+				SpotLights[1]->SetEnable(false);
+				Nexus::Logger::Message(Nexus::LOG_INFO, "Camera Mode: Third Person");
+			} else {
+				Settings.EnableGhostMode = true;
+				SpotLights[1]->SetEnable(true);
+				Nexus::Logger::Message(Nexus::LOG_INFO, "Camera Mode: First Person");
+			}
+		}
+
+		// 手電筒開關
+		if (key == GLFW_KEY_F) {
+			if (Settings.EnableGhostMode) {
+				if (SpotLights[1]->GetEnable()) {
+					SpotLights[1]->SetEnable(false);
+					Nexus::Logger::Message(Nexus::LOG_INFO, "Spot Light 1 is turn off.");
+				} else {
+					SpotLights[1]->SetEnable(true);
+					Nexus::Logger::Message(Nexus::LOG_INFO, "Spot Light 1 is turn on.");
+				}
+			} else {
+				if (SpotLights[0]->GetEnable()) {
+					SpotLights[0]->SetEnable(false);
+					Nexus::Logger::Message(Nexus::LOG_INFO, "Spot Light 0 is turn off.");
+				}
+				else {
+					SpotLights[0]->SetEnable(true);
+					Nexus::Logger::Message(Nexus::LOG_INFO, "Spot Light 0 is turn on.");
+				}
+			}
+		}
 	}
 	
 	void OnKeyRelease(int key) override {
 		if (key == GLFW_KEY_LEFT_SHIFT) {
-			camera->SetMovementSpeed(10.0f);
+			if (Settings.EnableGhostMode) {
+				first_camera->SetMovementSpeed(50.0f);
+			}
 		}
 	}
 	
 	void OnMouseMove(int xoffset, int yoffset) override {
 		if (!Settings.EnableCursor) {
-			camera->ProcessMouseMovement(xoffset, yoffset);
+			if (Settings.EnableGhostMode) {
+				first_camera->ProcessMouseMovement(xoffset, yoffset);
+			} else {
+				third_camera->ProcessMouseMovement(xoffset, yoffset);
+			}
 		}
 	}
 	
@@ -740,13 +743,36 @@ public:
 	}
 	
 	void OnMouseScroll(int yoffset) override {
-		camera->ProcessMouseScroll(yoffset);
+		if (ProjectionSettings.IsPerspective) {
+			if (Settings.EnableGhostMode) {
+				first_camera->ProcessMouseScroll(yoffset);
+			}
+			else {
+				third_camera->AdjustDistance(yoffset);
+			}
+		} else {
+			AdjustOrthogonalProjectionWidth(yoffset);
+		}
+	}
+
+	void AdjustOrthogonalProjectionWidth(float yoffset) {
+		if (ProjectionSettings.OrthogonalHeight >= 10.0f && ProjectionSettings.OrthogonalHeight <= 200.0f) {
+			ProjectionSettings.OrthogonalHeight -= (float)yoffset * 10.0f;
+		}
+		if (ProjectionSettings.OrthogonalHeight < 10.0f) {
+			ProjectionSettings.OrthogonalHeight = 10.0f;
+		}
+		if (ProjectionSettings.OrthogonalHeight > 200.0f) {
+			ProjectionSettings.OrthogonalHeight = 200.0f;
+		}
 	}
 
 private:
 	std::unique_ptr<Nexus::Shader> myShader = nullptr;
 	std::unique_ptr<Nexus::Shader> normalShader = nullptr;
-	std::unique_ptr<Nexus::Camera> camera = nullptr;
+	
+	std::unique_ptr<Nexus::FirstPersonCamera> first_camera = nullptr;
+	std::unique_ptr<Nexus::ThirdPersonCamera> third_camera = nullptr;
 	
 	std::unique_ptr<Nexus::MatrixStack> model = nullptr;
 	glm::mat4 view = glm::mat4(1.0f);
