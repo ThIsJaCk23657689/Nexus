@@ -69,7 +69,8 @@ namespace Nexus {
 		}
 
 		void SetTarget(glm::vec3 target) {
-			this->Set(this->Position, target, this->WorldUp, this->Yaw, this->Pitch);
+			this->Target = target;
+			this->UpdateCameraPosition();
 		}
 
 		void SetWorldUp(glm::vec3 world_up) override {
@@ -85,15 +86,15 @@ namespace Nexus {
 		}
 
 		// 縮短或拉長攝影機與物體之間的距離
-		void AdjustDistance(float yoffset) {
-			if (this->Distance >= 100.0f && this->Distance <= 1000.0f) {
-				this->Distance -= (float)yoffset * 10.0f;
+		void AdjustDistance(float yoffset, float min = 100.0f, float max = 1000.0f, float stride = 10.0f) {
+			if (this->Distance >= min && this->Distance <= max) {
+				this->Distance -= (float)yoffset * stride;
 			}
-			if (this->Distance < 100.0f) {
-				this->Distance = 100.0f;
+			if (this->Distance < min) {
+				this->Distance = min;
 			}
-			if (this->Distance > 1000.0f) {
-				this->Distance = 1000.0f;
+			if (this->Distance > max) {
+				this->Distance = max;
 			}
 			this->UpdateCameraPosition();
 		}

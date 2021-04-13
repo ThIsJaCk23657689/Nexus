@@ -119,6 +119,16 @@ namespace Nexus {
 		this->Vertices.push_back(z);
 	}
 
+	void Object::AddPosition(glm::vec4 position) {
+		this->Position.push_back(position.x);
+		this->Position.push_back(position.y);
+		this->Position.push_back(position.z);
+
+		this->Vertices.push_back(position.x);
+		this->Vertices.push_back(position.y);
+		this->Vertices.push_back(position.z);
+	}
+
 	void Object::AddNormal(float nx, float ny, float nz) {
 		this->Normal.push_back(nx);
 		this->Normal.push_back(ny);

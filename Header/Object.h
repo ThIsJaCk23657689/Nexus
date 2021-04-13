@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include "Shader.h"
+#include "Texture2D.h"
 #include <cstdint>
 #include <cstddef>
 #include <vector>
@@ -79,6 +80,11 @@ namespace Nexus {
 		void SetWireFrameMode(bool enable) {
 			this->EnableWireFrameMode = enable;
 		}
+
+		void BindTexture(GLenum unit, Texture2D* texture) {
+			glActiveTexture(GL_TEXTURE0 + unit);
+			texture->Bind(unit);
+		}
 		
 		unsigned int GetVertexCount() const { return (unsigned int)this->Vertices.size() / 8; }
 		unsigned int GetPositionCount() const { return (unsigned int)this->Position.size() / 3; }
@@ -110,6 +116,7 @@ namespace Nexus {
 		virtual void BufferInitialize();
 		
 		void AddPosition(float x, float y, float z);
+		void AddPosition(glm::vec4 position);
 		void AddNormal(float nx, float ny, float nz);
 		void AddTexCoord(float u, float v);
 		void AddIndices(unsigned int i1, unsigned int i2, unsigned int i3);

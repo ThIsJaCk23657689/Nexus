@@ -19,7 +19,6 @@ namespace Nexus {
 
 	const float CUTOFF = 12.0f;
 	const float OUTERCUTOFF = 15.0f;
-	const float EXPONENT = 128.0f;
 
 	
 	class Light {
@@ -156,7 +155,7 @@ namespace Nexus {
 
 	class SpotLight : public Light {
 	public:
-		SpotLight(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 direction = glm::vec3(0.0f, 0.0f, -1.0f), bool enable = true) : Constant(1.0f), Linear(LINEAR), Quadratic(QUADRATIC), Cutoff(CUTOFF), OuterCutoff(OUTERCUTOFF), Exponent(EXPONENT) {
+		SpotLight(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 direction = glm::vec3(0.0f, 0.0f, -1.0f), bool enable = true) : Constant(1.0f), Linear(LINEAR), Quadratic(QUADRATIC), Cutoff(CUTOFF), OuterCutoff(OUTERCUTOFF) {
 			this->Caster = LIGHT_SPOT;
 			this->Position = position;
 			this->Direction = direction;
@@ -172,7 +171,6 @@ namespace Nexus {
 		float GetQuadratic() const { return this->Quadratic; }
 		float GetCutoff() const { return this->Cutoff; }
 		float GetOuterCutoff() const { return this->OuterCutoff; }
-		float GetExponent() const { return this->Exponent; }
 
 		void SetDirection(glm::vec3 direction) {
 			this->Direction = direction;
@@ -202,14 +200,6 @@ namespace Nexus {
 			this->OuterCutoff = value;
 		}
 
-		void SetExponent(float value) {
-			this->Exponent = value;
-		}
-		
-		void SetEnableExponentMode(bool enable) {
-			this->EnableExponentMode = enable;
-		}
-
 		void GenerateDebugUI() {
 			ImGui::Text(std::string("Position: (%.2f, %.2f, %.2f)").c_str(), this->Position.x, this->Position.y, this->Position.z);
 			ImGui::Text(std::string("Direction: (%.2f, %.2f, %.2f)").c_str(), this->Direction.x, this->Direction.y, this->Direction.z);
@@ -220,7 +210,6 @@ namespace Nexus {
 			ImGui::SliderFloat(std::string("Quadratic").c_str(), (float*)&this->Quadratic, 0.00007, 0.5f);
 			ImGui::SliderFloat(std::string("Cutoff").c_str(), (float*)&this->Cutoff, 0.0f, this->OuterCutoff - 1);
 			ImGui::SliderFloat(std::string("OuterCutoff").c_str(), (float*)&this->OuterCutoff, this->Cutoff + 1, 40.0f);
-			ImGui::SliderFloat(std::string("Exponent").c_str(), (float*)&this->Exponent, 0.0f, 256.0f);
 			ImGui::Checkbox(std::string("Enable").c_str(), &this->Enable);
 			ImGui::Spacing();
 		}
@@ -235,8 +224,5 @@ namespace Nexus {
 
 		float Cutoff;
 		float OuterCutoff;
-		float Exponent;
-
-		bool EnableExponentMode = false;
 	};
 }

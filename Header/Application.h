@@ -34,7 +34,6 @@ namespace Nexus {
 		bool NormalVisualize = false;
 
 		bool UseBlinnPhongShading = true;
-		bool UseSpotExponent = false;
 		bool UseLighting = true;
 		bool UseDiffuseTexture = true;
 		bool UseSpecularTexture = true;
@@ -60,7 +59,7 @@ namespace Nexus {
 	class Application {
 	public:
 		virtual void Initialize() = 0;
-		virtual void Update() = 0;
+		virtual void Update(DisplayMode monitor_type) = 0;
 
 		void SetCursorDisable(bool enable);
 

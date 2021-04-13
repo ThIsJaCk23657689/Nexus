@@ -29,7 +29,6 @@ public:
 		Settings.ShowOriginAnd3Axes = false;
 		
 		Settings.UseBlinnPhongShading = false;
-		Settings.UseSpotExponent = false;
 		Settings.UseLighting = true;
 		Settings.UseDiffuseTexture = true;
 		Settings.UseSpecularTexture = true;
@@ -120,7 +119,6 @@ public:
 		myShader->SetVec3("viewPos", Settings.EnableGhostMode ? first_camera->GetPosition() : third_camera->GetPosition());
 
 		myShader->SetBool("useBlinnPhong", Settings.UseBlinnPhongShading);
-		myShader->SetBool("useSpotExponent", Settings.UseSpotExponent);
 		myShader->SetBool("useLighting", Settings.UseLighting);
 		myShader->SetBool("useDiffuseTexture", Settings.UseDiffuseTexture);
 		myShader->SetBool("useSpecularTexture", Settings.UseSpecularTexture);
@@ -164,7 +162,6 @@ public:
 			myShader->SetFloat("lights[" + std::to_string(i + 6) + "].quadratic", SpotLights[i]->GetQuadratic());
 			myShader->SetFloat("lights[" + std::to_string(i + 6) + "].cutoff", glm::cos(glm::radians(SpotLights[i]->GetCutoff())));
 			myShader->SetFloat("lights[" + std::to_string(i + 6) + "].outerCutoff", glm::cos(glm::radians(SpotLights[i]->GetOuterCutoff())));
-			myShader->SetFloat("lights[" + std::to_string(i + 6) + "].exponent", SpotLights[i]->GetExponent());
 			myShader->SetBool("lights[" + std::to_string(i + 6) + "].enable", SpotLights[i]->GetEnable());
 			myShader->SetInt("lights[" + std::to_string(i + 6) + "].caster", SpotLights[i]->GetCaster());
 		}
@@ -466,7 +463,6 @@ public:
 			if (ImGui::BeginTabItem("Illumination")) {
 
 				ImGui::Text("Lighting Model: %s", Settings.UseBlinnPhongShading ? "Blinn-Phong" : "Phong");
-				ImGui::Checkbox("use Exponent", &Settings.UseSpotExponent);
 				ImGui::Checkbox("Lighting", &Settings.UseLighting);
 				ImGui::Checkbox("DiffuseTexture", &Settings.UseDiffuseTexture);
 				ImGui::Checkbox("SpecularTexture", &Settings.UseSpecularTexture);

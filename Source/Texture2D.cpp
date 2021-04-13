@@ -21,7 +21,7 @@ namespace Nexus {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, enable_mipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		
-		// this->Unbind();
+		this->Unbind();
 	}
 
 	Texture2D::~Texture2D() {
@@ -69,16 +69,16 @@ namespace Nexus {
 	}
 
 	void Texture2D::SetWrappingParams(GLint wrap_s, GLint wrap_t) const {
-		glTextureParameteri(this->ID, GL_TEXTURE_WRAP_S, wrap_s);
-		glTextureParameteri(this->ID, GL_TEXTURE_WRAP_T, wrap_t);
+		this->Bind();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t);
+		this->Unbind();
 	}
 
 	void Texture2D::SetFilterParams(GLint min_filter, GLint max_filter) const {
+		this->Bind();
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_filter);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, max_filter);
-	}
-
-	void Texture2D::BindImage(GLuint unit, GLenum access, GLenum format) const {
-		glBindImageTexture(unit, this->ID, 0, GL_FALSE, 0, access, format);
+		this->Unbind();
 	}
 }

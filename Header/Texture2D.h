@@ -19,7 +19,7 @@ namespace Nexus {
 		static std::unique_ptr<Nexus::Texture2D> CreateFromFile(const char* path, bool flip_vertically = false);
 		
 		inline void Bind(const unsigned int unit = 0) const {
-			glActiveTexture(GL_TEXTURE0 + unit);
+			// glActiveTexture(GL_TEXTURE0 + unit);
 			glBindTexture(GL_TEXTURE_2D, this->ID);
 		}
 
@@ -33,6 +33,6 @@ namespace Nexus {
 		void BindImage(GLuint unit, GLenum access, GLenum format) const;
 		
 	private:	
-		
+
 	};	
 }

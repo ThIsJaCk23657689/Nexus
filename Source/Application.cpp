@@ -29,6 +29,10 @@ namespace Nexus {
 			// Process Input (Moving camera)
 			GLFWProcessInput(Window);
 
+			// Clear the buffer
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+
 			// Feed inputs to dear imgui start new frame
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
@@ -36,8 +40,25 @@ namespace Nexus {
 
 			ShowDebugUI();
 
-			// Display
-			Update();
+			// Display Default (DISPLAY_MODE_DEFAULT)
+			int scr_start = 4, scr_end = 4;
+			if (Settings.CurrentDisplyMode == DISPLAY_MODE_3O1P) {
+				scr_start = 1;
+				scr_end = 4;
+			} else if (Settings.CurrentDisplyMode == DISPLAY_MODE_ORTHOGONAL_X) {
+				scr_start = 1;
+				scr_end = 1;
+			} else if (Settings.CurrentDisplyMode == DISPLAY_MODE_ORTHOGONAL_Y) {
+				scr_start = 2;
+				scr_end = 2;
+			} else if (Settings.CurrentDisplyMode == DISPLAY_MODE_ORTHOGONAL_Z) {
+				scr_start = 3;
+				scr_end = 3;
+			}
+			
+			for (int i = scr_start; i <= scr_end; i++) {
+				Update(static_cast<DisplayMode>(i));
+			}
 
 			// Render imgui on the screen
 			ImGui::Render();
@@ -67,7 +88,6 @@ namespace Nexus {
 		// Set new width and height
 		Settings.Width = width;
 		Settings.Height = height;
-		SetViewport(Settings.CurrentDisplyMode);
 		OnWindowResize();
 	}
 
