@@ -106,11 +106,11 @@ namespace Nexus {
 
 		// Initialize and clean the vector;
 		this->IsReadyToDraw = false;
-		std::vector<float>().swap(this->Vertices);
-		std::vector<float>().swap(this->Position);
-		std::vector<float>().swap(this->Normal);
-		std::vector<float>().swap(this->GradientMagnitudes);
-
+		this->Vertices.clear();
+		this->Position.clear();
+		this->Normal.clear();
+		this->GradientMagnitudes.clear();
+		
 		// Input the data set and iso-value
 		this->GenerateVertices(iso_value, max_gradient);
 
