@@ -59,10 +59,10 @@ namespace Nexus {
 
 		// Initialize and clean the vector;
 		this->IsReadyToDraw = false;
-		std::vector<float>().swap(this->Vertices);
+		this->Vertices.clear();
 		std::vector<float>().swap(this->Position);
 		std::vector<float>().swap(this->Normal);
-
+		
 		// Input the data set and iso-value
 		this->GenerateVertices(iso_value);
 
