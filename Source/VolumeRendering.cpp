@@ -58,13 +58,11 @@ public:
 		sphere = std::make_unique<Nexus::Sphere>();
 	}
 
-	void Update() override {
-
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	void Update(Nexus::DisplayMode monitor_type) override {
 		
 		SetViewMatrix(Nexus::DISPLAY_MODE_DEFAULT);
 		SetProjectionMatrix(Nexus::DISPLAY_MODE_DEFAULT);
+		SetViewport(Nexus::DISPLAY_MODE_DEFAULT);
 
 		myShader->Use();
 		myShader->SetMat4("view", view);

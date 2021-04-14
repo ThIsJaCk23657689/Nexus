@@ -100,13 +100,11 @@ public:
 		fog = std::make_unique<Nexus::Fog>(glm::vec4(0.266f, 0.5f, 0.609f, 1.0f), false, 0.1f, 100.0f);
 	}
 	
-	void Update() override {
-
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	void Update(Nexus::DisplayMode monitor_type) override {
 
 		SetViewMatrix(Nexus::DISPLAY_MODE_DEFAULT);
 		SetProjectionMatrix(Nexus::DISPLAY_MODE_DEFAULT);
+		SetViewport(Nexus::DISPLAY_MODE_DEFAULT);
 
 		myShader->Use();
 		myShader->SetInt("material.diffuse_texture", 0);
