@@ -5,6 +5,7 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#include <implot.h>
 
 namespace Nexus {
 
@@ -68,6 +69,8 @@ namespace Nexus {
 			glfwSwapBuffers(Window);
 			glfwPollEvents();
 		}
+		ImPlot::DestroyContext();
+		ImGui::DestroyContext();
 		
 		return 0;
 	}
@@ -200,6 +203,7 @@ namespace Nexus {
 		std::string glsl_version = "#version 330";
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
+		ImPlot::CreateContext();
 		ImGui::StyleColorsDark();
 		// ImGuiIO& io = ImGui::GetIO();
 		ImGui_ImplGlfw_InitForOpenGL(Window, true);

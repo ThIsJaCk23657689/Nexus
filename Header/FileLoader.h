@@ -1,13 +1,39 @@
 #pragma once
-
-#include "Logger.h"
+#include <Windows.h>
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include "Logger.h"
 
 namespace Nexus {
 	class FileLoader {
 	public:
+		static std::vector<std::string> GetAllFilesNamesWithinFolder(const std::string& folder_path, std::string search_keyword) {
+			std::vector<std::string> file_names;
+			std::string search_path = folder_path + search_keyword;
+
+			WIN32_FIND_DATA fd;
+			HANDLE hFind = ::FindFirstFile(search_path.c_str(), &fd);
+			if (hFind != INVALID_HANDLE_VALUE) {
+				do {
+					// read all (real) files in current folder
+					// , delete '!' read other 2 default folder . and ..
+					if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+						file_names.push_back(fd.cFileName);
+					}
+				} while (::FindNextFile(hFind, &fd));
+				::FindClose(hFind);
+			}
+
+			if(file_names.empty()) {
+				Nexus::Logger::Message(LOG_WARNING, "There is no any volume data files in the folder. :(");
+			} else {
+				Nexus::Logger::Message(LOG_INFO, "Found " + std::to_string(file_names.size()) + " files.");
+			}
+			
+			return file_names;
+		}
+		
 		static std::vector<unsigned char> LoadRawFile(const std::string& path) {
 			std::vector<unsigned char> buffer;
 			std::ifstream file(path, std::ios::binary);
@@ -40,5 +66,7 @@ namespace Nexus {
 
 			return ShaderStream;
 		}
+	private:
+
 	};
 }

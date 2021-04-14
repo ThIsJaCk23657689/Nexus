@@ -30,7 +30,7 @@ namespace Nexus {
 		Logger::Message(LOG_INFO, "Initialize voxels data completed.");
 	}
 
-	std::vector<float> IsoSurface::GetnHistogramData() {
+	std::vector<float> IsoSurface::GetHistogramData() {
 		std::map<unsigned int, unsigned int> histogram;
 		for (unsigned int i = 0; i < this->RawData.size(); i++) {
 			if (histogram.find(this->RawData[i]) != histogram.end()) {
@@ -47,8 +47,55 @@ namespace Nexus {
 		
 		return x;
 	}
+
+	void IsoSurface::HistogramEqualization() {
+		std::vector<float> histogram = this->GetHistogramData();
+
+		// 計算總所有 iso value 為 0 ~ 255 的顯示次數。 
+		float max_number = 0;
+		for(auto i : histogram) {
+			max_number += i;
+		}
+
+		// 歸一化，所有顯示次數除以總次數，數值會介於 0 ~ 1 之間。
+		std::vector<float> result;
+		for(auto i : histogram) {
+			result.push_back(i / max_number);
+		}
+
+		// 計算	累計直方圖
+		float current_value = 0;
+		std::vector<float> cumulative;
+		for (auto i : result) {
+			current_value += i;
+			cumulative.push_back(current_value);
+		}
+
+		// 再重新映射到 0 ~ 255
+		std::vector<int> equal_values;
+		for (auto i : cumulative) {
+			equal_values.push_back(round(i * 255));
+		}
+
+		// 得到的數值是所謂的均衡化值 比如 equal_values[0] = 71 代表 原本  iso value = 0 均衡化後，調整為iso value = 71  數量是不變的
+		std::vector<float> final_result(256, 0);
+		for (int i = 0; i < equal_values.size(); i++) {
+			final_result[equal_values[i]] += histogram[i];
+		}
+
+		this->EqualizationData(equal_values);
+
+		// return final_result;
+	}
+
+	void IsoSurface::EqualizationData(std::vector<int> equal_values) {
+		for (unsigned int i = 0; i < this->RawData.size(); i++) {
+			float after_value = equal_values[static_cast<int>(this->RawData[i])];
+			this->RawData[i] = after_value;
+		}
+	}
 	
-	void IsoSurface::ConvertToPolygon(float iso_value) {
+	void IsoSurface::ConvertToPolygon(float iso_value, float max_gradient) {
 		if (!this->IsInitialize) {
 			Logger::Message(LOG_ERROR, "YOU MUST LOAD THE VOLUME DATA FIRST!");
 			return;
@@ -62,9 +109,10 @@ namespace Nexus {
 		std::vector<float>().swap(this->Vertices);
 		std::vector<float>().swap(this->Position);
 		std::vector<float>().swap(this->Normal);
+		std::vector<float>().swap(this->GradientMagnitudes);
 
 		// Input the data set and iso-value
-		this->GenerateVertices(iso_value);
+		this->GenerateVertices(iso_value, max_gradient);
 
 		// Send the position and normal of these vertices to the GPU
 		this->BufferInitialize();
@@ -90,6 +138,7 @@ namespace Nexus {
 			<< "Vertex Count: " << GetVertexCount() << std::endl
 			<< "Position Count: " << GetPositionCount() << std::endl
 			<< "Normal Count: " << GetNormalCount() << std::endl
+			<< "Gradient Magnitudes Counts: " << this->GradientMagnitudes.size() << std::endl
 			<< "Elapsed time: " << this->ElapsedSeconds.count() << " (seconds)" << std::endl
 			<< "================================================================================" << std::endl;
 	}
@@ -163,7 +212,7 @@ namespace Nexus {
 		}
 	}
 	
-	void IsoSurface::GenerateVertices(float iso_value) {
+	void IsoSurface::GenerateVertices(float iso_value, float max_gradient) {
 
 		Logger::Message(LOG_DEBUG, "Starting generate vertices....... It will takes a long time.");
 		
@@ -193,14 +242,14 @@ namespace Nexus {
 						cell.vertices.push_back(voxel);
 					}
 
-					Polygonise(cell, iso_value);
+					Polygonise(cell, iso_value, max_gradient);
 				}
 			}
 		}
 		Logger::Message(LOG_DEBUG, "Generate vertices completed.");
 	}
 
-	void IsoSurface::Polygonise(GridCell cell, float iso_value) {
+	void IsoSurface::Polygonise(GridCell cell, float iso_value, float max_gradient) {
 
 		int cube_index = 0;
 		glm::vec3 position_list[12];
@@ -246,7 +295,19 @@ namespace Nexus {
 		for (unsigned int i = 0; this->TriangleTable[cube_index][i] != -1; i += 3) {
 			for (unsigned int offset = 0; offset < 3; offset++) {
 				this->AddPosition(position_list[this->TriangleTable[cube_index][i + offset]]);
-				this->AddNormal(glm::normalize(normal_list[this->TriangleTable[cube_index][i + offset]]));
+
+				// Gradient 長度分貝化
+				glm::vec3 temp_norm = normal_list[this->TriangleTable[cube_index][i + offset]];
+				float temp_length = glm::length(temp_norm);
+				if (temp_length < 1) {
+					temp_length = 1;
+				} else if (temp_length > max_gradient) {
+					temp_length = max_gradient;
+				}
+				temp_length = 20.0f * glm::log2(temp_length);
+				this->GradientMagnitudes.push_back(temp_length);
+				
+				this->AddNormal(glm::normalize(temp_norm));
 			}
 		}
 	}

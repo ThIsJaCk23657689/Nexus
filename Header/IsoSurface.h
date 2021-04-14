@@ -59,9 +59,10 @@ namespace Nexus {
 			return &this->EnableWireFrameMode;
 		}
 
-		std::vector<float> IsoSurface::GetnHistogramData();
+		std::vector<float> GetHistogramData();
+		void HistogramEqualization();
 		void Initialize(const std::string& info_path, const std::string& raw_path);
-		void ConvertToPolygon(float iso_value);
+		void ConvertToPolygon(float iso_value, float max_gradient = 1.0f);
 		unsigned int GetVoxelCount() const{ return (unsigned int)this->RawData.size(); }
 		unsigned int GetTriangleCount() const{ return (unsigned int)this->Vertices.size() / 3; }
 		unsigned int GetVertexCount() const { return (unsigned int)this->Vertices.size(); }
@@ -371,6 +372,7 @@ namespace Nexus {
 		std::vector<float> Vertices;
 		std::vector<float> Position;
 		std::vector<float> Normal;
+		std::vector<float> GradientMagnitudes;
 		unsigned int VertexCount = 0;
 
 		bool EnableWireFrameMode = false;
@@ -404,8 +406,9 @@ namespace Nexus {
 			return this->GridNormals[this->GetIndexFromGrid(vector)];
 		}
 
+		void EqualizationData(std::vector<int> equal_values);
 		void ComputeAllNormals();
-		void GenerateVertices(float iso_value);
+		void GenerateVertices(float iso_value, float max_gradient);
 		void BufferInitialize();
 		
 		void AddPosition(float x, float y, float z);
@@ -413,7 +416,7 @@ namespace Nexus {
 		void AddNormal(float nx, float ny, float nz);
 		void AddNormal(glm::vec3 normal);
 		
-		void Polygonise(GridCell cell, float iso_value);
+		void Polygonise(GridCell cell, float iso_value, float max_gradient);
 		glm::vec3 Interpolation(float iso_value, Voxel voxel_a, Voxel voxel_b, InterpolateMode mode);
 	};
 }
