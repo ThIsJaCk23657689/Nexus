@@ -1,14 +1,15 @@
 #include "IsoSurface.h"
 #include "Logger.h"
 #include "FileLoader.h"
+#include "Utill.h"
 #include <iostream>
 
 namespace Nexus {
-	IsoSurface::IsoSurface(const std::string& info_path, const std::string& raw_path) {
-		this->Initialize(info_path, raw_path);
+	IsoSurface::IsoSurface(const std::string& info_path, const std::string& raw_path, float max_gradient) {
+		this->Initialize(info_path, raw_path, max_gradient);
 	}
 
-	void IsoSurface::Initialize(const std::string& info_path, const std::string& raw_path) {
+	void IsoSurface::Initialize(const std::string& info_path, const std::string& raw_path, float max_gradient) {
 		Logger::Message(LOG_INFO, "Starting loading volume data: " + raw_path);
 		this->IsInitialize = false;
 		Settings.Resolution[0] = 149;
@@ -24,8 +25,12 @@ namespace Nexus {
 		Logger::Message(LOG_INFO, "Starting initialize voxels data...");
 		
 		// Compute the gradient of these all voxels.
-		this->ComputeAllNormals();
+		this->GradientMagnitudes.clear();
+		this->ComputeAllNormals(max_gradient);
 		this->IsInitialize = true;
+
+		// 索引是 0 ~ 3409119 個，代表每一個 voxel 上面 gradient 的長度，介於 1 到 max_gradient 之間。
+		// Utill::Show1DVectorStatistics(this->GradientMagnitudes, "Gradient Before");
 	
 		Logger::Message(LOG_INFO, "Initialize voxels data completed.");
 	}
@@ -44,6 +49,8 @@ namespace Nexus {
 		for (auto it : histogram ) {
 			x[it.first] = static_cast<float>(it.second);
 		}
+
+		// Utill::Show1DVectorStatistics(x, "Histogram");
 		
 		return x;
 	}
@@ -94,8 +101,36 @@ namespace Nexus {
 			this->RawData[i] = after_value;
 		}
 	}
+
+	std::vector<float> IsoSurface::GetGradientHistogram() {
+		return this->GradientMagnitudes;
+	}
+
+	std::vector<float> IsoSurface::GetGradientHistogram(float max_gradient) {
+		// 必須將 gradient 的長度介於 1 到 max_gradient 之間 切成 k 個等分，先求間距
+		float bin_width = ((max_gradient - 1) + 1) / ((255 - 0) + 1);
+		std::vector<std::pair<float, float>> boundary;
+		for (unsigned int i = 0; i < 256; i++) {
+			float up = bin_width * i;
+			float down = bin_width * (i + 1);
+			boundary.push_back(std::pair<float, float>(up, down));
+		}
+
+		// 掃描整個資料，根據間距去做判斷
+		std::vector<float> result = std::vector<float>(256, 0);
+		for (unsigned int i = 0; i < this->GradientMagnitudes.size(); i++) {
+			for (unsigned int j = 0; j < boundary.size(); j++) {
+				if (boundary[j].first <= this->GradientMagnitudes[i] && this->GradientMagnitudes[i] < boundary[j].second) {
+					result[j] += 1;
+				}
+			}
+		}
+		// Utill::Show1DVectorStatistics(this->GradientMagnitudes, "Gradient After - 256");
+
+		return result;
+	}
 	
-	void IsoSurface::ConvertToPolygon(float iso_value, float max_gradient) {
+	void IsoSurface::ConvertToPolygon(float iso_value) {
 		if (!this->IsInitialize) {
 			Logger::Message(LOG_ERROR, "YOU MUST LOAD THE VOLUME DATA FIRST!");
 			return;
@@ -109,10 +144,9 @@ namespace Nexus {
 		this->Vertices.clear();
 		this->Position.clear();
 		this->Normal.clear();
-		this->GradientMagnitudes.clear();
 		
 		// Input the data set and iso-value
-		this->GenerateVertices(iso_value, max_gradient);
+		this->GenerateVertices(iso_value);
 
 		// Send the position and normal of these vertices to the GPU
 		this->BufferInitialize();
@@ -166,7 +200,7 @@ namespace Nexus {
 		glBindVertexArray(0);
 	}
 
-	void IsoSurface::ComputeAllNormals() {
+	void IsoSurface::ComputeAllNormals(float max_gradient) {
 		// 計算每一個 Voxel 的 Gradient 來當作法向量。
 		for (int k = 0; k < Settings.Resolution[2]; k++) {
 			for (int j = 0; j < Settings.Resolution[1]; j++) {
@@ -205,6 +239,16 @@ namespace Nexus {
 						// Central difference
 						norm.z = (this->GetIsoValueFromGrid(i, j, k + 1) - this->GetIsoValueFromGrid(i, j, k - 1)) / 2 * Settings.Ratio.z;
 					}
+
+					// Gradient 長度分貝化
+					float temp_length = glm::length(norm);
+					if (temp_length < 1) {
+						temp_length = 1;
+					} else if (temp_length > max_gradient) {
+						temp_length = max_gradient;
+					}
+					// temp_length = 20.0f * glm::log2(temp_length);
+					this->GradientMagnitudes.push_back(temp_length);
 					
 					this->GridNormals.push_back(norm);
 				}
@@ -212,7 +256,7 @@ namespace Nexus {
 		}
 	}
 	
-	void IsoSurface::GenerateVertices(float iso_value, float max_gradient) {
+	void IsoSurface::GenerateVertices(float iso_value) {
 
 		Logger::Message(LOG_DEBUG, "Starting generate vertices....... It will takes a long time.");
 		
@@ -242,14 +286,14 @@ namespace Nexus {
 						cell.vertices.push_back(voxel);
 					}
 
-					Polygonise(cell, iso_value, max_gradient);
+					Polygonise(cell, iso_value);
 				}
 			}
 		}
 		Logger::Message(LOG_DEBUG, "Generate vertices completed.");
 	}
 
-	void IsoSurface::Polygonise(GridCell cell, float iso_value, float max_gradient) {
+	void IsoSurface::Polygonise(GridCell cell, float iso_value) {
 
 		int cube_index = 0;
 		glm::vec3 position_list[12];
@@ -295,19 +339,7 @@ namespace Nexus {
 		for (unsigned int i = 0; this->TriangleTable[cube_index][i] != -1; i += 3) {
 			for (unsigned int offset = 0; offset < 3; offset++) {
 				this->AddPosition(position_list[this->TriangleTable[cube_index][i + offset]]);
-
-				// Gradient 長度分貝化
-				glm::vec3 temp_norm = normal_list[this->TriangleTable[cube_index][i + offset]];
-				float temp_length = glm::length(temp_norm);
-				if (temp_length < 1) {
-					temp_length = 1;
-				} else if (temp_length > max_gradient) {
-					temp_length = max_gradient;
-				}
-				temp_length = 20.0f * glm::log2(temp_length);
-				this->GradientMagnitudes.push_back(temp_length);
-				
-				this->AddNormal(glm::normalize(temp_norm));
+				this->AddNormal(glm::normalize(normal_list[this->TriangleTable[cube_index][i + offset]]));
 			}
 		}
 	}

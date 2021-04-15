@@ -25,12 +25,6 @@ namespace Nexus {
 				::FindClose(hFind);
 			}
 
-			if(file_names.empty()) {
-				Nexus::Logger::Message(LOG_WARNING, "There is no any volume data files in the folder. :(");
-			} else {
-				Nexus::Logger::Message(LOG_INFO, "Found " + std::to_string(file_names.size()) + " files.");
-			}
-			
 			return file_names;
 		}
 		

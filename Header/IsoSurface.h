@@ -32,7 +32,7 @@ namespace Nexus {
 	class IsoSurface {
 	public:
 		IsoSurface() {};
-		IsoSurface(const std::string& info_path, const std::string& raw_path);
+		IsoSurface(const std::string& info_path, const std::string& raw_path, float max_gradient = 1.0f);
 		
 		void Draw(Nexus::Shader* shader, glm::mat4 model = glm::mat4(1.0f));
 		void Debug();
@@ -60,14 +60,17 @@ namespace Nexus {
 		}
 
 		std::vector<float> GetHistogramData();
+		std::vector<float> GetGradientHistogram();
+		std::vector<float> GetGradientHistogram(float max_gradient);
 		void HistogramEqualization();
-		void Initialize(const std::string& info_path, const std::string& raw_path);
-		void ConvertToPolygon(float iso_value, float max_gradient = 1.0f);
+		void Initialize(const std::string& info_path, const std::string& raw_path, float max_gradient = 1.0f);
+		void ConvertToPolygon(float iso_value);
 		unsigned int GetVoxelCount() const{ return (unsigned int)this->RawData.size(); }
 		unsigned int GetTriangleCount() const{ return (unsigned int)this->Vertices.size() / 3; }
 		unsigned int GetVertexCount() const { return (unsigned int)this->Vertices.size(); }
 		unsigned int GetPositionCount() const { return (unsigned int)this->Position.size(); }
 		unsigned int GetNormalCount() const { return (unsigned int)this->Normal.size(); }
+		
 		
 	protected:
 		const std::vector<unsigned short> EdgeTable = {
@@ -407,8 +410,8 @@ namespace Nexus {
 		}
 
 		void EqualizationData(std::vector<int> equal_values);
-		void ComputeAllNormals();
-		void GenerateVertices(float iso_value, float max_gradient);
+		void ComputeAllNormals(float max_gradient);
+		void GenerateVertices(float iso_value);
 		void BufferInitialize();
 		
 		void AddPosition(float x, float y, float z);
@@ -416,7 +419,7 @@ namespace Nexus {
 		void AddNormal(float nx, float ny, float nz);
 		void AddNormal(glm::vec3 normal);
 		
-		void Polygonise(GridCell cell, float iso_value, float max_gradient);
+		void Polygonise(GridCell cell, float iso_value);
 		glm::vec3 Interpolation(float iso_value, Voxel voxel_a, Voxel voxel_b, InterpolateMode mode);
 	};
 }
