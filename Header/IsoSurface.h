@@ -59,12 +59,19 @@ namespace Nexus {
 			return &this->EnableWireFrameMode;
 		}
 
-		std::vector<float> GetHistogramData();
-		std::vector<float> GetGradientHistogram();
-		std::vector<float> GetGradientHistogram(float max_gradient);
-		void HistogramEqualization();
 		void Initialize(const std::string& info_path, const std::string& raw_path, float max_gradient = 1.0f);
 		void ConvertToPolygon(float iso_value);
+
+		void GenerateIsoValueHistogram();
+		void GenerateGradientHistogram();
+		void GenerateGradientHeatMap();
+		void IsoValueHistogramEqualization();
+
+		float Interval = 256.0f;
+		std::vector<float> GetIsoValueHistogram();
+		std::vector<float> GetGradientHistogram();
+		std::vector<float> GetGradientHeatmap();
+		std::vector<char*> GetGradientHeatmapAxisLabels(bool is_axis_x);
 		unsigned int GetVoxelCount() const{ return (unsigned int)this->RawData.size(); }
 		unsigned int GetTriangleCount() const{ return (unsigned int)this->Vertices.size() / 3; }
 		unsigned int GetVertexCount() const { return (unsigned int)this->Vertices.size(); }
@@ -370,12 +377,17 @@ namespace Nexus {
 		std::string InfDataFilePath;
 		std::vector<unsigned char> RawData;
 		std::vector<glm::vec3> GridNormals;
+		std::vector<float> GradientMagnitudes;
 		std::chrono::duration<double> ElapsedSeconds;
 		
 		std::vector<float> Vertices;
 		std::vector<float> Position;
 		std::vector<float> Normal;
-		std::vector<float> GradientMagnitudes;
+		std::vector<float> IsoValueHistogram;
+		std::vector<float> GradientHistogram;
+		std::vector<float> GradientHeatmap;
+		std::vector<std::pair<float, float>> IsoValue_Boundary;
+		std::vector<std::pair<float, float>> Gradient_Boundary;
 		unsigned int VertexCount = 0;
 
 		bool EnableWireFrameMode = false;

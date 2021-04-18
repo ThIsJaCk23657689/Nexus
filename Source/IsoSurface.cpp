@@ -27,6 +27,12 @@ namespace Nexus {
 		// Compute the gradient of these all voxels.
 		this->GradientMagnitudes.clear();
 		this->ComputeAllNormals(max_gradient);
+
+		// 計算 Iso value Histogram、Gradient Histogram 和 heatmap
+		this->GenerateIsoValueHistogram();
+		this->GenerateGradientHistogram();
+		this->GenerateGradientHeatMap();
+
 		this->IsInitialize = true;
 
 		// 索引是 0 ~ 3409119 個，代表每一個 voxel 上面 gradient 的長度，介於 1 到 max_gradient 之間。
@@ -35,107 +41,12 @@ namespace Nexus {
 		Logger::Message(LOG_INFO, "Initialize voxels data completed.");
 	}
 
-	std::vector<float> IsoSurface::GetHistogramData() {
-		std::map<unsigned int, unsigned int> histogram;
-		for (unsigned int i = 0; i < this->RawData.size(); i++) {
-			if (histogram.find(this->RawData[i]) != histogram.end()) {
-				histogram[this->RawData[i]]++;
-			} else {
-				histogram[this->RawData[i]] = 1;
-			}
-		}
-
-		std::vector<float> x(256, 0.0f);
-		for (auto it : histogram ) {
-			x[it.first] = static_cast<float>(it.second);
-		}
-
-		// Utill::Show1DVectorStatistics(x, "Histogram");
-		
-		return x;
-	}
-
-	void IsoSurface::HistogramEqualization() {
-		std::vector<float> histogram = this->GetHistogramData();
-
-		// 計算總所有 iso value 為 0 ~ 255 的顯示次數。 
-		float max_number = 0;
-		for(auto i : histogram) {
-			max_number += i;
-		}
-
-		// 歸一化，所有顯示次數除以總次數，數值會介於 0 ~ 1 之間。
-		std::vector<float> result;
-		for(auto i : histogram) {
-			result.push_back(i / max_number);
-		}
-
-		// 計算	累計直方圖
-		float current_value = 0;
-		std::vector<float> cumulative;
-		for (auto i : result) {
-			current_value += i;
-			cumulative.push_back(current_value);
-		}
-
-		// 再重新映射到 0 ~ 255
-		std::vector<int> equal_values;
-		for (auto i : cumulative) {
-			equal_values.push_back(round(i * 255));
-		}
-
-		// 得到的數值是所謂的均衡化值 比如 equal_values[0] = 71 代表 原本  iso value = 0 均衡化後，調整為iso value = 71  數量是不變的
-		std::vector<float> final_result(256, 0);
-		for (int i = 0; i < equal_values.size(); i++) {
-			final_result[equal_values[i]] += histogram[i];
-		}
-
-		this->EqualizationData(equal_values);
-
-		// return final_result;
-	}
-
-	void IsoSurface::EqualizationData(std::vector<int> equal_values) {
-		for (unsigned int i = 0; i < this->RawData.size(); i++) {
-			float after_value = equal_values[static_cast<int>(this->RawData[i])];
-			this->RawData[i] = after_value;
-		}
-	}
-
-	std::vector<float> IsoSurface::GetGradientHistogram() {
-		return this->GradientMagnitudes;
-	}
-
-	std::vector<float> IsoSurface::GetGradientHistogram(float max_gradient) {
-		// 必須將 gradient 的長度介於 1 到 max_gradient 之間 切成 k 個等分，先求間距
-		float bin_width = ((max_gradient - 1) + 1) / ((255 - 0) + 1);
-		std::vector<std::pair<float, float>> boundary;
-		for (unsigned int i = 0; i < 256; i++) {
-			float up = bin_width * i;
-			float down = bin_width * (i + 1);
-			boundary.push_back(std::pair<float, float>(up, down));
-		}
-
-		// 掃描整個資料，根據間距去做判斷
-		std::vector<float> result = std::vector<float>(256, 0);
-		for (unsigned int i = 0; i < this->GradientMagnitudes.size(); i++) {
-			for (unsigned int j = 0; j < boundary.size(); j++) {
-				if (boundary[j].first <= this->GradientMagnitudes[i] && this->GradientMagnitudes[i] < boundary[j].second) {
-					result[j] += 1;
-				}
-			}
-		}
-		// Utill::Show1DVectorStatistics(this->GradientMagnitudes, "Gradient After - 256");
-
-		return result;
-	}
-	
 	void IsoSurface::ConvertToPolygon(float iso_value) {
 		if (!this->IsInitialize) {
 			Logger::Message(LOG_ERROR, "YOU MUST LOAD THE VOLUME DATA FIRST!");
 			return;
 		}
-		
+
 		// Get the start time.
 		auto start = std::chrono::system_clock::now();
 
@@ -144,7 +55,7 @@ namespace Nexus {
 		this->Vertices.clear();
 		this->Position.clear();
 		this->Normal.clear();
-		
+
 		// Input the data set and iso-value
 		this->GenerateVertices(iso_value);
 
@@ -157,7 +68,177 @@ namespace Nexus {
 		auto end = std::chrono::system_clock::now();
 		this->ElapsedSeconds = end - start;
 	}
+
+	void IsoSurface::GenerateIsoValueHistogram() {
+		// 初始化，將此 Volume Data 的資料分成 m 等份
+		this->IsoValueHistogram = std::vector<float>(this->Interval, 0.0f);
+
+		// 必須先找出資料中最大值做為下界，上界則採用 0。
+		float max_isovalue = *std::max_element(this->RawData.cbegin(), this->RawData.cend());
+
+		// 必須將 iso value 介於 0 到 max_isovalue 之間 切成 m 個等分，先求間距
+		float bin_width = ((max_isovalue - 0) + 1) / this->Interval;
+		this->IsoValue_Boundary.clear();
+		for (unsigned int i = 0; i < this->Interval; i++) {
+			float up = bin_width * i;
+			float down = bin_width * (i + 1);
+			this->IsoValue_Boundary.push_back(std::pair<float, float>(up, down));
+		}
+
+		// 掃描整個資料，根據間距去做判斷
+		for (unsigned int i = 0; i < this->RawData.size(); i++) {
+			for (unsigned int j = 0; j < this->IsoValue_Boundary.size(); j++) {
+				if (this->IsoValue_Boundary[j].first <= static_cast<int>(this->RawData[i]) && static_cast<int>(this->RawData[i]) < this->IsoValue_Boundary[j].second) {
+					this->IsoValueHistogram[j] += 1;
+				}
+			}
+		}
+
+		// 顯示統計資訊
+		// Utill::Show1DVectorStatistics(x, "Iso Value Histogram");
+	}
 	
+	void IsoSurface::GenerateGradientHistogram() {
+		// 初始化，將 gradient length (已經被分貝化) 的資料分成 k 等份
+		this->GradientHistogram = std::vector<float>(this->Interval, 0.0f);
+
+		// 必須先找出資料中最大值做為下界，上界則採用 0。
+		float max_gradient = *std::max_element(this->GradientMagnitudes.cbegin(), this->GradientMagnitudes.cend());
+
+		// 必須將 gradient 的長度介於 0 到 max_gradient 之間 切成 k(16) 個等分，先求間距
+		float bin_width = ((max_gradient - 0) + 1) / this->Interval;
+		this->Gradient_Boundary.clear();
+		for (unsigned int i = 0; i < this->Interval; i++) {
+			float up = bin_width * i;
+			float down = bin_width * (i + 1);
+			this->Gradient_Boundary.push_back(std::pair<float, float>(up, down));
+		}
+
+		// 掃描整個資料，根據間距去做判斷
+		for (unsigned int i = 0; i < this->GradientMagnitudes.size(); i++) {
+			for (unsigned int j = 0; j < this->Gradient_Boundary.size(); j++) {
+				if (this->Gradient_Boundary[j].first <= this->GradientMagnitudes[i] && this->GradientMagnitudes[i] < this->Gradient_Boundary[j].second) {
+					this->GradientHistogram[j] += 1;
+				}
+			}
+		}
+
+		// 顯示統計資訊
+		// Utill::Show1DVectorStatistics(this->GradientMagnitudes, "Gradient Histogram");
+	}
+	
+	void IsoSurface::GenerateGradientHeatMap() {
+		// 初始化，橫軸為 Iso Value，縱軸為 Gradient Length
+		this->GradientHeatmap = std::vector<float>(this->Interval * this->Interval, 0.0f);
+
+		// 跑遍所有資料，只要有 Voxel 符合對應的 Iso value 和 在相對應的 梯度區間 該格就 +=1
+		for (unsigned int i = 0; i < this->RawData.size(); i++) {
+			unsigned int isovalue_idx = 0;
+			unsigned int gradient_idx = 0;
+			for (unsigned int j = 0; j < this->Gradient_Boundary.size(); j++) {
+				gradient_idx = j;
+				if (this->Gradient_Boundary[j].first <= this->GradientMagnitudes[i] && this->GradientMagnitudes[i] < this->Gradient_Boundary[j].second) {
+					break;
+				}
+			}
+
+			for (unsigned int j = 0; j < this->IsoValue_Boundary.size(); j++) {
+				isovalue_idx = j;
+				if (this->IsoValue_Boundary[j].first <= static_cast<int>(this->RawData[i]) && static_cast<int>(this->RawData[i]) < this->IsoValue_Boundary[j].second) {
+					break;
+				}
+			}
+			int idx = ((this->Interval - 1) - gradient_idx) * this->Interval + isovalue_idx;
+			this->GradientHeatmap[idx] += 1;
+		}
+	}
+	
+	void IsoSurface::IsoValueHistogramEqualization() {
+		// 先取得舊的 histogram，並重新初始化
+		std::vector<float> old_histogram = this->IsoValueHistogram;
+		this->IsoValueHistogram = std::vector<float>(256, 0.0f);
+
+		// 計算總所有 iso value 為 0 ~ 255 的顯示次數。 
+		float total_iso_value = std::accumulate(old_histogram.cbegin(), old_histogram.cend(), 0.0);
+
+		// 歸一化，所有顯示次數除以總次數，數值會介於 0 ~ 1 之間。
+		std::vector<float> normalize;
+		for (auto i : old_histogram) {
+			normalize.push_back(i / total_iso_value);
+		}
+
+		// 計算	累計直方圖
+		float current_value = 0;
+		std::vector<float> cumulative;
+		for (auto i : normalize) {
+			current_value += i;
+			cumulative.push_back(current_value);
+		}
+
+		// 再重新映射到 0 ~ 255 (並且四捨五入)
+		std::vector<int> equal_values;
+		for (auto i : cumulative) {
+			equal_values.push_back(round(i * 255));
+		}
+
+		// 得到的數值是所謂的均衡化值 比如 equal_values[0] = 71 代表 原本  iso value = 0 均衡化後，調整為iso value = 71  數量是不變的
+		for (int i = 0; i < equal_values.size(); i++) {
+			this->IsoValueHistogram[equal_values[i]] += old_histogram[i];
+		}
+
+		// 最後別忘了要對整個 Volume Data 做一樣的操作（均值化）！
+		this->EqualizationData(equal_values);
+	}
+
+	std::vector<float> IsoSurface::GetIsoValueHistogram() {
+		return this->IsoValueHistogram;
+	}
+	
+	std::vector<float> IsoSurface::GetGradientHistogram() {
+		return this->GradientHistogram;
+	}
+	
+	std::vector<float> IsoSurface::GetGradientHeatmap() {
+		return this->GradientHeatmap;
+	}
+
+	std::vector<char*> IsoSurface::GetGradientHeatmapAxisLabels(bool is_axis_x) {
+		std::vector<char*> result;
+		if (is_axis_x) {
+			float x_bin = this->IsoValue_Boundary.size() / 4.0f;
+			for (unsigned int i = 0; i <= 4; i++) {
+				std::string temp;
+				if (i == 4) {
+					temp = std::to_string(static_cast<int>(this->IsoValue_Boundary[(x_bin * i) - 1].second));
+				} else {
+					temp = std::to_string(static_cast<int>(this->IsoValue_Boundary[(x_bin * i)].first));
+				}
+				std::cout << temp.c_str() << std::endl;
+				result.push_back(const_cast<char*>(temp.c_str()));
+			}
+		} else {
+			float y_bin = this->Gradient_Boundary.size() / 4.0f;
+			for (unsigned int i = 0; i <= 4; i++) {
+				std::string temp;
+				if (i == 4) {
+					temp = std::to_string(static_cast<int>(this->Gradient_Boundary[(y_bin * i) - 1].second));
+				} else {
+					temp = std::to_string(static_cast<int>(this->Gradient_Boundary[(y_bin * i)].first));
+				}
+				std::cout << temp.c_str() << std::endl;
+				result.push_back(const_cast<char*>(temp.c_str()));
+			}
+		}
+		return result;
+	}
+
+	void IsoSurface::EqualizationData(std::vector<int> equal_values) {
+		for (unsigned int i = 0; i < this->RawData.size(); i++) {
+			float after_value = equal_values[static_cast<int>(this->RawData[i])];
+			this->RawData[i] = after_value;
+		}
+	}
+
 	void IsoSurface::Debug() {
 		if (!this->IsInitialize || !this->IsReadyToDraw) {
 			Logger::Message(LOG_ERROR, "YOU MUST LOAD THE VOLUME DATA FIRST and COMPUTE THESE ISO SURFACE VERTICES.");
@@ -166,7 +247,7 @@ namespace Nexus {
 		
 		std::cout << "==================== Iso Surface Information ====================" << std::endl
 			<< "Raw File Path: " << this->RawDataFilePath << std::endl
-			<< "Construct Method: March Cube Meh" << std::endl
+			<< "Construct Method: March Cube Method" << std::endl
 			<< "Voxel Count: " << GetVoxelCount() << std::endl
 			<< "Triangle Count: " << GetTriangleCount() << std::endl
 			<< "Vertex Count: " << GetVertexCount() << std::endl
@@ -247,7 +328,7 @@ namespace Nexus {
 					} else if (temp_length > max_gradient) {
 						temp_length = max_gradient;
 					}
-					// temp_length = 20.0f * glm::log2(temp_length);
+					temp_length = 20.0f * glm::log2(temp_length);
 					this->GradientMagnitudes.push_back(temp_length);
 					
 					this->GridNormals.push_back(norm);
