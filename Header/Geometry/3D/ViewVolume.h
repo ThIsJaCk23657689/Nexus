@@ -6,18 +6,50 @@ namespace Nexus {
 	class ViewVolume : public Object {
 	public:
 
+		std::vector<glm::vec4> NearPlaneVertex;
+		std::vector<glm::vec4> FarPlaneVertex;
+		std::vector<glm::vec3> ViewVolumeNormal;
+		std::vector<float> ClippingParameters;
+		
 		ViewVolume() {
+			this->NearPlaneVertex = {
+				glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
+				glm::vec4(1.0f, -1.0f, 1.0f, 1.0f),
+				glm::vec4(-1.0f, -1.0f, 1.0f, 1.0f),
+				glm::vec4(-1.0f, 1.0f, 1.0f, 1.0f),
+			};
+			
+			this->FarPlaneVertex = {
+				glm::vec4(1.0f, 1.0f, -1.0f, 1.0f),
+				glm::vec4(1.0f, -1.0f, -1.0f, 1.0f),
+				glm::vec4(-1.0f, -1.0f, -1.0f, 1.0f),
+				glm::vec4(-1.0f, 1.0f, -1.0f, 1.0f),
+			};
+			
+			this->ViewVolumeNormal = {
+				glm::vec3(0.0f, 0.0f, 1.0f),
+				glm::vec3(0.0f, 1.0f, 0.0f),
+				glm::vec3(1.0f, 0.0f, 0.0f),
+				glm::vec3(0.0f, 0.0f, -1.0f),
+				glm::vec3(0.0f, -1.0f, 0.0f),
+				glm::vec3(-1.0f, 0.0f, 0.0f),
+			};
+			
 			this->ShapeName = "View Volume";
 			this->Initialize();
 		}
 
-		void UpdateVertices(float camera_fov, bool is_perspective, int width, int height, float global_left, float global_right, float global_bottom, float global_top, float global_near, float global_far, glm::mat4 view) {
+		void UpdateVertices(float camera_fov, bool is_perspective, int width, int height, float global_near, float global_far, float ortho_height, glm::mat4 view) {
 
+			this->NearPlaneVertex.clear();
+			this->FarPlaneVertex.clear();
+			this->ViewVolumeNormal.clear();
+			this->ClippingParameters.clear();
+			
 			float aspect_wh = width / static_cast<float>(height);
 			float aspect_hw = height / static_cast<float>(width);
 
 			glm::vec4 rtnp, ltnp, rbnp, lbnp, rtfp, ltfp, rbfp, lbfp = glm::vec4(1.0f);
-
 			
 			if (is_perspective) {
 				// 計算透視投影矩陣的各參數
@@ -31,10 +63,9 @@ namespace Nexus {
 				float p_rf = p_rn * global_far / global_near;
 				float p_lf = -p_rf;
 
-				global_left = p_ln;
-				global_right = p_rn;
-				global_bottom = p_bn;
-				global_top = p_tn;
+				this->ClippingParameters = {
+					p_tn, p_bn, p_ln, p_rn
+				};
 
 				// 創建近平面的4個頂點 （記得要將近平面往前多挪0.01，攝影機才不會看不到）
 				rtnp = glm::vec4(p_rn, p_tn, -global_near + 0.01, 1.0);
@@ -48,23 +79,16 @@ namespace Nexus {
 				rbfp = glm::vec4(p_rf, p_bf, -global_far - 0.01, 1.0);
 				lbfp = glm::vec4(p_lf, p_bf, -global_far - 0.01, 1.0);
 			} else {
-				float length = tan(glm::radians(camera_fov / 2)) * global_near * 50;
 				float r, t = 0.0f;
-				if (width > height) {
-					r = length;
-					t = length * aspect_hw;
-				} else {
-					r = length * aspect_wh;
-					t = length;
-				}
+				r = ortho_height * aspect_wh;
+				t = ortho_height;
 				
 				float l = -r;
 				float b = -t;
 
-				global_left = l;
-				global_right = r;
-				global_bottom = b;
-				global_top = t;
+				this->ClippingParameters = {
+					t, b, l, r
+				};
 
 				// 創建近平面的4個頂點 （記得要將近平面往前多挪0.01，攝影機才不會看不到）
 				rtnp = glm::vec4(r, t, -global_near + 0.01, 1.0);
@@ -94,11 +118,11 @@ namespace Nexus {
 			rbfp = view_inv * rbfp;
 			lbfp = view_inv * lbfp;
 
-			std::vector<glm::vec4> nearPlaneVertex = {
-				rtnp, ltnp, rbnp, lbnp
+			this->NearPlaneVertex = {
+				rtnp, rbnp, lbnp, ltnp
 			};
-			std::vector<glm::vec4> farPlaneVertex  = {
-				rtfp, ltfp, rbfp, lbfp
+			this->FarPlaneVertex  = {
+				ltfp, lbfp, rbfp, rtfp
 			};
 
 			// 清空 View Volume 資料
@@ -106,113 +130,167 @@ namespace Nexus {
 			std::vector<float>().swap(this->Position);
 			std::vector<float>().swap(this->Normal);
 
+			glm::vec3 vec_1 = glm::vec3(0.0f);
+			glm::vec3 vec_2 = glm::vec3(0.0f);
+			glm::vec3 temp_normal = glm::vec3(0.0f);
+			
 			// 更新 View Volume 的頂點資料
 			// ========== Front ==========
+			vec_1 = glm::vec3(rtnp - rbnp);
+			vec_2 = glm::vec3(lbnp - rbnp);
+			temp_normal = glm::normalize(glm::cross(vec_1, vec_2));
+			this->ViewVolumeNormal.push_back(temp_normal);
+			
 			this->AddPosition(rtnp);
-			this->AddNormal(0.0f, 0.0f, 1.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 0.0f);
 
 			this->AddPosition(rbnp);
-			this->AddNormal(0.0f, 0.0f, 1.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 1.0f);
 
 			this->AddPosition(lbnp);
-			this->AddNormal(0.0f, 0.0f, 1.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 1.0f);
 
 			this->AddPosition(ltnp);
-			this->AddNormal(0.0f, 0.0f, 1.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 0.0f);
 
 			// ========== Top ==========
+			vec_1 = glm::vec3(rtnp - rtfp);
+			vec_2 = glm::vec3(ltfp - rtfp);
+			temp_normal = glm::normalize(glm::cross(vec_2, vec_1));
+			this->ViewVolumeNormal.push_back(temp_normal);
+			
 			this->AddPosition(rtnp);
-			this->AddNormal(0.0f, 1.0f, 0.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 0.0f);
 
 			this->AddPosition(rtfp);
-			this->AddNormal(0.0f, 1.0f, 0.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 1.0f);
 
 			this->AddPosition(ltfp);
-			this->AddNormal(0.0f, 1.0f, 0.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 1.0f);
 
 			this->AddPosition(ltnp);
-			this->AddNormal(0.0f, 1.0f, 0.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 0.0f);
 
 			// ========== Right ==========
+			vec_1 = glm::vec3(rtnp - rtfp);
+			vec_2 = glm::vec3(rbfp - rtfp);
+			temp_normal = glm::normalize(glm::cross(vec_1, vec_2));
+			this->ViewVolumeNormal.push_back(temp_normal);
+			
 			this->AddPosition(rtnp);
-			this->AddNormal(1.0f, 0.0f, 0.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 0.0f);
 
 			this->AddPosition(rtfp);
-			this->AddNormal(1.0f, 0.0f, 0.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 1.0f);
 
 			this->AddPosition(rbfp);
-			this->AddNormal(1.0f, 0.0f, 0.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 1.0f);
 
 			this->AddPosition(rbnp);
-			this->AddNormal(1.0f, 0.0f, 0.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 0.0f);
 
 			// ========== Back ==========
+			vec_1 = glm::vec3(rtfp - rbfp);
+			vec_2 = glm::vec3(lbfp - rbfp);
+			temp_normal = glm::normalize(glm::cross(vec_2, vec_1));
+			this->ViewVolumeNormal.push_back(temp_normal);
+			
 			this->AddPosition(rtfp);
-			this->AddNormal(0.0f, 0.0f, -1.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 0.0f);
 
 			this->AddPosition(rbfp);
-			this->AddNormal(0.0f, 0.0f, -1.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 1.0f);
 
 			this->AddPosition(lbfp);
-			this->AddNormal(0.0f, 0.0f, -1.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 1.0f);
 
 			this->AddPosition(ltfp);
-			this->AddNormal(0.0f, 0.0f, -1.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 0.0f);
 
 			// ========== Bottom ==========
+			vec_1 = glm::vec3(rbnp - rbfp);
+			vec_2 = glm::vec3(lbfp - rbfp);
+			temp_normal = glm::normalize(glm::cross(vec_1, vec_2));
+			this->ViewVolumeNormal.push_back(temp_normal);
+			
 			this->AddPosition(rbnp);
-			this->AddNormal(0.0f, -1.0f, 0.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 0.0f);
 
 			this->AddPosition(rbfp);
-			this->AddNormal(0.0f, -1.0f, 0.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 1.0f);
 
 			this->AddPosition(lbfp);
-			this->AddNormal(0.0f, -1.0f, 0.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 1.0f);
 
 			this->AddPosition(lbnp);
-			this->AddNormal(0.0f, -1.0f, 0.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 0.0f);
 
 			// ========== Left ==========
+			vec_1 = glm::vec3(ltnp - ltfp);
+			vec_2 = glm::vec3(lbfp - ltfp);
+			temp_normal = glm::normalize(glm::cross(vec_2, vec_1));
+			this->ViewVolumeNormal.push_back(temp_normal);
+			
 			this->AddPosition(ltnp);
-			this->AddNormal(-1.0f, 0.0f, 0.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 0.0f);
 
 			this->AddPosition(ltfp);
-			this->AddNormal(-1.0f, 0.0f, 0.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 1.0f);
 
 			this->AddPosition(lbfp);
-			this->AddNormal(-1.0f, 0.0f, 0.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 1.0f);
 
 			this->AddPosition(lbnp);
-			this->AddNormal(-1.0f, 0.0f, 0.0f);
+			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 0.0f);
 
 			glBindVertexArray(this->VAO->GetID());
 			glBindBuffer(GL_ARRAY_BUFFER, this->VBO->GetID());
 			glBufferData(GL_ARRAY_BUFFER, this->Vertices.size() * sizeof(float), this->Vertices.data(), GL_STATIC_DRAW);
 			glBindVertexArray(0);
+		}
+
+		void ShowViewVolumeVerticesImGUI() {
+			ImGui::BulletText("rtnp: (%.2f, %.2f, %.2f)", this->NearPlaneVertex[0].x, this->NearPlaneVertex[0].y, this->NearPlaneVertex[0].z);
+			ImGui::BulletText("ltnp: (%.2f, %.2f, %.2f)", this->NearPlaneVertex[1].x, this->NearPlaneVertex[1].y, this->NearPlaneVertex[1].z);
+			ImGui::BulletText("rbnp: (%.2f, %.2f, %.2f)", this->NearPlaneVertex[2].x, this->NearPlaneVertex[2].y, this->NearPlaneVertex[2].z);
+			ImGui::BulletText("lbnp: (%.2f, %.2f, %.2f)", this->NearPlaneVertex[3].x, this->NearPlaneVertex[3].y, this->NearPlaneVertex[3].z);
+			ImGui::BulletText("rtfp: (%.2f, %.2f, %.2f)", this->FarPlaneVertex[0].x, this->FarPlaneVertex[0].y, this->FarPlaneVertex[0].z);
+			ImGui::BulletText("ltfp: (%.2f, %.2f, %.2f)", this->FarPlaneVertex[1].x, this->FarPlaneVertex[1].y, this->FarPlaneVertex[1].z);
+			ImGui::BulletText("rbfp: (%.2f, %.2f, %.2f)", this->FarPlaneVertex[2].x, this->FarPlaneVertex[2].y, this->FarPlaneVertex[2].z);
+			ImGui::BulletText("lbfp: (%.2f, %.2f, %.2f)", this->FarPlaneVertex[3].x, this->FarPlaneVertex[3].y, this->FarPlaneVertex[3].z);
+		}
+
+		void ShowViewVolumeNormalsImGUI() {
+			ImGui::BulletText("Front: (%.2f, %.2f, %.2f)", this->ViewVolumeNormal[0].x, this->ViewVolumeNormal[0].y, this->ViewVolumeNormal[0].z);
+			ImGui::BulletText("Top: (%.2f, %.2f, %.2f)", this->ViewVolumeNormal[1].x, this->ViewVolumeNormal[1].y, this->ViewVolumeNormal[1].z);
+			ImGui::BulletText("Right: (%.2f, %.2f, %.2f)", this->ViewVolumeNormal[2].x, this->ViewVolumeNormal[2].y, this->ViewVolumeNormal[2].z);
+			ImGui::BulletText("Back: (%.2f, %.2f, %.2f)", this->ViewVolumeNormal[3].x, this->ViewVolumeNormal[3].y, this->ViewVolumeNormal[3].z);
+			ImGui::BulletText("Bottom: (%.2f, %.2f, %.2f)", this->ViewVolumeNormal[4].x, this->ViewVolumeNormal[4].y, this->ViewVolumeNormal[4].z);
+			ImGui::BulletText("Left: (%.2f, %.2f, %.2f)", this->ViewVolumeNormal[5].x, this->ViewVolumeNormal[5].y, this->ViewVolumeNormal[5].z);
 		}
 	private:
 

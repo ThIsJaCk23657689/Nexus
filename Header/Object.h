@@ -118,6 +118,7 @@ namespace Nexus {
 		void AddPosition(float x, float y, float z);
 		void AddPosition(glm::vec4 position);
 		void AddNormal(float nx, float ny, float nz);
+		void AddNormal(glm::vec3 normal);
 		void AddTexCoord(float u, float v);
 		void AddIndices(unsigned int i1, unsigned int i2, unsigned int i3);
 	};

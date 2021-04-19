@@ -351,8 +351,8 @@ public:
 				if (!ProjectionSettings.IsPerspective) {
 					ImGui::SliderFloat("Length", &ProjectionSettings.OrthogonalHeight, 10.0f, 200.0f);
 				}
-				ImGui::BulletText("left: %.2f, right: %.2f ", ProjectionSettings.ClippingLeft, ProjectionSettings.ClippingTop);
-				ImGui::BulletText("bottom: %.2f, top: %.2f ", ProjectionSettings.ClippingBottom, ProjectionSettings.ClippingTop);
+				// ImGui::BulletText("left: %.2f, right: %.2f ", ProjectionSettings.ClippingLeft, ProjectionSettings.ClippingTop);
+				// ImGui::BulletText("bottom: %.2f, top: %.2f ", ProjectionSettings.ClippingBottom, ProjectionSettings.ClippingTop);
 				ImGui::SliderFloat("Near", &ProjectionSettings.ClippingNear, 0.1, 10);
 				ImGui::SliderFloat("Far", &ProjectionSettings.ClippingFar, 10, 250);
 				ImGui::Spacing();

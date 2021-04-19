@@ -139,6 +139,16 @@ namespace Nexus {
 		this->Vertices.push_back(nz);
 	}
 
+	void Object::AddNormal(glm::vec3 normal) {
+		this->Normal.push_back(normal.x);
+		this->Normal.push_back(normal.y);
+		this->Normal.push_back(normal.z);
+
+		this->Vertices.push_back(normal.x);
+		this->Vertices.push_back(normal.y);
+		this->Vertices.push_back(normal.z);
+	}
+
 	void Object::AddTexCoord(float u, float v) {
 		this->TexCoord.push_back(u);
 		this->TexCoord.push_back(v);

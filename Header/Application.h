@@ -48,10 +48,6 @@ namespace Nexus {
 		bool IsPerspective = true;
 		float Aspect = 0;
 		float OrthogonalHeight = 200.0f;
-		float ClippingLeft = 0.0f;
-		float ClippingRight = 0.0f;
-		float ClippingBottom = 0.0f;
-		float ClippingTop = 0.0f;
 		float ClippingNear = 0.1f;
 		float ClippingFar = 250.0f;
 	};
