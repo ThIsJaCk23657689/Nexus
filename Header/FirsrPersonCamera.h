@@ -25,6 +25,10 @@ namespace Nexus {
 			if (direction == CAMERA_RIGHT) {
 				this->Position += this->Right * velocity;
 			}
+
+			if (this->Restrict) {
+				this->Position = glm::clamp(this->Position, this->RestrictMin, this->RestrictMax);
+			}
 		}
 
 		void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true) override {
@@ -52,23 +56,32 @@ namespace Nexus {
 			this->WorldUp = up;
 			this->Yaw = yaw;
 			this->Pitch = pitch;
+
+			this->Restrict = false;
+			this->RestrictMin = glm::vec3(-9.8f);
+			this->RestrictMax = glm::vec3(9.8f);
+			
 			this->UpdateCameraVectors();
 		}
 
 		void SetPosition(glm::vec3 position) override {
-			this->Set(position, this->WorldUp, this->Yaw, this->Pitch);
+			this->Position = position;
+			this->UpdateCameraVectors();
 		}
 
 		void SetWorldUp(glm::vec3 world_up) override {
-			this->Set(this->Position, world_up, this->Yaw, this->Pitch);
+			this->WorldUp = world_up;
+			this->UpdateCameraVectors();
 		}
 
 		void SetYaw(float yaw) override {
-			this->Set(this->Position, this->WorldUp, yaw, this->Pitch);
+			this->Yaw = yaw;
+			this->UpdateCameraVectors();
 		}
 
 		void SetPitch(float pitch) override {
-			this->Set(this->Position, this->WorldUp, this->Yaw, pitch);
+			this->Pitch = pitch;
+			this->UpdateCameraVectors();
 		}
 	};
 }

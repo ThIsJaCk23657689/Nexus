@@ -141,19 +141,19 @@ namespace Nexus {
 			temp_normal = glm::normalize(glm::cross(vec_1, vec_2));
 			this->ViewVolumeNormal.push_back(temp_normal);
 			
-			this->AddPosition(rtnp);
+			this->AddPosition(lbnp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 0.0f);
 
-			this->AddPosition(rbnp);
+			this->AddPosition(ltnp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 1.0f);
 
-			this->AddPosition(lbnp);
+			this->AddPosition(rtnp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 1.0f);
 
-			this->AddPosition(ltnp);
+			this->AddPosition(rbnp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 0.0f);
 
@@ -163,19 +163,19 @@ namespace Nexus {
 			temp_normal = glm::normalize(glm::cross(vec_2, vec_1));
 			this->ViewVolumeNormal.push_back(temp_normal);
 			
-			this->AddPosition(rtnp);
+			this->AddPosition(ltnp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 0.0f);
 
-			this->AddPosition(rtfp);
+			this->AddPosition(ltfp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 1.0f);
 
-			this->AddPosition(ltfp);
+			this->AddPosition(rtfp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 1.0f);
 
-			this->AddPosition(ltnp);
+			this->AddPosition(rtnp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 0.0f);
 
@@ -185,19 +185,19 @@ namespace Nexus {
 			temp_normal = glm::normalize(glm::cross(vec_1, vec_2));
 			this->ViewVolumeNormal.push_back(temp_normal);
 			
-			this->AddPosition(rtnp);
+			this->AddPosition(rbnp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 0.0f);
 
-			this->AddPosition(rtfp);
+			this->AddPosition(rtnp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 1.0f);
 
-			this->AddPosition(rbfp);
+			this->AddPosition(rtfp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 1.0f);
 
-			this->AddPosition(rbnp);
+			this->AddPosition(rbfp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 0.0f);
 
@@ -207,19 +207,19 @@ namespace Nexus {
 			temp_normal = glm::normalize(glm::cross(vec_2, vec_1));
 			this->ViewVolumeNormal.push_back(temp_normal);
 			
-			this->AddPosition(rtfp);
+			this->AddPosition(rbfp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 0.0f);
 
-			this->AddPosition(rbfp);
+			this->AddPosition(rtfp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 1.0f);
 
-			this->AddPosition(lbfp);
+			this->AddPosition(ltfp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 1.0f);
 
-			this->AddPosition(ltfp);
+			this->AddPosition(lbfp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 0.0f);
 
@@ -229,19 +229,19 @@ namespace Nexus {
 			temp_normal = glm::normalize(glm::cross(vec_1, vec_2));
 			this->ViewVolumeNormal.push_back(temp_normal);
 			
-			this->AddPosition(rbnp);
+			this->AddPosition(lbfp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 0.0f);
 
-			this->AddPosition(rbfp);
+			this->AddPosition(lbnp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 1.0f);
 
-			this->AddPosition(lbfp);
+			this->AddPosition(rbnp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 1.0f);
 
-			this->AddPosition(lbnp);
+			this->AddPosition(rbfp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 0.0f);
 
@@ -251,7 +251,7 @@ namespace Nexus {
 			temp_normal = glm::normalize(glm::cross(vec_2, vec_1));
 			this->ViewVolumeNormal.push_back(temp_normal);
 			
-			this->AddPosition(ltnp);
+			this->AddPosition(lbfp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 0.0f);
 
@@ -259,7 +259,7 @@ namespace Nexus {
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(0.0f, 1.0f);
 
-			this->AddPosition(lbfp);
+			this->AddPosition(ltnp);
 			this->AddNormal(temp_normal);
 			this->AddTexCoord(1.0f, 1.0f);
 

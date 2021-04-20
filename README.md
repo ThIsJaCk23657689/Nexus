@@ -23,22 +23,18 @@ This is a framework allows you to develop a OpenGL applications quickly and more
 * 0.2.5 ImGui Debug
 * 0.2.6 Fogging
 * 0.2.7 Gamma Correction
+* 0.2.8 Geometry Shader (Normal Visiualization)
+* 0.2.9 Anti Aliasing
+* 0.3.0 ImGui Debug
+* 0.3.1 View Volume Visiualization
+* 0.3.2 Multi Screen
 
 ## Feature (Coming Soon)
-* 0.2.8 CubeMap
-
-* 0.3.0 Assimp (Model Loadder)
-* 0.3.1 Geometry Shader (Normal Visiualization)
-* 0.3.2 Instancing
-* 0.3.3 Anti Aliasing
-
-* ImGui Debug
-* View Volume Visiualization
-* Multi Screen
+* CubeMap
+* Assimp (Model Loadder)
+* 0Instancing
 * Full Screen
 * Key Frame Animation
 * Billboard
 * ROV
 * Camera
-
-光照怪怪的

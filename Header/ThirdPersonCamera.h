@@ -61,11 +61,17 @@ namespace Nexus {
 			this->WorldUp = up;
 			this->Yaw = yaw;
 			this->Pitch = pitch;
+
+			this->Restrict = false;
+			this->RestrictMin = glm::vec3(-9.8f);
+			this->RestrictMax = glm::vec3(9.8f);
+			
 			this->UpdateCameraPosition();
 		}
 
 		void SetPosition(glm::vec3 position) override {
-			this->Set(position, this->Target, this->WorldUp, this->Yaw, this->Pitch);
+			this->Position = position;
+			this->UpdateCameraPosition();
 		}
 
 		void SetTarget(glm::vec3 target) {
@@ -74,15 +80,18 @@ namespace Nexus {
 		}
 
 		void SetWorldUp(glm::vec3 world_up) override {
-			this->Set(this->Position, this->Target, world_up, this->Yaw, this->Pitch);
+			this->WorldUp = world_up;
+			this->UpdateCameraPosition();
 		}
 
 		void SetYaw(float yaw) override {
-			this->Set(this->Position, this->Target, this->WorldUp, yaw, this->Pitch);
+			this->Yaw = yaw;
+			this->UpdateCameraPosition();
 		}
 
 		void SetPitch(float pitch) override {
-			this->Set(this->Position, this->Target, this->WorldUp, this->Yaw, pitch);
+			this->Pitch = pitch;
+			this->UpdateCameraPosition();
 		}
 
 		// 縮短或拉長攝影機與物體之間的距離
@@ -103,9 +112,9 @@ namespace Nexus {
 		float Distance = 200.0f;
 		
 		void UpdateCameraVectors() override {
-			this->Front = glm::normalize(this->Position - this->Target);
-			this->Right = glm::normalize(glm::cross(this->WorldUp, this->Front));
-			this->Up = glm::normalize(glm::cross(this->Front, this->Right));
+			this->Front = glm::normalize(this->Target - this->Position);
+			this->Right = glm::normalize(glm::cross(this->Front, this->WorldUp));
+			this->Up = glm::normalize(glm::cross(this->Right, this->Front));
 		}
 		
 	private:
@@ -121,6 +130,9 @@ namespace Nexus {
 			glm::vec4 pos = translation * rotateMatrix * radius;
 
 			this->Position = glm::vec3(pos.x, pos.y, pos.z);
+			if(this->Restrict) {
+				this->Position = glm::clamp(this->Position, this->RestrictMin, this->RestrictMax);
+			}
 
 			// 算出攝影機的位置之後，就能算出攝影機的座標軸
 			this->UpdateCameraVectors();

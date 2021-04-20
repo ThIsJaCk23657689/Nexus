@@ -30,13 +30,3 @@ find_package(imgui CONFIG REQUIRED)
 find_package(implot CONFIG REQUIRED)
 find_package(Assimp CONFIG REQUIRED)
 target_link_libraries(${MY_LIBRARY} PUBLIC glfw glm::glm glad::glad imgui::imgui implot::implot assimp::assimp)
-
-# Excecutable file setting
-add_executable(${MY_PROJECT} Source/Main.cpp)
-target_link_libraries(${MY_PROJECT} PUBLIC ${MY_LIBRARY})
-
-# Copy these shader files
-add_custom_command(TARGET ${MY_PROJECT} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
-	${CMAKE_SOURCE_DIR}/Shaders/ ${CMAKE_BINARY_DIR}/Shaders/)
-add_custom_command(TARGET ${MY_PROJECT} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
-	${CMAKE_SOURCE_DIR}/Resource/ ${CMAKE_BINARY_DIR}/Resource/)

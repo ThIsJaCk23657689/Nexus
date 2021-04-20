@@ -61,6 +61,7 @@ namespace Nexus {
 
 	void Object::Draw(Nexus::Shader* shader, glm::mat4 model) {
 		shader->Use();
+		shader->SetMat3("normalModel", glm::mat3(glm::transpose(glm::inverse(model))));
 		shader->SetMat4("model", model);
 		
 		this->VAO->Bind();

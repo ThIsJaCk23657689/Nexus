@@ -139,8 +139,8 @@ namespace Nexus {
 			}
 			*/
 
-			ImGui::SliderFloat(std::string("Linear").c_str(), (float*)&this->Linear, 0.00014f, 0.7f);
-			ImGui::SliderFloat(std::string("Quadratic").c_str(), (float*)&this->Quadratic, 0.00007, 0.5f);
+			ImGui::SliderFloat(std::string("Linear").c_str(), &this->Linear, 0.00014f, 0.7f);
+			ImGui::SliderFloat(std::string("Quadratic").c_str(), &this->Quadratic, 0.00007, 0.5f);
 			ImGui::Checkbox(std::string("Enable").c_str(), &this->Enable);
 			ImGui::Spacing();
 		}
@@ -206,10 +206,9 @@ namespace Nexus {
 			ImGui::SliderFloat3(std::string("Ambient").c_str(), (float*)&this->Ambient, 0.0f, 1.0f);
 			ImGui::SliderFloat3(std::string("Diffuse").c_str(), (float*)&this->Diffuse, 0.0f, 1.0f);
 			ImGui::SliderFloat3(std::string("Specular").c_str(), (float*)&this->Specular, 0.0f, 1.0f);
-			ImGui::SliderFloat(std::string("Linear").c_str(), (float*)&this->Linear, 0.00014f, 0.7f);
-			ImGui::SliderFloat(std::string("Quadratic").c_str(), (float*)&this->Quadratic, 0.00007, 0.5f);
-			ImGui::SliderFloat(std::string("Cutoff").c_str(), (float*)&this->Cutoff, 0.0f, this->OuterCutoff - 1);
-			ImGui::SliderFloat(std::string("OuterCutoff").c_str(), (float*)&this->OuterCutoff, this->Cutoff + 1, 40.0f);
+			ImGui::SliderFloat(std::string("Linear").c_str(), &this->Linear, 0.00014f, 0.7f);
+			ImGui::SliderFloat(std::string("Quadratic").c_str(), &this->Quadratic, 0.00007, 0.5f);
+			ImGui::DragFloatRange2("Cutoff & OuterCutoff", &this->Cutoff, &this->OuterCutoff, 0.1f, 0.0f, 40.0f);
 			ImGui::Checkbox(std::string("Enable").c_str(), &this->Enable);
 			ImGui::Spacing();
 		}

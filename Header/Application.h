@@ -30,6 +30,7 @@ namespace Nexus {
 		bool EnableFullScreen = false;
 		bool EnableDebugCallback = true;
 		bool EnableGhostMode = true;
+		bool EnableBackFaceCulling = false;
 		bool ShowOriginAnd3Axes = false;
 		bool NormalVisualize = false;
 

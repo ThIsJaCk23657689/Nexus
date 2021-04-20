@@ -38,6 +38,7 @@ namespace Nexus {
 		glm::vec3 GetRight() const { return this->Right; }
 		float GetYaw() const { return this->Yaw; }
 		float GetPitch() const { return this->Pitch; }
+		bool GetRestrict() const { return this->Restrict; }
 		float GetMovementSpeed() const { return this->MovementSpeed; }
 		float GetMouseSensitivity() const { return this->MouseSensitivity; }
 		float GetFOV() const { return this->Zoom; }
@@ -47,6 +48,8 @@ namespace Nexus {
 		virtual void SetWorldUp(glm::vec3 world_up) {};
 		virtual void SetYaw(float yaw) {};
 		virtual void SetPitch(float pitch) {};
+		void SetRestrict(bool restrict);
+		void SetRestrictValue(glm::vec3 min, glm::vec3 max);
 		void SetMovementSpeed(float speed);
 		void SetMouseSensitivity(float sensitivity);
 		void SetZoom(float zoom);
@@ -60,6 +63,10 @@ namespace Nexus {
 		glm::vec3 Up;
 		glm::vec3 Right;
 		glm::vec3 WorldUp;
+
+		bool Restrict;
+		glm::vec3 RestrictMin;
+		glm::vec3 RestrictMax;
 
 		float Yaw;
 		float Pitch;

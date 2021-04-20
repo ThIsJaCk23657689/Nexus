@@ -24,6 +24,15 @@ namespace Nexus {
 	}
 
 	// Setter
+	void Camera::SetRestrict(bool restrict) {
+		this->Restrict = restrict;
+	}
+
+	void Camera::SetRestrictValue(glm::vec3 min, glm::vec3 max) {
+		this->RestrictMax = max - glm::vec3(0.2f);
+		this->RestrictMin = min + glm::vec3(0.2f);
+	}
+	
 	void Camera::SetMovementSpeed(float speed) {
 		this->MovementSpeed = speed;
 	}

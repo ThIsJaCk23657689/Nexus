@@ -66,53 +66,53 @@ namespace Nexus {
 			this->AddTexCoord(1.0f, 0.0f);
 
 			// ========== Back ==========
-			this->AddPosition(-0.5f, -0.5f, -0.5f);
+			this->AddPosition(0.5f, -0.5f, -0.5f);
 			this->AddNormal(0.0f, 0.0f, -1.0f);
 			this->AddTexCoord(0.0f, 0.0f);
 
-			this->AddPosition(-0.5f, 0.5f, -0.5f);
+			this->AddPosition(0.5f, 0.5f, -0.5f);
 			this->AddNormal(0.0f, 0.0f, -1.0f);
 			this->AddTexCoord(0.0f, 1.0f);
 
-			this->AddPosition(0.5f, 0.5f, -0.5f);
+			this->AddPosition(-0.5f, 0.5f, -0.5f);
 			this->AddNormal(0.0f, 0.0f, -1.0f);
 			this->AddTexCoord(1.0f, 1.0f);
 
-			this->AddPosition(0.5f, -0.5f, -0.5f);
+			this->AddPosition(-0.5f, -0.5f, -0.5f);
 			this->AddNormal(0.0f, 0.0f, -1.0f);
 			this->AddTexCoord(1.0f, 0.0f);
 
 			// ========== Bottom ==========
-			this->AddPosition(-0.5f, -0.5f, 0.5f);
+			this->AddPosition(-0.5f, -0.5f, -0.5f);
 			this->AddNormal(0.0f, -1.0f, 0.0f);
 			this->AddTexCoord(0.0f, 0.0f);
 
-			this->AddPosition(-0.5f, -0.5f, -0.5f);
+			this->AddPosition(-0.5f, -0.5f, 0.5f);
 			this->AddNormal(0.0f, -1.0f, 0.0f);
 			this->AddTexCoord(0.0f, 1.0f);
 
-			this->AddPosition(0.5f, -0.5f, -0.5f);
+			this->AddPosition(0.5f, -0.5f, 0.5f);
 			this->AddNormal(0.0f, -1.0f, 0.0f);
 			this->AddTexCoord(1.0f, 1.0f);
 
-			this->AddPosition(0.5f, -0.5f, 0.5f);
+			this->AddPosition(0.5f, -0.5f, -0.5f);
 			this->AddNormal(0.0f, -1.0f, 0.0f);
 			this->AddTexCoord(1.0f, 0.0f);
 
 			// ========== Left ==========
-			this->AddPosition(-0.5f, -0.5f, 0.5f);
+			this->AddPosition(-0.5f, -0.5f, -0.5f);
 			this->AddNormal(-1.0f, 0.0f, 0.0f);
 			this->AddTexCoord(0.0f, 0.0f);
 
-			this->AddPosition(-0.5f, 0.5f, 0.5f);
+			this->AddPosition(-0.5f, 0.5f, -0.5f);
 			this->AddNormal(-1.0f, 0.0f, 0.0f);
 			this->AddTexCoord(0.0f, 1.0f);
 
-			this->AddPosition(-0.5f, 0.5f, -0.5f);
+			this->AddPosition(-0.5f, 0.5f, 0.5f);
 			this->AddNormal(-1.0f, 0.0f, 0.0f);
 			this->AddTexCoord(1.0f, 1.0f);
 
-			this->AddPosition(-0.5f, -0.5f, -0.5f);
+			this->AddPosition(-0.5f, -0.5f, 0.5f);
 			this->AddNormal(-1.0f, 0.0f, 0.0f);
 			this->AddTexCoord(1.0f, 0.0f);
 

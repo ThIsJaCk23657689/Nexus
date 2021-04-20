@@ -58,6 +58,10 @@ namespace Nexus {
 			return this->Color;
 		}
 
+		void SetDensity(float density) {
+			this->Density = density;
+		}
+
 		void GenerateDebugUI() {
 			// ImGui::Checkbox(std::string("Manual Control").c_str(), &fogManual);
 			ImGui::SliderFloat4(std::string("Color").c_str(), (float*)&this->Color, 0.0f, 1.0f);
