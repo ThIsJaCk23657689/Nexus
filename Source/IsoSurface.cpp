@@ -19,7 +19,8 @@ namespace Nexus {
 
 		this->RawDataFilePath = raw_path;
 		this->InfDataFilePath = info_path;
-
+		this->IsEqualization = false;
+		
 		// Loading Volume Data
 		this->RawData = Nexus::FileLoader::LoadRawFile(raw_path);
 		Logger::Message(LOG_INFO, "Starting initialize voxels data...");
@@ -154,6 +155,8 @@ namespace Nexus {
 	}
 	
 	void IsoSurface::IsoValueHistogramEqualization() {
+		this->IsEqualization = true;
+		
 		// 先取得舊的 histogram，並重新初始化
 		std::vector<float> old_histogram = this->IsoValueHistogram;
 		this->IsoValueHistogram = std::vector<float>(256, 0.0f);
@@ -213,7 +216,7 @@ namespace Nexus {
 				} else {
 					temp = std::to_string(static_cast<int>(this->IsoValue_Boundary[(x_bin * i)].first));
 				}
-				std::cout << temp.c_str() << std::endl;
+				// std::cout << temp.c_str() << std::endl;
 				result.push_back(const_cast<char*>(temp.c_str()));
 			}
 		} else {
@@ -225,7 +228,7 @@ namespace Nexus {
 				} else {
 					temp = std::to_string(static_cast<int>(this->Gradient_Boundary[(y_bin * i)].first));
 				}
-				std::cout << temp.c_str() << std::endl;
+				// std::cout << temp.c_str() << std::endl;
 				result.push_back(const_cast<char*>(temp.c_str()));
 			}
 		}
@@ -268,7 +271,9 @@ namespace Nexus {
 		
 		shader->Use();
 		shader->SetMat4("model", model);
-
+		shader->SetBool("is_volume", true);
+		shader->SetInt("transfer_function", 1);
+		
 		// this->VAO->Bind();
 		glBindVertexArray(VAO);
 		if (this->EnableWireFrameMode) {

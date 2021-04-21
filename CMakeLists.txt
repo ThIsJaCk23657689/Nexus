@@ -8,11 +8,17 @@ set(NEXUS_INCLUDE_DIRS
 	"Header"
 	"Header/Geometry/2D"
 	"Header/Geometry/3D"
-	"External/stb_image")
+	"External/stb_image"
+	"External/imgui"
+	"External/implot"
+	"External/imgui-transfer-function")
 
 set(SOURCE_DIRS
 	"Source/*.cpp"
-	"External/stb_image/*.cpp")
+	"External/stb_image/*.cpp"
+	"External/imgui/*.cpp"
+	"External/implot/*.cpp"
+	"External/imgui-transfer-function/*.cpp")
 
 project (${MY_PROJECT} LANGUAGES CXX C)
 
@@ -26,7 +32,5 @@ target_include_directories(${MY_LIBRARY} PUBLIC ${NEXUS_INCLUDE_DIRS})
 find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(glad CONFIG REQUIRED)
-find_package(imgui CONFIG REQUIRED)
-find_package(implot CONFIG REQUIRED)
 find_package(Assimp CONFIG REQUIRED)
-target_link_libraries(${MY_LIBRARY} PUBLIC glfw glm::glm glad::glad imgui::imgui implot::implot assimp::assimp)
+target_link_libraries(${MY_LIBRARY} PUBLIC glfw glm::glm glad::glad assimp::assimp)

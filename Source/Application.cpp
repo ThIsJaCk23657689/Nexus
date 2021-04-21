@@ -205,7 +205,6 @@ namespace Nexus {
 		ImGui::CreateContext();
 		ImPlot::CreateContext();
 		ImGui::StyleColorsDark();
-		// ImGuiIO& io = ImGui::GetIO();
 		ImGui_ImplGlfw_InitForOpenGL(Window, true);
 		ImGui_ImplOpenGL3_Init(glsl_version.c_str());
 

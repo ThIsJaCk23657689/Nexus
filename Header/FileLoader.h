@@ -1,8 +1,11 @@
 #pragma once
 #include <Windows.h>
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <vector>
+
+#include "IsoSurface.h"
 #include "Logger.h"
 
 namespace Nexus {
@@ -59,6 +62,21 @@ namespace Nexus {
 			}
 
 			return ShaderStream;
+		}
+
+		static void OutputTransferFunction(const char* path, std::vector<float> &transfer, IsoSurface* iso_surface) {
+			Logger::Message(LOG_INFO, path);
+
+			std::ofstream MyFile(path);
+			MyFile << "Raw File Path: " << iso_surface->GetRawDataFilePath() << std::endl;
+			MyFile << "Inf File Path: " << iso_surface->GetRawDataFilePath() << std::endl;
+			MyFile << "Equalization: " << iso_surface->GetIsEqualization() << std::endl;
+			MyFile << "Resolutions: " << "(" << iso_surface->GetDataResolutions().x << ", " << iso_surface->GetDataResolutions().y << ", " << iso_surface->GetDataResolutions().z << ")" << std::endl;
+			MyFile << "Data Value\t\tRed\t\tGreen\t\tBlue\t\tAlpha\t\t\n";
+			for (unsigned i = 0; i < transfer.size(); i = i + 4) {
+				MyFile << (i / 4.0f) << "\t\t\t" << round(transfer[i] * 100) / 100.0f << "\t\t" << round(transfer[i + 1] * 100) / 100.0f << "\t\t" << round(transfer[i + 2] * 100) / 100.0f << "\t\t" << round(transfer[i + 3] * 100) / 100.0f << "\t\t\n";
+			}
+			MyFile.close();
 		}
 	private:
 

@@ -37,7 +37,7 @@ namespace Nexus {
 		void Draw(Nexus::Shader* shader, glm::mat4 model = glm::mat4(1.0f));
 		void Debug();
 		
-		~IsoSurface() {};
+		~IsoSurface() {}
 
 		bool GetIsInitialize() const {
 			return this->IsInitialize;
@@ -45,6 +45,10 @@ namespace Nexus {
 
 		bool GetIsReadyToDraw() const {
 			return this->IsReadyToDraw;
+		}
+
+		bool GetIsEqualization() const {
+			return this->IsEqualization;
 		}
 
 		bool GetWireFrameMode() const {
@@ -72,6 +76,9 @@ namespace Nexus {
 		std::vector<float> GetGradientHistogram();
 		std::vector<float> GetGradientHeatmap();
 		std::vector<char*> GetGradientHeatmapAxisLabels(bool is_axis_x);
+		std::string GetRawDataFilePath() const { return this->RawDataFilePath; }
+		std::string GetInfDataFilePath() const { return this->InfDataFilePath; }
+		glm::vec3 GetDataResolutions() const { return glm::vec3(this->Settings.Resolution[0], this->Settings.Resolution[1], this->Settings.Resolution[2]); }
 		unsigned int GetVoxelCount() const{ return (unsigned int)this->RawData.size(); }
 		unsigned int GetTriangleCount() const{ return (unsigned int)this->Vertices.size() / 3; }
 		unsigned int GetVertexCount() const { return (unsigned int)this->Vertices.size(); }
@@ -383,6 +390,7 @@ namespace Nexus {
 		std::vector<float> Vertices;
 		std::vector<float> Position;
 		std::vector<float> Normal;
+		bool IsEqualization = false;
 		std::vector<float> IsoValueHistogram;
 		std::vector<float> GradientHistogram;
 		std::vector<float> GradientHeatmap;
