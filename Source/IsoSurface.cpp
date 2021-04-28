@@ -29,6 +29,9 @@ namespace Nexus {
 		this->GradientMagnitudes.clear();
 		this->ComputeAllNormals(max_gradient);
 
+		// 索引是 0 ~ 3409119 個，代表每一個 voxel 上面 gradient 的長度，介於 1 到 max_gradient 之間。
+		Utill::Show1DVectorStatistics(this->GradientMagnitudes, "Gradient Histogram - Before");
+
 		// 計算 Iso value Histogram、Gradient Histogram 和 heatmap
 		this->GenerateIsoValueHistogram();
 		this->GenerateGradientHistogram();
@@ -36,8 +39,7 @@ namespace Nexus {
 
 		this->IsInitialize = true;
 
-		// 索引是 0 ~ 3409119 個，代表每一個 voxel 上面 gradient 的長度，介於 1 到 max_gradient 之間。
-		// Utill::Show1DVectorStatistics(this->GradientMagnitudes, "Gradient Before");
+		
 	
 		Logger::Message(LOG_INFO, "Initialize voxels data completed.");
 	}
@@ -125,7 +127,7 @@ namespace Nexus {
 		}
 
 		// 顯示統計資訊
-		// Utill::Show1DVectorStatistics(this->GradientMagnitudes, "Gradient Histogram");
+		Utill::Show1DVectorStatistics(this->GradientMagnitudes, "Gradient Histogram - After");
 	}
 	
 	void IsoSurface::GenerateGradientHeatMap() {
