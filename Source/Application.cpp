@@ -22,6 +22,12 @@ namespace Nexus {
 		
 		while(!glfwWindowShouldClose(Window)) {
 
+			Settings.SkipApplicationIO = false;
+			// ImGUI Event Detect
+			if(Settings.ImGui_IO.WantCaptureKeyboard || Settings.ImGui_IO.WantCaptureMouse) {
+				Settings.SkipApplicationIO = true;
+			}
+
 			// Calculate the delta time
 			CurrentTime = (float)glfwGetTime();
 			DeltaTime = CurrentTime - LastTime;
@@ -207,6 +213,7 @@ namespace Nexus {
 		ImGui::StyleColorsDark();
 		ImGui_ImplGlfw_InitForOpenGL(Window, true);
 		ImGui_ImplOpenGL3_Init(glsl_version.c_str());
+		Settings.ImGUI_IO = ImGui::GetIO();
 
 		// Mouse Initialize
 		LastX = (float)Settings.Width / 2.0f;
