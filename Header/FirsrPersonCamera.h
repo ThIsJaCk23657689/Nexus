@@ -38,6 +38,13 @@ namespace Nexus {
 			this->Yaw += xoffset;
 			this->Pitch += yoffset;
 
+			if (this->Yaw >= 360.0f) {
+				this->Yaw = 0.0f;
+			}
+			if (this->Yaw <= -360.0f ) {
+				this->Yaw = 0.0f;
+			}
+
 			if (constrainPitch) {
 				if (this->Pitch > 89.0f) {
 					this->Pitch = 89.0f;
