@@ -1,14 +1,78 @@
 #include "Application.h"
 #include "Logger.h"
 
-#include <iostream>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <implot.h>
+#include <iostream>
 
 namespace Nexus {
 
+	void Application::InitializeBase() {
+
+		Logger::ShowMe();
+
+		// Initialize GLFW
+		if (!glfwInit()) {
+			Logger::Message(LOG_ERROR, "Oops! Failed to initialize GLFW. :(");
+			glfwTerminate();
+			exit(-1);
+		}
+		Logger::Message(LOG_DEBUG, "Initialize GLFW successfully.");
+
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+		glfwWindowHint(GLFW_SAMPLES, 8);
+
+		if (Settings.EnableDebugCallback) {
+			glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+		}
+
+		// Create a window
+		Window = glfwCreateWindow(Settings.Width, Settings.Height, Settings.WindowTitle.c_str(), nullptr, nullptr);
+		if (!Window) {
+			Logger::Message(LOG_ERROR, "Oops! Failed to create a GLFW window. :(");
+			glfwTerminate();
+			exit(-1);
+		}
+		Logger::Message(LOG_DEBUG, "Create a GLFW window successfully.");
+
+		// Register callbacks and settings
+		glfwMakeContextCurrent(Window);
+		glfwSetWindowUserPointer(Window, this);
+		glfwSetFramebufferSizeCallback(Window, GLFWFrameBufferSizeCallbackHelper);
+		glfwSetKeyCallback(Window, GLFWKeyCallbackHelper);
+		glfwSetCursorPosCallback(Window, GLFWMouseCallbackHelper);
+		glfwSetMouseButtonCallback(Window, GLFWMouseButtonCallbackHelper);
+		glfwSetScrollCallback(Window, GLFWScrollCallbackHelper);
+		glfwSetInputMode(Window, GLFW_CURSOR, Settings.EnableCursor ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+
+		// Initialize GLAD (Must behind the create window)
+		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+			Logger::Message(LOG_ERROR, "Failed to initialize GLAD.");
+			glfwTerminate();
+			exit(-1);
+		}
+		Logger::Message(LOG_DEBUG, "Initialize GLAD successfully.");
+
+		// Initialize ImGui and bind to GLFW and OpenGL3(glad)
+		std::string glsl_version = "#version 330";
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
+		ImPlot::CreateContext();
+		ImGuiSettings.ImGui_IO = &ImGui::GetIO();
+		ImGui_ImplGlfw_InitForOpenGL(Window, true);
+		ImGui_ImplOpenGL3_Init(glsl_version.c_str());
+		ImGui::StyleColorsDark();
+		ImGuiSettings.ImGui_IO->Fonts->AddFontFromFileTTF(ImGuiSettings.StringFontPath.c_str(), ImGuiSettings.FontSize);
+
+		// Mouse Initialize
+		LastX = static_cast<float>(Settings.Width / 2.0f);
+		LastY = static_cast<float>(Settings.Height / 2.0f);
+	}
+	
 	int Application::Run() {
 		
 		InitializeBase();
@@ -19,13 +83,13 @@ namespace Nexus {
 		const GLubyte* OpenGLRenderer = glGetString(GL_RENDERER);
 		const GLubyte* OpenGLVersion = glGetString(GL_VERSION);
 		Logger::ShowInitInfo(OpenGLVender, OpenGLRenderer, OpenGLVersion);
-		
+
 		while(!glfwWindowShouldClose(Window)) {
 
-			Settings.SkipApplicationIO = false;
 			// ImGUI Event Detect
-			if(Settings.ImGui_IO.WantCaptureKeyboard || Settings.ImGui_IO.WantCaptureMouse) {
-				Settings.SkipApplicationIO = true;
+			ImGuiSettings.SkipApplicationIO = false;
+			if (ImGuiSettings.ImGui_IO->WantCaptureKeyboard || ImGuiSettings.ImGui_IO->WantCaptureMouse) {
+				ImGuiSettings.SkipApplicationIO = true;
 			}
 
 			// Calculate the delta time
@@ -40,7 +104,7 @@ namespace Nexus {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
-			// Feed inputs to dear imgui start new frame
+			// Start the Dear ImGui frame
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
@@ -101,6 +165,9 @@ namespace Nexus {
 	}
 
 	void Application::GLFWProcessInput(GLFWwindow* window) {
+		if (ImGuiSettings.SkipApplicationIO) {
+			return;
+		}
 		// Handle camera moving
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
 			OnProcessInput(GLFW_KEY_W);
@@ -117,6 +184,9 @@ namespace Nexus {
 	}
 	
 	void Application::GLFWKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+		if (ImGuiSettings.SkipApplicationIO) {
+			return;
+		}
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
 		}
@@ -129,6 +199,9 @@ namespace Nexus {
 	}
 	
 	void Application::GLFWMouseCallback(GLFWwindow* window, double xpos, double ypos) {
+		if (ImGuiSettings.SkipApplicationIO) {
+			return;
+		}
 		// In the first time u create a window, ur cursor may not in the middle of the window.
 		if (FirstMouse) {
 			LastX = xpos;
@@ -146,6 +219,9 @@ namespace Nexus {
 	}
 	
 	void Application::GLFWMouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+		if (ImGuiSettings.SkipApplicationIO) {
+			return;
+		}
 		if (action == GLFW_PRESS) {
 			OnMouseButtonPress(button);
 		} else if (action == GLFW_RELEASE) {
@@ -154,70 +230,10 @@ namespace Nexus {
 	}
 	
 	void Application::GLFWScrollCallback(GLFWwindow* window, double xpos, double ypos) {
+		if(ImGuiSettings.SkipApplicationIO) {
+			return;
+		}
 		OnMouseScroll((float)ypos);
-	}
-
-	void Application::InitializeBase() {
-
-		Logger::ShowMe();
-		
-		// Initialize GLFW
-		if (!glfwInit()) {
-			Logger::Message(LOG_ERROR, "Oops! Failed to initialize GLFW. :(");
-			glfwTerminate();
-			exit(-1);
-		}
-		Logger::Message(LOG_DEBUG, "Initialize GLFW successfully.");
-		
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-		glfwWindowHint(GLFW_SAMPLES, 8);
-
-		if(Settings.EnableDebugCallback) {
-			glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
-		}
-
-		// Create a window
-		Window = glfwCreateWindow(Settings.Width, Settings.Height, Settings.WindowTitle.c_str(), nullptr, nullptr);
-		if (!Window) {
-			Logger::Message(LOG_ERROR, "Oops! Failed to create a GLFW window. :(");
-			glfwTerminate();
-			exit(-1);
-		}
-		Logger::Message(LOG_DEBUG, "Create a GLFW window successfully.");
-
-		// Register callbacks and settings
-		glfwMakeContextCurrent(Window);
-		glfwSetWindowUserPointer(Window, this);
-		glfwSetFramebufferSizeCallback(Window, GLFWFrameBufferSizeCallbackHelper);
-		glfwSetKeyCallback(Window, GLFWKeyCallbackHelper);
-		glfwSetCursorPosCallback(Window, GLFWMouseCallbackHelper);
-		glfwSetMouseButtonCallback(Window, GLFWMouseButtonCallbackHelper);
-		glfwSetScrollCallback(Window, GLFWScrollCallbackHelper);
-		glfwSetInputMode(Window, GLFW_CURSOR, Settings.EnableCursor ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
-
-		// Initialize GLAD (Must behind the create window)
-		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-			Logger::Message(LOG_ERROR, "Failed to initialize GLAD.");
-			glfwTerminate();
-			exit(-1);
-		}
-		Logger::Message(LOG_DEBUG, "Initialize GLAD successfully.");
-
-		// Initialize ImGui and bind to GLFW and OpenGL3(glad)
-		std::string glsl_version = "#version 330";
-		IMGUI_CHECKVERSION();
-		ImGui::CreateContext();
-		ImPlot::CreateContext();
-		ImGui::StyleColorsDark();
-		ImGui_ImplGlfw_InitForOpenGL(Window, true);
-		ImGui_ImplOpenGL3_Init(glsl_version.c_str());
-		Settings.ImGUI_IO = ImGui::GetIO();
-
-		// Mouse Initialize
-		LastX = (float)Settings.Width / 2.0f;
-		LastY = (float)Settings.Height / 2.0f;
 	}
 
 	glm::mat4 Application::GetPerspectiveProjMatrix(float fovy, float ascept, float znear, float zfar) const {

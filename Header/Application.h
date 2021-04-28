@@ -1,15 +1,10 @@
 #pragma once
-
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
-#include <implot.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -45,8 +40,6 @@ namespace Nexus {
 		bool UseGamma = false;
 		float GammaValue = 1.0f / 2.2f;
 
-		ImGuiIO ImGui_IO;
-		bool SkipApplicationIO = false;
 		DisplayMode CurrentDisplyMode = DISPLAY_MODE_DEFAULT;
 	};
 
@@ -56,6 +49,13 @@ namespace Nexus {
 		float OrthogonalHeight = 200.0f;
 		float ClippingNear = 0.1f;
 		float ClippingFar = 250.0f;
+	};
+
+	struct ImGuiConfig {
+		ImGuiIO* ImGui_IO;
+		float FontSize = 18.0f;
+		std::string StringFontPath = "Resource/Fonts/ComicNeue-Regular.ttf";
+		bool SkipApplicationIO = false;
 	};
 
 	class Application {
@@ -93,6 +93,7 @@ namespace Nexus {
 		
 		ApplicationSettings Settings;
 		ProjectionConfig ProjectionSettings;
+		ImGuiConfig ImGuiSettings;
 		
 	private:
 		void InitializeBase();
