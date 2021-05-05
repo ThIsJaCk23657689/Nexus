@@ -1,12 +1,10 @@
 #pragma once
-
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
+#include <imgui.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
 #include <string>
 #include <vector>
 
@@ -53,6 +51,13 @@ namespace Nexus {
 		float ClippingFar = 250.0f;
 	};
 
+	struct ImGuiConfig {
+		ImGuiIO* ImGui_IO;
+		float FontSize = 18.0f;
+		std::string StringFontPath = "Resource/Fonts/ComicNeue-Regular.ttf";
+		bool SkipApplicationIO = false;
+	};
+
 	class Application {
 	public:
 		virtual void Initialize() = 0;
@@ -88,6 +93,7 @@ namespace Nexus {
 		
 		ApplicationSettings Settings;
 		ProjectionConfig ProjectionSettings;
+		ImGuiConfig ImGuiSettings;
 		
 	private:
 		void InitializeBase();

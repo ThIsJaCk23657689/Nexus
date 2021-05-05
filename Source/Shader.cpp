@@ -120,7 +120,7 @@ namespace Nexus {
 
 		GLint location = glGetUniformLocation(this->ID, name.c_str());
 		if (location == -1) {
-			Logger::Message(LOG_WARNING, "The uniform variable <" + name + "> doesn't exist.");
+			Logger::Message(LOG_WARNING, "The uniform variable <" + name + "> doesn't exist in this shader ID: " + std::to_string(this->ID));
 		}
 
 		UniformLocationCache[name] = location;
@@ -138,7 +138,7 @@ namespace Nexus {
 				Logger::Message(LOG_ERROR, infoLog);
 				return true;
 			}
-			Logger::Message(LOG_DEBUG, "Created a shader program successfully.");
+			Logger::Message(LOG_DEBUG, "Created a shader program successfully, Shader ID: " + std::to_string(this->ID));
 		} else {
 			glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 			if (!success) {
@@ -148,7 +148,7 @@ namespace Nexus {
 				Logger::Message(LOG_ERROR, infoLog);
 				return true;
 			}
-			Logger::Message(LOG_DEBUG, "Compiled a " + this->GetShaderTypeString(type) + " shader successfully.");
+			Logger::Message(LOG_DEBUG, "Compiled a " + this->GetShaderTypeString(type) + " shader successfully. Filepath: " + filePath);
 		}
 		return false;
 	}

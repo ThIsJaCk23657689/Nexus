@@ -76,7 +76,8 @@ namespace Nexus {
 		}
 
 		void GenerateDebugUI() {
-			ImGui::Text(std::string("Direction: (%.2f, %.2f, %.2f)").c_str(), this->Direction.x, this->Direction.y, this->Direction.z);
+			ImGui::Text(std::string("Position: (%.2f, %.2f, %.2f)").c_str(), this->Direction.x * -1, this->Direction.y * -1, this->Direction.z * -1);
+			ImGui::SliderFloat3(std::string("Direction").c_str(), (float*)&this->Direction, -50.0f, 50.0f);
 			ImGui::SliderFloat3(std::string("Ambient").c_str(), (float*)&this->Ambient, 0.0f, 1.0f);
 			ImGui::SliderFloat3(std::string("Diffuse").c_str(), (float*)&this->Diffuse, 0.0f, 1.0f);
 			ImGui::SliderFloat3(std::string("Specular").c_str(), (float*)&this->Specular, 0.0f, 1.0f);
