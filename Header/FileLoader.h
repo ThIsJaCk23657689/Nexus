@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <regex>
 
 #include "IsoSurface.h"
 #include "Logger.h"
@@ -29,6 +30,54 @@ namespace Nexus {
 			}
 
 			return file_names;
+		}
+
+		static std::string LoadInfoFile(const std::string& path) {
+			std::regex Resolution_reg("Resolution");
+			std::regex VoxelSize_reg("VoxelSize");
+			std::regex SampleType_reg("SampleType");
+			std::regex Endian_reg("Endian");
+			
+			std::ifstream file(path);
+			std::string str;
+			std::cout << "gegeg";
+			while (std::getline(file, str)) {
+				// process string ...
+				std::cout << str << "\t result: " << std::regex_match(str, Resolution_reg);
+				std::cout << "ewgegege";
+				
+				if(std::regex_match(str, Resolution_reg)) {
+					std::cout << "Resolution";
+				}
+				if (std::regex_match(str, VoxelSize_reg)) {
+					std::cout << "VoxelSize";
+				}
+				if (std::regex_match(str, SampleType_reg)) {
+					std::cout << "SampleType";
+				}
+				if (std::regex_match(str, Endian_reg)) {
+					std::cout << "Endian";
+				}
+				std::cout << std::endl;
+			}
+			
+			std::ifstream info_file;
+			std::stringstream info_stream;
+			info_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+			try {
+				// Open files and loaded.
+				info_file.open(path);
+				info_stream << info_file.rdbuf();
+				info_file.close();
+			} catch (std::ifstream::failure& e) {
+				// Handle Failure
+				Nexus::Logger::Message(LOG_ERROR, "Failed to load info file. Filepath: " + path);
+				exit(-1);
+			}
+
+			const std::string& info_source = info_stream.str();
+
+			return info_source;
 		}
 		
 		static std::vector<unsigned char> LoadRawFile(const std::string& path) {

@@ -20,6 +20,10 @@ namespace Nexus {
 		this->RawDataFilePath = raw_path;
 		this->InfDataFilePath = info_path;
 		this->IsEqualization = false;
+
+		// Loading Info File
+		const std::string InfoData = Nexus::FileLoader::LoadInfoFile(info_path);
+		// std::cout << InfoData << std::endl;
 		
 		// Loading Volume Data
 		this->RawData = Nexus::FileLoader::LoadRawFile(raw_path);
