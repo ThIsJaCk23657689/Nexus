@@ -12,18 +12,14 @@ namespace Nexus {
 	void IsoSurface::Initialize(const std::string& info_path, const std::string& raw_path, float max_gradient) {
 		Logger::Message(LOG_INFO, "Starting loading volume data: " + raw_path);
 		this->IsInitialize = false;
-		Settings.Resolution[0] = 149;
-		Settings.Resolution[1] = 208;
-		Settings.Resolution[2] = 110;
-		Settings.DataType = "unsigned char";
-
+		this->IsEqualization = false;
+		
 		this->RawDataFilePath = raw_path;
 		this->InfDataFilePath = info_path;
-		this->IsEqualization = false;
 
 		// Loading Info File
-		const std::string InfoData = Nexus::FileLoader::LoadInfoFile(info_path);
-		// std::cout << InfoData << std::endl;
+		this->InfData = Nexus::FileLoader::LoadInfoFile(info_path);
+		GetAttributesFromInfoFile();
 		
 		// Loading Volume Data
 		this->RawData = Nexus::FileLoader::LoadRawFile(raw_path);
@@ -34,7 +30,7 @@ namespace Nexus {
 		this->ComputeAllNormals(max_gradient);
 
 		// 索引是 0 ~ 3409119 個，代表每一個 voxel 上面 gradient 的長度，介於 1 到 max_gradient 之間。
-		Utill::Show1DVectorStatistics(this->GradientMagnitudes, "Gradient Histogram - Before");
+		// Utill::Show1DVectorStatistics(this->GradientMagnitudes, "Gradient Histogram - Before");
 
 		// 計算 Iso value Histogram、Gradient Histogram 和 heatmap
 		this->GenerateIsoValueHistogram();
@@ -42,10 +38,97 @@ namespace Nexus {
 		this->GenerateGradientHeatMap();
 
 		this->IsInitialize = true;
-
-		
-	
 		Logger::Message(LOG_INFO, "Initialize voxels data completed.");
+	}
+
+	void IsoSurface::GetAttributesFromInfoFile() {
+		glm::vec3 resolution(0.0f);
+		glm::vec3 voxelsize(0.0f);
+		std::string sampletype;
+		std::string endian;
+
+		std::stringstream info_ss = std::stringstream{ this->InfData };
+		std::string line;
+		
+		std::vector<std::regex> RegFormat = {
+			std::regex("Resolution|resolution"),
+			std::regex("VoxelSize|ratio"),
+			std::regex("SampleType|sample-type"),
+			std::regex("Endian")
+		};
+
+		while (std::getline(info_ss, line)) {
+			std::vector<bool> result;
+			for (auto i : RegFormat) {
+				result.push_back(std::regex_search(line, i));
+			}
+
+			std::cout << line << "\t result: ";
+			for (auto i : result) {
+				std::cout << std::to_string(i);
+			}
+
+			if (std::regex_search(line, RegFormat[0])) {
+				// 如果是 Resolution，格式通常是 Resolution=149:208:110、resolution=256x256x256。
+				// 先找出 = 的位置後，擷取剩下的字串，並利用:來進行切割(或x來切割)。
+				std::vector<std::string> resolution_str;
+				if(line.find("x") == std::string::npos) {
+					// 如果找不到 x 就用 : 去切割
+					resolution_str = Utill::Split(line.substr(line.find("=") + 1), ":");
+				} else {
+					resolution_str = Utill::Split(line.substr(line.find("=") + 1), "x");
+				}
+				
+				resolution.x = std::stof(resolution_str[0]);
+				resolution.y = std::stof(resolution_str[1]);
+				resolution.z = std::stof(resolution_str[2]);
+
+				Attributes.Resolution.x = std::stof(resolution_str[0]);
+				Attributes.Resolution.y = std::stof(resolution_str[1]);
+				Attributes.Resolution.z = std::stof(resolution_str[2]);
+				
+				std::cout << resolution.x << " ";
+				std::cout << resolution.y << " ";
+				std::cout << resolution.z << " ";
+			}
+
+			if (std::regex_search(line, RegFormat[1])) {
+				// 如果是 VoxelSize，格式通常是 VoxelSize=1.000000:1.000000:1.000000、ratio=1:0.5:1。
+				// 先找出 = 的位置後，擷取剩下的字串，並利用:來進行切割。
+				std::vector<std::string> voxelsize_str = Utill::Split(line.substr(line.find("=") + 1), ":");
+
+				voxelsize.x = std::stof(voxelsize_str[0]);
+				voxelsize.y = std::stof(voxelsize_str[1]);
+				voxelsize.z = std::stof(voxelsize_str[2]);
+
+				Attributes.Ratio.x = std::stof(voxelsize_str[0]);
+				Attributes.Ratio.y = std::stof(voxelsize_str[1]);
+				Attributes.Ratio.z = std::stof(voxelsize_str[2]);
+
+				std::cout << voxelsize.x << " ";
+				std::cout << voxelsize.y << " ";
+				std::cout << voxelsize.z << " ";
+			}
+
+			if (std::regex_search(line, RegFormat[2])) {
+				// 如果是 SampleType，格式通常是 SampleType=UnsignedChar、sample-type=unsigned char。
+				// 先找出 = 的位置後，擷取剩下的字串。
+				std::cout << line.find("=") << "\t" << line.substr(line.find("=") + 1) << "\t";
+				std::string sampletype_str = line.substr(line.find("=") + 1);
+				if (sampletype_str == "UnsignedChar" || sampletype_str == "unsigned char") Attributes.DataType = "unsigned char";
+			}
+
+			if (std::regex_search(line, RegFormat[3])) {
+				// 如果是 Endian，格式通常是 Endian=Little。
+				// 先找出 = 的位置後，擷取剩下的字串。
+				std::cout << line.find("=") << "\t" << line.substr(line.find("=") + 1) << "\t";
+				std::string endian_str = line.substr(line.find("=") + 1);
+				if (endian_str == "Little" || endian_str == "") Attributes.Endian = "little";
+				if (endian_str == "Big") Attributes.Endian = "big";
+			}
+
+			std::cout << std::endl;
+		}
 	}
 
 	void IsoSurface::ConvertToPolygon(float iso_value) {
@@ -294,42 +377,42 @@ namespace Nexus {
 
 	void IsoSurface::ComputeAllNormals(float max_gradient) {
 		// 計算每一個 Voxel 的 Gradient 來當作法向量。
-		for (int k = 0; k < Settings.Resolution[2]; k++) {
-			for (int j = 0; j < Settings.Resolution[1]; j++) {
-				for (int i = 0; i < Settings.Resolution[0]; i++) {
+		for (int k = 0; k < Attributes.Resolution.z; k++) {
+			for (int j = 0; j < Attributes.Resolution.y; j++) {
+				for (int i = 0; i < Attributes.Resolution.x; i++) {
 					glm::vec3 norm = glm::vec3(0.0f);
 
-					if (i + 1 >= Settings.Resolution[0]) {
+					if (i + 1 >= Attributes.Resolution.x) {
 						// Backward difference
-						norm.x = (this->GetIsoValueFromGrid(i, j, k) - this->GetIsoValueFromGrid(i - 1, j, k)) / Settings.Ratio.x;
+						norm.x = (this->GetIsoValueFromGrid(i, j, k) - this->GetIsoValueFromGrid(i - 1, j, k)) / Attributes.Ratio.x;
 					} else if (i - 1 < 0) {
 						// Forward difference
-						norm.x = (this->GetIsoValueFromGrid(i + 1, j, k) - this->GetIsoValueFromGrid(i, j, k)) / Settings.Ratio.x;
+						norm.x = (this->GetIsoValueFromGrid(i + 1, j, k) - this->GetIsoValueFromGrid(i, j, k)) / Attributes.Ratio.x;
 					} else {
 						// Central difference
-						norm.x = (this->GetIsoValueFromGrid(i + 1, j, k) - this->GetIsoValueFromGrid(i - 1, j, k)) / 2 * Settings.Ratio.x;
+						norm.x = (this->GetIsoValueFromGrid(i + 1, j, k) - this->GetIsoValueFromGrid(i - 1, j, k)) / 2 * Attributes.Ratio.x;
 					}
 
-					if (j + 1 >= Settings.Resolution[1]) {
+					if (j + 1 >= Attributes.Resolution.y) {
 						// Backward difference
-						norm.y = (this->GetIsoValueFromGrid(i, j, k) - this->GetIsoValueFromGrid(i, j - 1, k)) / Settings.Ratio.y;
+						norm.y = (this->GetIsoValueFromGrid(i, j, k) - this->GetIsoValueFromGrid(i, j - 1, k)) / Attributes.Ratio.y;
 					} else if (j - 1 < 0) {
 						// Forward difference
-						norm.y = (this->GetIsoValueFromGrid(i, j + 1, k) - this->GetIsoValueFromGrid(i, j, k)) / Settings.Ratio.y;
+						norm.y = (this->GetIsoValueFromGrid(i, j + 1, k) - this->GetIsoValueFromGrid(i, j, k)) / Attributes.Ratio.y;
 					} else {
 						// Central difference
-						norm.y = (this->GetIsoValueFromGrid(i, j + 1, k) - this->GetIsoValueFromGrid(i, j - 1, k)) / 2 * Settings.Ratio.y;
+						norm.y = (this->GetIsoValueFromGrid(i, j + 1, k) - this->GetIsoValueFromGrid(i, j - 1, k)) / 2 * Attributes.Ratio.y;
 					}
 
-					if (k + 1 >= Settings.Resolution[2]) {
+					if (k + 1 >= Attributes.Resolution.z) {
 						// Backward difference
-						norm.z = (this->GetIsoValueFromGrid(i, j, k) - this->GetIsoValueFromGrid(i, j, k - 1)) / Settings.Ratio.z;
+						norm.z = (this->GetIsoValueFromGrid(i, j, k) - this->GetIsoValueFromGrid(i, j, k - 1)) / Attributes.Ratio.z;
 					} else if (k - 1 < 0) {
 						// Forward difference
-						norm.z = (this->GetIsoValueFromGrid(i, j, k + 1) - this->GetIsoValueFromGrid(i, j, k)) / Settings.Ratio.z;
+						norm.z = (this->GetIsoValueFromGrid(i, j, k + 1) - this->GetIsoValueFromGrid(i, j, k)) / Attributes.Ratio.z;
 					} else {
 						// Central difference
-						norm.z = (this->GetIsoValueFromGrid(i, j, k + 1) - this->GetIsoValueFromGrid(i, j, k - 1)) / 2 * Settings.Ratio.z;
+						norm.z = (this->GetIsoValueFromGrid(i, j, k + 1) - this->GetIsoValueFromGrid(i, j, k - 1)) / 2 * Attributes.Ratio.z;
 					}
 
 					// Gradient 長度分貝化
@@ -354,9 +437,9 @@ namespace Nexus {
 		
 		// 開始一個一個 Voxel 讀取，並且每讀一個 Voxel 就抓它其他7個 Voxel (能構成一個正方形的)，
 		// 一次輸入 8 個 Voxel，檢查並求出正方塊中所包覆的三角形頂點與法向量為何。
-		for (int k = 0; k < Settings.Resolution[2] - 1; k++) {
-			for (int j = 0; j < Settings.Resolution[1] - 1; j++) {
-				for (int i = 0; i < Settings.Resolution[0] - 1; i++) {
+		for (int k = 0; k < Attributes.Resolution.z - 1; k++) {
+			for (int j = 0; j < Attributes.Resolution.y - 1; j++) {
+				for (int i = 0; i < Attributes.Resolution.x - 1; i++) {
 					// Logger::Message(LOG_DEBUG, "Coordinate: (" + std::to_string(i) + ", " + std::to_string(j) + ", " + std::to_string(k) + ")");
 					std::vector<glm::vec3> VertexOrder = {
 						glm::vec3(i, j, k),

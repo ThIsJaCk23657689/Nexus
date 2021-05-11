@@ -13,10 +13,11 @@ namespace Nexus {
 		INTERPOLATE_NORMAL
 	};
 
-	struct IsoSurfaceSettings {
-		int Resolution[3];
-		std::string DataType;
+	struct IsoSurfaceAttributes {
+		glm::vec3 Resolution = glm::vec3(1.0f);
 		glm::vec3 Ratio = glm::vec3(1.0f);
+		std::string DataType = "unsigned char";
+		std::string Endian = "little";
 	};
 	
 	struct Voxel {
@@ -78,7 +79,10 @@ namespace Nexus {
 		std::vector<char*> GetGradientHeatmapAxisLabels(bool is_axis_x);
 		std::string GetRawDataFilePath() const { return this->RawDataFilePath; }
 		std::string GetInfDataFilePath() const { return this->InfDataFilePath; }
-		glm::vec3 GetDataResolutions() const { return glm::vec3(this->Settings.Resolution[0], this->Settings.Resolution[1], this->Settings.Resolution[2]); }
+		glm::vec3 GetResolution() const { return this->Attributes.Resolution; }
+		glm::vec3 GetRatio() const { return this->Attributes.Ratio; }
+		std::string GetDataType() const { return this->Attributes.DataType; }
+		std::string GetEndian() const { return this->Attributes.Endian; }
 		unsigned int GetVoxelCount() const{ return (unsigned int)this->RawData.size(); }
 		unsigned int GetTriangleCount() const{ return (unsigned int)this->Vertices.size() / 3; }
 		unsigned int GetVertexCount() const { return (unsigned int)this->Vertices.size(); }
@@ -382,6 +386,7 @@ namespace Nexus {
 
 		std::string RawDataFilePath;
 		std::string InfDataFilePath;
+		std::string InfData;
 		std::vector<unsigned char> RawData;
 		std::vector<glm::vec3> GridNormals;
 		std::vector<float> GradientMagnitudes;
@@ -401,16 +406,16 @@ namespace Nexus {
 		bool EnableWireFrameMode = false;
 		bool IsInitialize = false;
 		bool IsReadyToDraw = false;
-		IsoSurfaceSettings Settings;
+		IsoSurfaceAttributes Attributes;
 		unsigned int VAO;
 		unsigned int VBO;
 
 		unsigned int GetIndexFromGrid(int x, int y, int z) const {
-			return z * Settings.Resolution[1] * Settings.Resolution[0] + (y * Settings.Resolution[0] + x);
+			return z * Attributes.Resolution.y * Attributes.Resolution.x + (y * Attributes.Resolution.x + x);
 		}
 
 		unsigned int GetIndexFromGrid(glm::vec3 vector) const {
-			return vector.z * Settings.Resolution[1] * Settings.Resolution[0] + (vector.y * Settings.Resolution[0] + vector.x);
+			return vector.z * Attributes.Resolution.y * Attributes.Resolution.x + (vector.y * Attributes.Resolution.x + vector.x);
 		}
 		
 		float GetIsoValueFromGrid(int x, int y, int z) const {
@@ -429,6 +434,7 @@ namespace Nexus {
 			return this->GridNormals[this->GetIndexFromGrid(vector)];
 		}
 
+		void GetAttributesFromInfoFile();
 		void EqualizationData(std::vector<int> equal_values);
 		void ComputeAllNormals(float max_gradient);
 		void GenerateVertices(float iso_value);

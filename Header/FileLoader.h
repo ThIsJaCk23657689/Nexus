@@ -8,6 +8,7 @@
 
 #include "IsoSurface.h"
 #include "Logger.h"
+#include "Utill.h"
 
 namespace Nexus {
 	class FileLoader {
@@ -33,34 +34,6 @@ namespace Nexus {
 		}
 
 		static std::string LoadInfoFile(const std::string& path) {
-			std::regex Resolution_reg("Resolution");
-			std::regex VoxelSize_reg("VoxelSize");
-			std::regex SampleType_reg("SampleType");
-			std::regex Endian_reg("Endian");
-			
-			std::ifstream file(path);
-			std::string str;
-			std::cout << "gegeg";
-			while (std::getline(file, str)) {
-				// process string ...
-				std::cout << str << "\t result: " << std::regex_match(str, Resolution_reg);
-				std::cout << "ewgegege";
-				
-				if(std::regex_match(str, Resolution_reg)) {
-					std::cout << "Resolution";
-				}
-				if (std::regex_match(str, VoxelSize_reg)) {
-					std::cout << "VoxelSize";
-				}
-				if (std::regex_match(str, SampleType_reg)) {
-					std::cout << "SampleType";
-				}
-				if (std::regex_match(str, Endian_reg)) {
-					std::cout << "Endian";
-				}
-				std::cout << std::endl;
-			}
-			
 			std::ifstream info_file;
 			std::stringstream info_stream;
 			info_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
@@ -74,7 +47,6 @@ namespace Nexus {
 				Nexus::Logger::Message(LOG_ERROR, "Failed to load info file. Filepath: " + path);
 				exit(-1);
 			}
-
 			const std::string& info_source = info_stream.str();
 
 			return info_source;
@@ -120,7 +92,7 @@ namespace Nexus {
 			MyFile << "Raw File Path: " << iso_surface->GetRawDataFilePath() << std::endl;
 			MyFile << "Inf File Path: " << iso_surface->GetRawDataFilePath() << std::endl;
 			MyFile << "Equalization: " << iso_surface->GetIsEqualization() << std::endl;
-			MyFile << "Resolutions: " << "(" << iso_surface->GetDataResolutions().x << ", " << iso_surface->GetDataResolutions().y << ", " << iso_surface->GetDataResolutions().z << ")" << std::endl;
+			MyFile << "Resolutions: " << "(" << iso_surface->GetResolution().x << ", " << iso_surface->GetResolution().y << ", " << iso_surface->GetResolution().z << ")" << std::endl;
 			MyFile << "Data Value\t\tRed\t\tGreen\t\tBlue\t\tAlpha\t\t\n";
 			for (unsigned i = 0; i < transfer.size(); i = i + 4) {
 				MyFile << (i / 4.0f) << "\t\t\t" << round(transfer[i] * 100) / 100.0f << "\t\t" << round(transfer[i + 1] * 100) / 100.0f << "\t\t" << round(transfer[i + 2] * 100) / 100.0f << "\t\t" << round(transfer[i + 3] * 100) / 100.0f << "\t\t\n";
