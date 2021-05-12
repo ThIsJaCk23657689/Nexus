@@ -5,12 +5,20 @@
 #include <chrono>
 #include <vector>
 #include <map>
+#include <memory>
+
+#include "Cube.h"
 
 namespace Nexus {
 	
 	enum InterpolateMode {
 		INTERPOLATE_POSITION,
 		INTERPOLATE_NORMAL
+	};
+
+	enum RenderMode {
+		RENDER_MODE_ISO_SURFACE,
+		RENDER_MODE_RAY_CASTING
 	};
 
 	struct IsoSurfaceAttributes {
@@ -73,6 +81,7 @@ namespace Nexus {
 		void IsoValueHistogramEqualization();
 
 		float Interval = 256.0f;
+		GLuint GetVolumeTexture() const { return this->VolumeTexture; }
 		std::vector<float> GetIsoValueHistogram();
 		std::vector<float> GetGradientHistogram();
 		std::vector<float> GetGradientHeatmap();
@@ -83,6 +92,7 @@ namespace Nexus {
 		glm::vec3 GetRatio() const { return this->Attributes.Ratio; }
 		std::string GetDataType() const { return this->Attributes.DataType; }
 		std::string GetEndian() const { return this->Attributes.Endian; }
+		int GetCurrentRenderMode() const { return this->CurrentRenderMode; }
 		unsigned int GetVoxelCount() const{ return (unsigned int)this->RawData.size(); }
 		unsigned int GetTriangleCount() const{ return (unsigned int)this->Vertices.size() / 3; }
 		unsigned int GetVertexCount() const { return (unsigned int)this->Vertices.size(); }
@@ -384,29 +394,42 @@ namespace Nexus {
 			{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}
 		};
 
-		std::string RawDataFilePath;
+		// 通用資料
+		IsoSurfaceAttributes Attributes;
 		std::string InfDataFilePath;
+		std::string RawDataFilePath;
 		std::string InfData;
 		std::vector<unsigned char> RawData;
 		std::vector<glm::vec3> GridNormals;
 		std::vector<float> GradientMagnitudes;
-		std::chrono::duration<double> ElapsedSeconds;
-		
-		std::vector<float> Vertices;
-		std::vector<float> Position;
-		std::vector<float> Normal;
+		bool IsInitialize = false;
+		bool IsReadyToDraw = false;
+
+		// 統計專用
 		bool IsEqualization = false;
+		std::chrono::duration<double> ElapsedSeconds;
 		std::vector<float> IsoValueHistogram;
 		std::vector<float> GradientHistogram;
 		std::vector<float> GradientHeatmap;
 		std::vector<std::pair<float, float>> IsoValue_Boundary;
 		std::vector<std::pair<float, float>> Gradient_Boundary;
-		unsigned int VertexCount = 0;
 
+		// Ray Casting 專用
+		int CurrentRenderMode = RENDER_MODE_RAY_CASTING;
+		GLuint VolumeTexture;
+		std::vector<glm::vec4> TextureData;
+		std::vector<float> BoundingBoxVertices;
+		std::vector<unsigned int> BoundingBoxIndices;
+		unsigned int BoundingBoxVAO;
+		unsigned int BoundingBoxVBO;
+		unsigned int BoundingBoxEBO;
+
+		// Iso Surface 專用
+		std::vector<float> Vertices;
+		std::vector<float> Position;
+		std::vector<float> Normal;
+		unsigned int VertexCount = 0;
 		bool EnableWireFrameMode = false;
-		bool IsInitialize = false;
-		bool IsReadyToDraw = false;
-		IsoSurfaceAttributes Attributes;
 		unsigned int VAO;
 		unsigned int VBO;
 
@@ -435,6 +458,7 @@ namespace Nexus {
 		}
 
 		void GetAttributesFromInfoFile();
+		void GenerateTextureData();
 		void EqualizationData(std::vector<int> equal_values);
 		void ComputeAllNormals(float max_gradient);
 		void GenerateVertices(float iso_value);

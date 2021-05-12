@@ -11,6 +11,7 @@ namespace Nexus {
 			this->ShapeName = "Cube";
 			this->Initialize();
 		}
+
 	private:
 		
 		void GenerateVertices() override {

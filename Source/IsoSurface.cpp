@@ -2,6 +2,7 @@
 #include "Logger.h"
 #include "FileLoader.h"
 #include "Utill.h"
+#include "Cube.h"
 #include <iostream>
 
 namespace Nexus {
@@ -19,23 +20,80 @@ namespace Nexus {
 
 		// Loading Info File
 		this->InfData = Nexus::FileLoader::LoadInfoFile(info_path);
-		GetAttributesFromInfoFile();
+		this->GetAttributesFromInfoFile();
 		
 		// Loading Volume Data
 		this->RawData = Nexus::FileLoader::LoadRawFile(raw_path);
 		Logger::Message(LOG_INFO, "Starting initialize voxels data...");
-		
+
 		// Compute the gradient of these all voxels.
 		this->GradientMagnitudes.clear();
 		this->ComputeAllNormals(max_gradient);
 
-		// 索引是 0 ~ 3409119 個，代表每一個 voxel 上面 gradient 的長度，介於 1 到 max_gradient 之間。
-		// Utill::Show1DVectorStatistics(this->GradientMagnitudes, "Gradient Histogram - Before");
+		if(CurrentRenderMode == RENDER_MODE_RAY_CASTING) {
+			// Generate a new data and sent into gpu (r, g, b) => Gradient, a => Value;
+			this->GenerateTextureData();
+
+			// Creating a 3D Texture. 
+			glGenTextures(1, &this->VolumeTexture);
+			glBindTexture(GL_TEXTURE_3D, this->VolumeTexture);
+			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+			glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA, Attributes.Resolution.x, Attributes.Resolution.y, Attributes.Resolution.z, 0, GL_RGBA, GL_UNSIGNED_BYTE, this->TextureData.data());
+			glBindTexture(GL_TEXTURE_3D, 0);
+
+			// Creating a bounding-box.  //149 208 110
+			glm::vec3 resolution = Attributes.Resolution;
+			this->BoundingBoxVertices = {
+				resolution.x, resolution.y, 0.0,				1.0, 1.0, 0.0,
+				resolution.x, 0.0, 0.0,							1.0, 0.0, 0.0,
+				0.0, 0.0, 0.0,									0.0, 0.0, 0.0,
+				0.0, resolution.y, 0.0,							0.0, 1.0, 0.0,
+				resolution.x,  resolution.y, resolution.z,		1.0, 1.0, 1.0,
+				resolution.x, 0.0, resolution.z,				1.0, 0.0, 1.0,
+				0.0, 0.0, resolution.z,							0.0, 0.0, 1.0,
+				0.0,  resolution.y, resolution.z,				0.0, 1.0, 1.0,
+			};
+			this->BoundingBoxIndices = {
+				0, 1, 2,
+				0, 2, 3,
+				3, 2, 6,
+				3, 6, 7,
+				7, 6, 5,
+				7, 5, 4,
+				4, 5, 1,
+				4, 1, 0,
+				4, 0, 3,
+				4, 3, 7,
+				6, 2, 1,
+				6, 1, 5
+			};
+			glGenVertexArrays(1, &BoundingBoxVAO);
+			glGenBuffers(1, &BoundingBoxVBO);
+			glGenBuffers(1, &BoundingBoxEBO);
+			glBindVertexArray(BoundingBoxVAO);
+			glBindBuffer(GL_ARRAY_BUFFER, BoundingBoxVBO);
+			glBufferData(GL_ARRAY_BUFFER, this->BoundingBoxVertices.size() * sizeof(float), this->BoundingBoxVertices.data(), GL_STATIC_DRAW);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, BoundingBoxEBO);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->BoundingBoxIndices.size() * sizeof(unsigned int), this->BoundingBoxIndices.data(), GL_STATIC_DRAW);
+			glEnableVertexAttribArray(0);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(1);
+			glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+			glBindVertexArray(0);
+		}
 
 		// 計算 Iso value Histogram、Gradient Histogram 和 heatmap
 		this->GenerateIsoValueHistogram();
 		this->GenerateGradientHistogram();
 		this->GenerateGradientHeatMap();
+		
+		// 索引是 0 ~ 3409119 個，代表每一個 voxel 上面 gradient 的長度，介於 1 到 max_gradient 之間。
+		// Utill::Show1DVectorStatistics(this->GradientMagnitudes, "Gradient Histogram - Before");
 
 		this->IsInitialize = true;
 		Logger::Message(LOG_INFO, "Initialize voxels data completed.");
@@ -131,6 +189,15 @@ namespace Nexus {
 		}
 	}
 
+	void IsoSurface::GenerateTextureData() {
+		float max_isovalue = *std::max_element(this->RawData.cbegin(), this->RawData.cend());
+		for (unsigned i = 0; i < this->RawData.size(); i++) {
+			glm::vec3 temp_norm = glm::normalize(this->GridNormals[i]);
+			float temp_value = this->RawData[i] / max_isovalue;
+			this->TextureData.push_back(glm::vec4(temp_norm, temp_value));
+		}
+	}
+	
 	void IsoSurface::ConvertToPolygon(float iso_value) {
 		if (!this->IsInitialize) {
 			Logger::Message(LOG_ERROR, "YOU MUST LOAD THE VOLUME DATA FIRST!");
@@ -195,7 +262,7 @@ namespace Nexus {
 		// 必須先找出資料中最大值做為下界，上界則採用 0。
 		float max_gradient = *std::max_element(this->GradientMagnitudes.cbegin(), this->GradientMagnitudes.cend());
 
-		// 必須將 gradient 的長度介於 0 到 max_gradient 之間 切成 k(16) 個等分，先求間距
+		// 必須將 gradient 的長度介於 0 到 max_gradient 之間 切成 k 個等分，先求間距
 		float bin_width = ((max_gradient - 0) + 1) / this->Interval;
 		this->Gradient_Boundary.clear();
 		for (unsigned int i = 0; i < this->Interval; i++) {
@@ -357,22 +424,33 @@ namespace Nexus {
 		}
 		
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		
+
 		shader->Use();
 		shader->SetMat4("model", model);
 		shader->SetBool("is_volume", true);
-		shader->SetInt("transfer_function", 1);
 		
-		// this->VAO->Bind();
-		glBindVertexArray(VAO);
-		if (this->EnableWireFrameMode) {
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		} else {
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		if (this->CurrentRenderMode == RENDER_MODE_ISO_SURFACE) {
+			// this->VAO->Bind();
+			glBindVertexArray(this->VAO);
+			if (this->EnableWireFrameMode) {
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			} else {
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			}
+			glDrawArrays(GL_TRIANGLES, 0, this->GetPositionCount());
+			glBindVertexArray(0);
 		}
 
-		glDrawArrays(GL_TRIANGLES, 0, this->GetPositionCount());
-		glBindVertexArray(0);
+		if (this->CurrentRenderMode == RENDER_MODE_RAY_CASTING) {
+			shader->SetVec3("volume_resolution", this->Attributes.Resolution);
+			shader->SetInt("volume_texture", 0);
+			shader->SetInt("transfer_function", 1);
+
+			// Draw a bounding-box, size will be the resolution of the volume data.
+			glBindVertexArray(this->BoundingBoxVAO);
+			glDrawElements(GL_TRIANGLES, (GLsizei)this->BoundingBoxIndices.size(), GL_UNSIGNED_INT, 0);
+			glBindVertexArray(0);
+		}
 	}
 
 	void IsoSurface::ComputeAllNormals(float max_gradient) {
