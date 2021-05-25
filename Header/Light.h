@@ -28,11 +28,15 @@ namespace Nexus {
 
 		~Light()  = default;
 
+		// 取消 Ambient、Diffuse 與 Specular 的制度，統一由 Color 來變化
+		
 		glm::vec3 GetAmbient() const { return this->Ambient; }
 		glm::vec3 GetDiffuse() const { return this->Diffuse; }
 		glm::vec3 GetSpecular() const { return this->Specular; }
 		bool GetEnable() const { return this->Enable; }
 		unsigned int GetCaster() const { return this->Caster; }
+
+		float* GetDiffusePointer() { return glm::value_ptr(this->Diffuse); }
 
 		void SetAmbient(glm::vec3 ambient) {
 			this->Ambient = ambient;

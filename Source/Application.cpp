@@ -101,7 +101,7 @@ namespace Nexus {
 			GLFWProcessInput(Window);
 
 			// Clear the buffer
-			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+			glClearColor(this->Settings.BackgroundColor.r, this->Settings.BackgroundColor.g, this->Settings.BackgroundColor.b, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			// Start the Dear ImGui frame

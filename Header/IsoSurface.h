@@ -98,7 +98,7 @@ namespace Nexus {
 		unsigned int GetVertexCount() const { return (unsigned int)this->Vertices.size(); }
 		unsigned int GetPositionCount() const { return (unsigned int)this->Position.size(); }
 		unsigned int GetNormalCount() const { return (unsigned int)this->Normal.size(); }
-		
+		glm::mat4 GetModelMatrix();
 		
 	protected:
 		const std::vector<unsigned short> EdgeTable = {
@@ -463,6 +463,7 @@ namespace Nexus {
 		void ComputeAllNormals(float max_gradient);
 		void GenerateVertices(float iso_value);
 		void BufferInitialize();
+		
 		
 		void AddPosition(float x, float y, float z);
 		void AddPosition(glm::vec3 position);

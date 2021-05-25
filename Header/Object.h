@@ -71,7 +71,7 @@ namespace Nexus {
 
 		Object() {}
 
-		void Draw(Nexus::Shader* shader, glm::mat4 model = glm::mat4(1.0f));
+		void Draw(Nexus::Shader* shader, const glm::mat4& model = glm::mat4(1.0f));
 		void DrawInstancing(Nexus::Shader* shader, std::vector<glm::mat4>& models);
 		void Debug();
 		
@@ -114,7 +114,8 @@ namespace Nexus {
 		
 		virtual void GenerateVertices() = 0;
 		virtual void BufferInitialize();
-		
+
+		void AddPosition(float x, float y);
 		void AddPosition(float x, float y, float z);
 		void AddPosition(glm::vec4 position);
 		void AddNormal(float nx, float ny, float nz);

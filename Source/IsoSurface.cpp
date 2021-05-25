@@ -34,7 +34,8 @@ namespace Nexus {
 			// Generate a new data and sent into gpu (r, g, b) => Gradient, a => Value;
 			this->GenerateTextureData();
 
-			// Creating a 3D Texture. 
+			// Creating a 3D Texture.
+			// Please make sure your texture settings (it is GL_FLOAT, not GL_UNSIGNED_BYTE)
 			glGenTextures(1, &this->VolumeTexture);
 			glBindTexture(GL_TEXTURE_3D, this->VolumeTexture);
 			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -43,10 +44,10 @@ namespace Nexus {
 			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-			glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA, Attributes.Resolution.x, Attributes.Resolution.y, Attributes.Resolution.z, 0, GL_RGBA, GL_UNSIGNED_BYTE, this->TextureData.data());
+			glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, Attributes.Resolution.x, Attributes.Resolution.y, Attributes.Resolution.z, 0, GL_RGBA, GL_FLOAT, this->TextureData.data());
 			glBindTexture(GL_TEXTURE_3D, 0);
 
-			// Creating a bounding-box.  //149 208 110
+			// Creating a bounding-box with texture coordinate.
 			glm::vec3 resolution = Attributes.Resolution;
 			this->BoundingBoxVertices = {
 				resolution.x, resolution.y, 0.0,				1.0, 1.0, 0.0,
@@ -81,9 +82,9 @@ namespace Nexus {
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, BoundingBoxEBO);
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->BoundingBoxIndices.size() * sizeof(unsigned int), this->BoundingBoxIndices.data(), GL_STATIC_DRAW);
 			glEnableVertexAttribArray(0);
-			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (const void*)0);
 			glEnableVertexAttribArray(1);
-			glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+			glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (const void*)(3 * sizeof(float)));
 			glBindVertexArray(0);
 		}
 
@@ -191,6 +192,7 @@ namespace Nexus {
 
 	void IsoSurface::GenerateTextureData() {
 		float max_isovalue = *std::max_element(this->RawData.cbegin(), this->RawData.cend());
+		
 		for (unsigned i = 0; i < this->RawData.size(); i++) {
 			glm::vec3 temp_norm = glm::normalize(this->GridNormals[i]);
 			float temp_value = this->RawData[i] / max_isovalue;
@@ -425,11 +427,12 @@ namespace Nexus {
 		
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-		shader->Use();
-		shader->SetMat4("model", model);
-		shader->SetBool("is_volume", true);
-		
 		if (this->CurrentRenderMode == RENDER_MODE_ISO_SURFACE) {
+			shader->Use();
+			shader->SetMat4("model", model);
+			shader->SetMat3("normalModel", glm::mat3(glm::transpose(glm::inverse(model))));
+			shader->SetBool("is_volume", true);
+			
 			// this->VAO->Bind();
 			glBindVertexArray(this->VAO);
 			if (this->EnableWireFrameMode) {
@@ -442,9 +445,11 @@ namespace Nexus {
 		}
 
 		if (this->CurrentRenderMode == RENDER_MODE_RAY_CASTING) {
-			shader->SetVec3("volume_resolution", this->Attributes.Resolution);
-			shader->SetInt("volume_texture", 0);
+			shader->Use();
+			shader->SetMat4("model", model);
+			shader->SetInt("volume", 0);
 			shader->SetInt("transfer_function", 1);
+			shader->SetVec3("volume_resolution", this->Attributes.Resolution);
 
 			// Draw a bounding-box, size will be the resolution of the volume data.
 			glBindVertexArray(this->BoundingBoxVAO);
@@ -650,6 +655,24 @@ namespace Nexus {
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 		glBindVertexArray(0);
+	}
+
+	glm::mat4 IsoSurface::GetModelMatrix() {
+		// 基本上就是 scale 和 translate 的組合。
+		glm::mat3 basis;
+		basis[0] = { this->Attributes.Resolution.x * this->Attributes.Ratio.x * 0.01f, 0.0f, 0.0f };
+		basis[1] = { 0.0f, this->Attributes.Resolution.y * this->Attributes.Ratio.y * 0.01f, 0.0f };
+		basis[2] = { 0.0f, 0.0f, this->Attributes.Resolution.z * this->Attributes.Ratio.z * 0.01f };
+
+		glm::vec3 offset = -0.5f * (basis[0] + basis[1] + basis[2]);
+
+		glm::mat4 model(1.0f);
+		model[0] = glm::vec4(basis[0], 0.0f);
+		model[1] = glm::vec4(basis[1], 0.0f);
+		model[2] = glm::vec4(basis[2], 0.0f);
+		model[3] = glm::vec4(offset, 1.0f);
+
+		return model;
 	}
 	
 	void IsoSurface::AddPosition(float x, float y, float z) {

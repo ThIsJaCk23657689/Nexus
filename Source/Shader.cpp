@@ -57,6 +57,14 @@ namespace Nexus {
 		glUniform1f(GetUniformLocation(name), value);
 	}
 
+	void Shader::SetVec2(const std::string& name, glm::vec2 vector) {
+		glUniform2fv(GetUniformLocation(name), 1, &vector[0]);
+	}
+
+	void Shader::SetVec2(const std::string& name, GLfloat x, GLfloat y) {
+		glUniform2f(GetUniformLocation(name), x, y);
+	}
+
 	void Shader::SetVec3(const std::string& name, glm::vec3 vector) {
 		glUniform3fv(GetUniformLocation(name), 1, &vector[0]);
 	}

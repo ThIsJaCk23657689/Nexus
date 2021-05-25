@@ -29,6 +29,10 @@ namespace Nexus {
 		
 		void SetFloat(const std::string& name, GLfloat value);
 
+		void SetVec2(const std::string& name, glm::vec2 vector);
+
+		void SetVec2(const std::string& name, GLfloat x, GLfloat y);
+
 		void SetVec3(const std::string& name, glm::vec3 vector);
 
 		void SetVec3(const std::string& name, GLfloat x, GLfloat y, GLfloat z);

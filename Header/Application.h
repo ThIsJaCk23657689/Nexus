@@ -28,9 +28,14 @@ namespace Nexus {
 		bool EnableFullScreen = false;
 		bool EnableDebugCallback = true;
 		bool EnableGhostMode = true;
-		bool EnableBackFaceCulling = false;
+		
+		bool EnableFaceCulling = false;
+		std::string CullingTypeStr = "Back Face";
+		std::vector<std::string> CullingTypes = { "Back Face", "Front Face" };
+		
 		bool ShowOriginAnd3Axes = false;
 		bool NormalVisualize = false;
+		glm::vec3 BackgroundColor = glm::vec3(0.1f, 0.1f, 0.1f);
 
 		bool UseBlinnPhongShading = true;
 		bool UseLighting = true;

@@ -59,7 +59,7 @@ namespace Nexus {
 			<< "Index Count: " << GetIndexCount() << std::endl;
 	}
 
-	void Object::Draw(Nexus::Shader* shader, glm::mat4 model) {
+	void Object::Draw(Nexus::Shader* shader, const glm::mat4& model) {
 		shader->Use();
 		shader->SetMat3("normalModel", glm::mat3(glm::transpose(glm::inverse(model))));
 		shader->SetMat4("model", model);
@@ -108,6 +108,14 @@ namespace Nexus {
 
 		Nexus::VertexAttributes Attribs[] = { {3, 0}, {3, offsetof(Vertex, Normal)}, {2, offsetof(Vertex, TexCoord)} };
 		this->VAO = std::make_unique<Nexus::VertexArray>(this->VBO.get(), Attribs, 3, (GLsizei)sizeof(Vertex), this->EBO.get());
+	}
+
+	void Object::AddPosition(float x, float y) {
+		this->Position.push_back(x);
+		this->Position.push_back(y);
+
+		this->Vertices.push_back(x);
+		this->Vertices.push_back(y);
 	}
 	
 	void Object::AddPosition(float x, float y, float z) {
