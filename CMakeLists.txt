@@ -11,14 +11,16 @@ set(NEXUS_INCLUDE_DIRS
 	"External/stb_image"
 	"External/imgui"
 	"External/implot"
-	"External/imgui-transfer-function")
+	"External/imgui-transfer-function"
+	"External/transfer-function")
 
 set(SOURCE_DIRS
 	"Source/*.cpp"
 	"External/stb_image/*.cpp"
 	"External/imgui/*.cpp"
 	"External/implot/*.cpp"
-	"External/imgui-transfer-function/*.cpp")
+	"External/imgui-transfer-function/*.cpp"
+	"External/transfer-function/*.cpp")
 
 project (${MY_PROJECT} LANGUAGES CXX C)
 

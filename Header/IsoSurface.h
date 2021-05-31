@@ -67,13 +67,21 @@ namespace Nexus {
 		void SetWireFrameMode(bool enable) {
 			this->EnableWireFrameMode = enable;
 		}
+
+		void SetCurrentRenderMode(int render_mode) {
+			this->CurrentRenderMode = render_mode;
+		}
+
+		void SetIsoValue(float iso_value) {
+			this->IsoValue = iso_value;
+		}
 		
 		bool* WireFrameModeHelper() {
 			return &this->EnableWireFrameMode;
 		}
 
 		void Initialize(const std::string& info_path, const std::string& raw_path, float max_gradient = 1.0f);
-		void ConvertToPolygon(float iso_value);
+		void ConvertToPolygon();
 
 		void GenerateIsoValueHistogram();
 		void GenerateGradientHistogram();
@@ -85,7 +93,7 @@ namespace Nexus {
 		std::vector<float> GetIsoValueHistogram();
 		std::vector<float> GetGradientHistogram();
 		std::vector<float> GetGradientHeatmap();
-		std::vector<char*> GetGradientHeatmapAxisLabels(bool is_axis_x);
+		void GetGradientHeatmapAxisLabels(std::vector<std::string>& labels, bool is_axis_x);
 		std::string GetRawDataFilePath() const { return this->RawDataFilePath; }
 		std::string GetInfDataFilePath() const { return this->InfDataFilePath; }
 		glm::vec3 GetResolution() const { return this->Attributes.Resolution; }
@@ -98,7 +106,7 @@ namespace Nexus {
 		unsigned int GetVertexCount() const { return (unsigned int)this->Vertices.size(); }
 		unsigned int GetPositionCount() const { return (unsigned int)this->Position.size(); }
 		unsigned int GetNormalCount() const { return (unsigned int)this->Normal.size(); }
-		glm::mat4 GetModelMatrix();
+		float GetIsoValue() const { return this->IsoValue; }
 		
 	protected:
 		const std::vector<unsigned short> EdgeTable = {
@@ -411,11 +419,11 @@ namespace Nexus {
 		std::vector<float> IsoValueHistogram;
 		std::vector<float> GradientHistogram;
 		std::vector<float> GradientHeatmap;
-		std::vector<std::pair<float, float>> IsoValue_Boundary;
-		std::vector<std::pair<float, float>> Gradient_Boundary;
+		std::vector<std::pair<float, float>> IsoValueBoundary;
+		std::vector<std::pair<float, float>> GradientBoundary;
 
 		// Ray Casting 專用
-		int CurrentRenderMode = RENDER_MODE_RAY_CASTING;
+		int CurrentRenderMode = RENDER_MODE_ISO_SURFACE;
 		GLuint VolumeTexture;
 		std::vector<glm::vec4> TextureData;
 		std::vector<float> BoundingBoxVertices;
@@ -425,6 +433,7 @@ namespace Nexus {
 		unsigned int BoundingBoxEBO;
 
 		// Iso Surface 專用
+		float IsoValue = 80.0f;
 		std::vector<float> Vertices;
 		std::vector<float> Position;
 		std::vector<float> Normal;

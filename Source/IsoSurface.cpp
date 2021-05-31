@@ -12,8 +12,16 @@ namespace Nexus {
 
 	void IsoSurface::Initialize(const std::string& info_path, const std::string& raw_path, float max_gradient) {
 		Logger::Message(LOG_INFO, "Starting loading volume data: " + raw_path);
+
+		// Initial
 		this->IsInitialize = false;
+		this->IsReadyToDraw = false;
 		this->IsEqualization = false;
+		this->InfData.clear();
+		this->RawData.clear();
+		this->GridNormals.clear();
+		this->GradientMagnitudes.clear();
+		this->TextureData.clear();
 		
 		this->RawDataFilePath = raw_path;
 		this->InfDataFilePath = info_path;
@@ -27,66 +35,7 @@ namespace Nexus {
 		Logger::Message(LOG_INFO, "Starting initialize voxels data...");
 
 		// Compute the gradient of these all voxels.
-		this->GradientMagnitudes.clear();
 		this->ComputeAllNormals(max_gradient);
-
-		if(CurrentRenderMode == RENDER_MODE_RAY_CASTING) {
-			// Generate a new data and sent into gpu (r, g, b) => Gradient, a => Value;
-			this->GenerateTextureData();
-
-			// Creating a 3D Texture.
-			// Please make sure your texture settings (it is GL_FLOAT, not GL_UNSIGNED_BYTE)
-			glGenTextures(1, &this->VolumeTexture);
-			glBindTexture(GL_TEXTURE_3D, this->VolumeTexture);
-			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-			glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, Attributes.Resolution.x, Attributes.Resolution.y, Attributes.Resolution.z, 0, GL_RGBA, GL_FLOAT, this->TextureData.data());
-			glBindTexture(GL_TEXTURE_3D, 0);
-
-			// Creating a bounding-box with texture coordinate.
-			glm::vec3 resolution = Attributes.Resolution;
-			this->BoundingBoxVertices = {
-				resolution.x, resolution.y, 0.0,				1.0, 1.0, 0.0,
-				resolution.x, 0.0, 0.0,							1.0, 0.0, 0.0,
-				0.0, 0.0, 0.0,									0.0, 0.0, 0.0,
-				0.0, resolution.y, 0.0,							0.0, 1.0, 0.0,
-				resolution.x,  resolution.y, resolution.z,		1.0, 1.0, 1.0,
-				resolution.x, 0.0, resolution.z,				1.0, 0.0, 1.0,
-				0.0, 0.0, resolution.z,							0.0, 0.0, 1.0,
-				0.0,  resolution.y, resolution.z,				0.0, 1.0, 1.0,
-			};
-			this->BoundingBoxIndices = {
-				0, 1, 2,
-				0, 2, 3,
-				3, 2, 6,
-				3, 6, 7,
-				7, 6, 5,
-				7, 5, 4,
-				4, 5, 1,
-				4, 1, 0,
-				4, 0, 3,
-				4, 3, 7,
-				6, 2, 1,
-				6, 1, 5
-			};
-			glGenVertexArrays(1, &BoundingBoxVAO);
-			glGenBuffers(1, &BoundingBoxVBO);
-			glGenBuffers(1, &BoundingBoxEBO);
-			glBindVertexArray(BoundingBoxVAO);
-			glBindBuffer(GL_ARRAY_BUFFER, BoundingBoxVBO);
-			glBufferData(GL_ARRAY_BUFFER, this->BoundingBoxVertices.size() * sizeof(float), this->BoundingBoxVertices.data(), GL_STATIC_DRAW);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, BoundingBoxEBO);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->BoundingBoxIndices.size() * sizeof(unsigned int), this->BoundingBoxIndices.data(), GL_STATIC_DRAW);
-			glEnableVertexAttribArray(0);
-			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (const void*)0);
-			glEnableVertexAttribArray(1);
-			glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (const void*)(3 * sizeof(float)));
-			glBindVertexArray(0);
-		}
 
 		// 計算 Iso value Histogram、Gradient Histogram 和 heatmap
 		this->GenerateIsoValueHistogram();
@@ -194,13 +143,13 @@ namespace Nexus {
 		float max_isovalue = *std::max_element(this->RawData.cbegin(), this->RawData.cend());
 		
 		for (unsigned i = 0; i < this->RawData.size(); i++) {
-			glm::vec3 temp_norm = glm::normalize(this->GridNormals[i]);
+			glm::vec3 temp_norm = this->GridNormals[i];
 			float temp_value = this->RawData[i] / max_isovalue;
 			this->TextureData.push_back(glm::vec4(temp_norm, temp_value));
 		}
 	}
 	
-	void IsoSurface::ConvertToPolygon(float iso_value) {
+	void IsoSurface::ConvertToPolygon() {
 		if (!this->IsInitialize) {
 			Logger::Message(LOG_ERROR, "YOU MUST LOAD THE VOLUME DATA FIRST!");
 			return;
@@ -215,11 +164,71 @@ namespace Nexus {
 		this->Position.clear();
 		this->Normal.clear();
 
-		// Input the data set and iso-value
-		this->GenerateVertices(iso_value);
+		if (this->CurrentRenderMode == RENDER_MODE_ISO_SURFACE) {
 
-		// Send the position and normal of these vertices to the GPU
-		this->BufferInitialize();
+			// Input the data set and iso-value
+			this->GenerateVertices(this->IsoValue);
+
+			// Send the position and normal of these vertices to the GPU
+			this->BufferInitialize();
+			
+		} else if (this->CurrentRenderMode == RENDER_MODE_RAY_CASTING) {
+			// Generate a new data and sent into gpu (r, g, b) => Gradient, a => Value;
+			this->GenerateTextureData();
+
+			// Creating a 3D Texture.
+			// Please make sure your texture settings (it is GL_FLOAT, not GL_UNSIGNED_BYTE)
+			glGenTextures(1, &this->VolumeTexture);
+			glBindTexture(GL_TEXTURE_3D, this->VolumeTexture);
+			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+			glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, Attributes.Resolution.x, Attributes.Resolution.y, Attributes.Resolution.z, 0, GL_RGBA, GL_FLOAT, this->TextureData.data());
+			glBindTexture(GL_TEXTURE_3D, 0);
+
+			// Creating a bounding-box with texture coordinate.
+			glm::vec3 resolution = Attributes.Resolution;
+			this->BoundingBoxVertices = {
+				resolution.x, resolution.y, 0.0,				1.0, 1.0, 0.0,
+				resolution.x, 0.0, 0.0,							1.0, 0.0, 0.0,
+				0.0, 0.0, 0.0,									0.0, 0.0, 0.0,
+				0.0, resolution.y, 0.0,							0.0, 1.0, 0.0,
+				resolution.x,  resolution.y, resolution.z,		1.0, 1.0, 1.0,
+				resolution.x, 0.0, resolution.z,				1.0, 0.0, 1.0,
+				0.0, 0.0, resolution.z,							0.0, 0.0, 1.0,
+				0.0,  resolution.y, resolution.z,				0.0, 1.0, 1.0,
+			};
+			this->BoundingBoxIndices = {
+				0, 1, 2,
+				0, 2, 3,
+				3, 2, 6,
+				3, 6, 7,
+				7, 6, 5,
+				7, 5, 4,
+				4, 5, 1,
+				4, 1, 0,
+				4, 0, 3,
+				4, 3, 7,
+				6, 2, 1,
+				6, 1, 5
+			};
+			glGenVertexArrays(1, &BoundingBoxVAO);
+			glGenBuffers(1, &BoundingBoxVBO);
+			glGenBuffers(1, &BoundingBoxEBO);
+			glBindVertexArray(BoundingBoxVAO);
+			glBindBuffer(GL_ARRAY_BUFFER, BoundingBoxVBO);
+			glBufferData(GL_ARRAY_BUFFER, this->BoundingBoxVertices.size() * sizeof(float), this->BoundingBoxVertices.data(), GL_STATIC_DRAW);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, BoundingBoxEBO);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->BoundingBoxIndices.size() * sizeof(unsigned int), this->BoundingBoxIndices.data(), GL_STATIC_DRAW);
+			glEnableVertexAttribArray(0);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (const void*)0);
+			glEnableVertexAttribArray(1);
+			glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (const void*)(3 * sizeof(float)));
+			glBindVertexArray(0);
+		}
 
 		// Ready to draw
 		this->IsReadyToDraw = true;
@@ -237,17 +246,17 @@ namespace Nexus {
 
 		// 必須將 iso value 介於 0 到 max_isovalue 之間 切成 m 個等分，先求間距
 		float bin_width = ((max_isovalue - 0) + 1) / this->Interval;
-		this->IsoValue_Boundary.clear();
+		this->IsoValueBoundary.clear();
 		for (unsigned int i = 0; i < this->Interval; i++) {
 			float up = bin_width * i;
 			float down = bin_width * (i + 1);
-			this->IsoValue_Boundary.push_back(std::pair<float, float>(up, down));
+			this->IsoValueBoundary.push_back(std::pair<float, float>(up, down));
 		}
 
 		// 掃描整個資料，根據間距去做判斷
 		for (unsigned int i = 0; i < this->RawData.size(); i++) {
-			for (unsigned int j = 0; j < this->IsoValue_Boundary.size(); j++) {
-				if (this->IsoValue_Boundary[j].first <= static_cast<int>(this->RawData[i]) && static_cast<int>(this->RawData[i]) < this->IsoValue_Boundary[j].second) {
+			for (unsigned int j = 0; j < this->IsoValueBoundary.size(); j++) {
+				if (this->IsoValueBoundary[j].first <= static_cast<int>(this->RawData[i]) && static_cast<int>(this->RawData[i]) < this->IsoValueBoundary[j].second) {
 					this->IsoValueHistogram[j] += 1;
 				}
 			}
@@ -266,24 +275,24 @@ namespace Nexus {
 
 		// 必須將 gradient 的長度介於 0 到 max_gradient 之間 切成 k 個等分，先求間距
 		float bin_width = ((max_gradient - 0) + 1) / this->Interval;
-		this->Gradient_Boundary.clear();
+		this->GradientBoundary.clear();
 		for (unsigned int i = 0; i < this->Interval; i++) {
 			float up = bin_width * i;
 			float down = bin_width * (i + 1);
-			this->Gradient_Boundary.push_back(std::pair<float, float>(up, down));
+			this->GradientBoundary.push_back(std::pair<float, float>(up, down));
 		}
 
 		// 掃描整個資料，根據間距去做判斷
 		for (unsigned int i = 0; i < this->GradientMagnitudes.size(); i++) {
-			for (unsigned int j = 0; j < this->Gradient_Boundary.size(); j++) {
-				if (this->Gradient_Boundary[j].first <= this->GradientMagnitudes[i] && this->GradientMagnitudes[i] < this->Gradient_Boundary[j].second) {
+			for (unsigned int j = 0; j < this->GradientBoundary.size(); j++) {
+				if (this->GradientBoundary[j].first <= this->GradientMagnitudes[i] && this->GradientMagnitudes[i] < this->GradientBoundary[j].second) {
 					this->GradientHistogram[j] += 1;
 				}
 			}
 		}
 
 		// 顯示統計資訊
-		Utill::Show1DVectorStatistics(this->GradientMagnitudes, "Gradient Histogram - After");
+		// Utill::Show1DVectorStatistics(this->GradientMagnitudes, "Gradient Histogram - After");
 	}
 	
 	void IsoSurface::GenerateGradientHeatMap() {
@@ -294,16 +303,16 @@ namespace Nexus {
 		for (unsigned int i = 0; i < this->RawData.size(); i++) {
 			unsigned int isovalue_idx = 0;
 			unsigned int gradient_idx = 0;
-			for (unsigned int j = 0; j < this->Gradient_Boundary.size(); j++) {
+			for (unsigned int j = 0; j < this->GradientBoundary.size(); j++) {
 				gradient_idx = j;
-				if (this->Gradient_Boundary[j].first <= this->GradientMagnitudes[i] && this->GradientMagnitudes[i] < this->Gradient_Boundary[j].second) {
+				if (this->GradientBoundary[j].first <= this->GradientMagnitudes[i] && this->GradientMagnitudes[i] < this->GradientBoundary[j].second) {
 					break;
 				}
 			}
 
-			for (unsigned int j = 0; j < this->IsoValue_Boundary.size(); j++) {
+			for (unsigned int j = 0; j < this->IsoValueBoundary.size(); j++) {
 				isovalue_idx = j;
-				if (this->IsoValue_Boundary[j].first <= static_cast<int>(this->RawData[i]) && static_cast<int>(this->RawData[i]) < this->IsoValue_Boundary[j].second) {
+				if (this->IsoValueBoundary[j].first <= static_cast<int>(this->RawData[i]) && static_cast<int>(this->RawData[i]) < this->IsoValueBoundary[j].second) {
 					break;
 				}
 			}
@@ -363,34 +372,33 @@ namespace Nexus {
 		return this->GradientHeatmap;
 	}
 
-	std::vector<char*> IsoSurface::GetGradientHeatmapAxisLabels(bool is_axis_x) {
-		std::vector<char*> result;
+	void IsoSurface::GetGradientHeatmapAxisLabels(std::vector<std::string>& labels, bool is_axis_x) {
+		labels.clear();
 		if (is_axis_x) {
-			float x_bin = this->IsoValue_Boundary.size() / 4.0f;
+			float x_bin = this->IsoValueBoundary.size() / 4.0f;
 			for (unsigned int i = 0; i <= 4; i++) {
 				std::string temp;
 				if (i == 4) {
-					temp = std::to_string(static_cast<int>(this->IsoValue_Boundary[(x_bin * i) - 1].second));
+					temp = std::to_string(static_cast<int>(this->IsoValueBoundary[(x_bin * i) - 1].second));
 				} else {
-					temp = std::to_string(static_cast<int>(this->IsoValue_Boundary[(x_bin * i)].first));
+					temp = std::to_string(static_cast<int>(this->IsoValueBoundary[(x_bin * i)].first));
 				}
 				// std::cout << temp.c_str() << std::endl;
-				result.push_back(const_cast<char*>(temp.c_str()));
+				labels.push_back(temp);
 			}
 		} else {
-			float y_bin = this->Gradient_Boundary.size() / 4.0f;
+			float y_bin = this->GradientBoundary.size() / 4.0f;
 			for (unsigned int i = 0; i <= 4; i++) {
 				std::string temp;
 				if (i == 4) {
-					temp = std::to_string(static_cast<int>(this->Gradient_Boundary[(y_bin * i) - 1].second));
+					temp = std::to_string(static_cast<int>(this->GradientBoundary[(y_bin * i) - 1].second));
 				} else {
-					temp = std::to_string(static_cast<int>(this->Gradient_Boundary[(y_bin * i)].first));
+					temp = std::to_string(static_cast<int>(this->GradientBoundary[(y_bin * i)].first));
 				}
 				// std::cout << temp.c_str() << std::endl;
-				result.push_back(const_cast<char*>(temp.c_str()));
+				labels.push_back(temp);
 			}
 		}
-		return result;
 	}
 
 	void IsoSurface::EqualizationData(std::vector<int> equal_values) {
@@ -405,18 +413,28 @@ namespace Nexus {
 			Logger::Message(LOG_ERROR, "YOU MUST LOAD THE VOLUME DATA FIRST and COMPUTE THESE ISO SURFACE VERTICES.");
 			return;
 		}
-		
-		std::cout << "==================== Iso Surface Information ====================" << std::endl
-			<< "Raw File Path: " << this->RawDataFilePath << std::endl
-			<< "Construct Method: March Cube Method" << std::endl
-			<< "Voxel Count: " << GetVoxelCount() << std::endl
-			<< "Triangle Count: " << GetTriangleCount() << std::endl
-			<< "Vertex Count: " << GetVertexCount() << std::endl
-			<< "Position Count: " << GetPositionCount() << std::endl
-			<< "Normal Count: " << GetNormalCount() << std::endl
-			<< "Gradient Magnitudes Counts: " << this->GradientMagnitudes.size() << std::endl
-			<< "Elapsed time: " << this->ElapsedSeconds.count() << " (seconds)" << std::endl
-			<< "================================================================================" << std::endl;
+
+		if (this->CurrentRenderMode == RENDER_MODE_ISO_SURFACE) {
+			std::cout << "==================== Iso Surface Information ====================" << std::endl
+				<< "Raw File Path: " << this->RawDataFilePath << std::endl
+				<< "Construct Method: March Cube Method" << std::endl
+				<< "Voxel Count: " << GetVoxelCount() << std::endl
+				<< "Triangle Count: " << GetTriangleCount() << std::endl
+				<< "Vertex Count: " << GetVertexCount() << std::endl
+				<< "Position Count: " << GetPositionCount() << std::endl
+				<< "Normal Count: " << GetNormalCount() << std::endl
+				<< "Gradient Magnitudes Counts: " << this->GradientMagnitudes.size() << std::endl
+				<< "Elapsed time: " << this->ElapsedSeconds.count() << " (seconds)" << std::endl
+				<< "================================================================================" << std::endl;
+		} else if (this->CurrentRenderMode == RENDER_MODE_RAY_CASTING) {
+			std::cout << "==================== Volume Rendering Information ====================" << std::endl
+				<< "Raw File Path: " << this->RawDataFilePath << std::endl
+				<< "Construct Method: Ray Casting" << std::endl
+				<< "Voxel Count: " << GetVoxelCount() << std::endl
+				<< "Gradient Magnitudes Counts: " << this->GradientMagnitudes.size() << std::endl
+				<< "Elapsed time: " << this->ElapsedSeconds.count() << " (seconds)" << std::endl
+				<< "================================================================================" << std::endl;
+		}
 	}
 
 	void IsoSurface::Draw(Nexus::Shader* shader, glm::mat4 model) {
@@ -655,24 +673,6 @@ namespace Nexus {
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 		glBindVertexArray(0);
-	}
-
-	glm::mat4 IsoSurface::GetModelMatrix() {
-		// 基本上就是 scale 和 translate 的組合。
-		glm::mat3 basis;
-		basis[0] = { this->Attributes.Resolution.x * this->Attributes.Ratio.x * 0.01f, 0.0f, 0.0f };
-		basis[1] = { 0.0f, this->Attributes.Resolution.y * this->Attributes.Ratio.y * 0.01f, 0.0f };
-		basis[2] = { 0.0f, 0.0f, this->Attributes.Resolution.z * this->Attributes.Ratio.z * 0.01f };
-
-		glm::vec3 offset = -0.5f * (basis[0] + basis[1] + basis[2]);
-
-		glm::mat4 model(1.0f);
-		model[0] = glm::vec4(basis[0], 0.0f);
-		model[1] = glm::vec4(basis[1], 0.0f);
-		model[2] = glm::vec4(basis[2], 0.0f);
-		model[3] = glm::vec4(offset, 1.0f);
-
-		return model;
 	}
 	
 	void IsoSurface::AddPosition(float x, float y, float z) {
