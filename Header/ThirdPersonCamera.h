@@ -40,7 +40,7 @@ namespace Nexus {
 				}
 			}
 
-			// °O±o¡A¦]¬°Äá¼v¾÷»Pª«Åéªº¶ZÂ÷¬O©T©wªº¡A©Ò¥H·í§Aªºµø¨¤µo²{ÅÜ¤Æ®É¡A§Aªº¦ì¸m¤]·|¸òµÛ¤£¦P¡C
+			// è¨˜å¾—ï¼Œå› ç‚ºæ”å½±æ©Ÿèˆ‡ç‰©é«”çš„è·é›¢æ˜¯å›ºå®šçš„ï¼Œæ‰€ä»¥ç•¶ä½ çš„è¦–è§’ç™¼ç¾è®ŠåŒ–æ™‚ï¼Œä½ çš„ä½ç½®ä¹Ÿæœƒè·Ÿè‘—ä¸åŒã€‚
 			this->UpdateCameraPosition();
 		}
 		
@@ -94,7 +94,7 @@ namespace Nexus {
 			this->UpdateCameraPosition();
 		}
 
-		// ÁYµu©Î©ÔªøÄá¼v¾÷»Pª«Åé¤§¶¡ªº¶ZÂ÷
+		// ç¸®çŸ­æˆ–æ‹‰é•·æ”å½±æ©Ÿèˆ‡ç‰©é«”ä¹‹é–“çš„è·é›¢
 		void AdjustDistance(float yoffset, float min = 100.0f, float max = 1000.0f, float stride = 10.0f) {
 			if (this->Distance >= min && this->Distance <= max) {
 				this->Distance -= (float)yoffset * stride;
@@ -134,7 +134,7 @@ namespace Nexus {
 				this->Position = glm::clamp(this->Position, this->RestrictMin, this->RestrictMax);
 			}
 
-			// ºâ¥XÄá¼v¾÷ªº¦ì¸m¤§«á¡A´N¯àºâ¥XÄá¼v¾÷ªº®y¼Ð¶b
+			// ç®—å‡ºæ”å½±æ©Ÿçš„ä½ç½®ä¹‹å¾Œï¼Œå°±èƒ½ç®—å‡ºæ”å½±æ©Ÿçš„åº§æ¨™è»¸
 			this->UpdateCameraVectors();
 		}
 	};

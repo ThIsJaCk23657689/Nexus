@@ -13,7 +13,7 @@ namespace Nexus {
 		GLuint vertex = CreateShader(vertexPath, ShaderType::Vertex);
 		GLuint fragment = CreateShader(fragmentPath, ShaderType::Fragment);
 
-		GLuint geometry = NULL;
+		GLuint geometry = 0;
 		if (geometryPath != nullptr) {
 			geometry = CreateShader(geometryPath, ShaderType::Geometry);
 		}
@@ -104,6 +104,8 @@ namespace Nexus {
 			case ShaderType::Geometry:
 				CurrentShaderType = GL_GEOMETRY_SHADER;
 				break;
+            default:
+                break;
 		}
 
 		// Compile these shaders.
@@ -164,15 +166,17 @@ namespace Nexus {
 	std::string Shader::GetShaderTypeString(ShaderType type) {
 		std::string result = "vertex";
 		switch (type) {
-		case ShaderType::Fragment:
-			result = "fragment";
-			break;
-		case ShaderType::Geometry:
-			result = "geometry";
-			break;
-		case ShaderType::Program:
-			result = "program";
-			break;
+            case ShaderType::Fragment:
+                result = "fragment";
+                break;
+            case ShaderType::Geometry:
+                result = "geometry";
+                break;
+            case ShaderType::Program:
+                result = "program";
+                break;
+            default:
+                break;
 		}
 
 		return result;

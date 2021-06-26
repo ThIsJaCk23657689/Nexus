@@ -37,12 +37,12 @@ namespace Nexus {
 		// Compute the gradient of these all voxels.
 		this->ComputeAllNormals(max_gradient);
 
-		// ­pºâ Iso value Histogram¡BGradient Histogram ©M heatmap
+		// è¨ˆç®— Iso value Histogramã€Gradient Histogram å’Œ heatmap
 		this->GenerateIsoValueHistogram();
 		this->GenerateGradientHistogram();
 		this->GenerateGradientHeatMap();
 		
-		// ¯Á¤Ş¬O 0 ~ 3409119 ­Ó¡A¥Nªí¨C¤@­Ó voxel ¤W­± gradient ªºªø«×¡A¤¶©ó 1 ¨ì max_gradient ¤§¶¡¡C
+		// ç´¢å¼•æ˜¯ 0 ~ 3409119 å€‹ï¼Œä»£è¡¨æ¯ä¸€å€‹ voxel ä¸Šé¢ gradient çš„é•·åº¦ï¼Œä»‹æ–¼ 1 åˆ° max_gradient ä¹‹é–“ã€‚
 		// Utill::Show1DVectorStatistics(this->GradientMagnitudes, "Gradient Histogram - Before");
 
 		this->IsInitialize = true;
@@ -77,11 +77,11 @@ namespace Nexus {
 			}
 
 			if (std::regex_search(line, RegFormat[0])) {
-				// ¦pªG¬O Resolution¡A®æ¦¡³q±`¬O Resolution=149:208:110¡Bresolution=256x256x256¡C
-				// ¥ı§ä¥X = ªº¦ì¸m«á¡AÂ^¨ú³Ñ¤Uªº¦r¦ê¡A¨Ã§Q¥Î:¨Ó¶i¦æ¤Á³Î(©Îx¨Ó¤Á³Î)¡C
+				// å¦‚æœæ˜¯ Resolutionï¼Œæ ¼å¼é€šå¸¸æ˜¯ Resolution=149:208:110ã€resolution=256x256x256ã€‚
+				// å…ˆæ‰¾å‡º = çš„ä½ç½®å¾Œï¼Œæ“·å–å‰©ä¸‹çš„å­—ä¸²ï¼Œä¸¦åˆ©ç”¨:ä¾†é€²è¡Œåˆ‡å‰²(æˆ–xä¾†åˆ‡å‰²)ã€‚
 				std::vector<std::string> resolution_str;
 				if(line.find("x") == std::string::npos) {
-					// ¦pªG§ä¤£¨ì x ´N¥Î : ¥h¤Á³Î
+					// å¦‚æœæ‰¾ä¸åˆ° x å°±ç”¨ : å»åˆ‡å‰²
 					resolution_str = Utill::Split(line.substr(line.find("=") + 1), ":");
 				} else {
 					resolution_str = Utill::Split(line.substr(line.find("=") + 1), "x");
@@ -101,8 +101,8 @@ namespace Nexus {
 			}
 
 			if (std::regex_search(line, RegFormat[1])) {
-				// ¦pªG¬O VoxelSize¡A®æ¦¡³q±`¬O VoxelSize=1.000000:1.000000:1.000000¡Bratio=1:0.5:1¡C
-				// ¥ı§ä¥X = ªº¦ì¸m«á¡AÂ^¨ú³Ñ¤Uªº¦r¦ê¡A¨Ã§Q¥Î:¨Ó¶i¦æ¤Á³Î¡C
+				// å¦‚æœæ˜¯ VoxelSizeï¼Œæ ¼å¼é€šå¸¸æ˜¯ VoxelSize=1.000000:1.000000:1.000000ã€ratio=1:0.5:1ã€‚
+				// å…ˆæ‰¾å‡º = çš„ä½ç½®å¾Œï¼Œæ“·å–å‰©ä¸‹çš„å­—ä¸²ï¼Œä¸¦åˆ©ç”¨:ä¾†é€²è¡Œåˆ‡å‰²ã€‚
 				std::vector<std::string> voxelsize_str = Utill::Split(line.substr(line.find("=") + 1), ":");
 
 				voxelsize.x = std::stof(voxelsize_str[0]);
@@ -119,16 +119,16 @@ namespace Nexus {
 			}
 
 			if (std::regex_search(line, RegFormat[2])) {
-				// ¦pªG¬O SampleType¡A®æ¦¡³q±`¬O SampleType=UnsignedChar¡Bsample-type=unsigned char¡C
-				// ¥ı§ä¥X = ªº¦ì¸m«á¡AÂ^¨ú³Ñ¤Uªº¦r¦ê¡C
+				// å¦‚æœæ˜¯ SampleTypeï¼Œæ ¼å¼é€šå¸¸æ˜¯ SampleType=UnsignedCharã€sample-type=unsigned charã€‚
+				// å…ˆæ‰¾å‡º = çš„ä½ç½®å¾Œï¼Œæ“·å–å‰©ä¸‹çš„å­—ä¸²ã€‚
 				std::cout << line.find("=") << "\t" << line.substr(line.find("=") + 1) << "\t";
 				std::string sampletype_str = line.substr(line.find("=") + 1);
 				if (sampletype_str == "UnsignedChar" || sampletype_str == "unsigned char") Attributes.DataType = "unsigned char";
 			}
 
 			if (std::regex_search(line, RegFormat[3])) {
-				// ¦pªG¬O Endian¡A®æ¦¡³q±`¬O Endian=Little¡C
-				// ¥ı§ä¥X = ªº¦ì¸m«á¡AÂ^¨ú³Ñ¤Uªº¦r¦ê¡C
+				// å¦‚æœæ˜¯ Endianï¼Œæ ¼å¼é€šå¸¸æ˜¯ Endian=Littleã€‚
+				// å…ˆæ‰¾å‡º = çš„ä½ç½®å¾Œï¼Œæ“·å–å‰©ä¸‹çš„å­—ä¸²ã€‚
 				std::cout << line.find("=") << "\t" << line.substr(line.find("=") + 1) << "\t";
 				std::string endian_str = line.substr(line.find("=") + 1);
 				if (endian_str == "Little" || endian_str == "") Attributes.Endian = "little";
@@ -238,13 +238,13 @@ namespace Nexus {
 	}
 
 	void IsoSurface::GenerateIsoValueHistogram() {
-		// ªì©l¤Æ¡A±N¦¹ Volume Data ªº¸ê®Æ¤À¦¨ m µ¥¥÷
+		// åˆå§‹åŒ–ï¼Œå°‡æ­¤ Volume Data çš„è³‡æ–™åˆ†æˆ m ç­‰ä»½
 		this->IsoValueHistogram = std::vector<float>(this->Interval, 0.0f);
 
-		// ¥²¶·¥ı§ä¥X¸ê®Æ¤¤³Ì¤j­È°µ¬°¤U¬É¡A¤W¬É«h±Ä¥Î 0¡C
+		// å¿…é ˆå…ˆæ‰¾å‡ºè³‡æ–™ä¸­æœ€å¤§å€¼åšç‚ºä¸‹ç•Œï¼Œä¸Šç•Œå‰‡æ¡ç”¨ 0ã€‚
 		float max_isovalue = *std::max_element(this->RawData.cbegin(), this->RawData.cend());
 
-		// ¥²¶·±N iso value ¤¶©ó 0 ¨ì max_isovalue ¤§¶¡ ¤Á¦¨ m ­Óµ¥¤À¡A¥ı¨D¶¡¶Z
+		// å¿…é ˆå°‡ iso value ä»‹æ–¼ 0 åˆ° max_isovalue ä¹‹é–“ åˆ‡æˆ m å€‹ç­‰åˆ†ï¼Œå…ˆæ±‚é–“è·
 		float bin_width = ((max_isovalue - 0) + 1) / this->Interval;
 		this->IsoValueBoundary.clear();
 		for (unsigned int i = 0; i < this->Interval; i++) {
@@ -253,7 +253,7 @@ namespace Nexus {
 			this->IsoValueBoundary.push_back(std::pair<float, float>(up, down));
 		}
 
-		// ±½´y¾ã­Ó¸ê®Æ¡A®Ú¾Ú¶¡¶Z¥h°µ§PÂ_
+		// æƒææ•´å€‹è³‡æ–™ï¼Œæ ¹æ“šé–“è·å»åšåˆ¤æ–·
 		for (unsigned int i = 0; i < this->RawData.size(); i++) {
 			for (unsigned int j = 0; j < this->IsoValueBoundary.size(); j++) {
 				if (this->IsoValueBoundary[j].first <= static_cast<int>(this->RawData[i]) && static_cast<int>(this->RawData[i]) < this->IsoValueBoundary[j].second) {
@@ -262,18 +262,18 @@ namespace Nexus {
 			}
 		}
 
-		// Åã¥Ü²Î­p¸ê°T
+		// é¡¯ç¤ºçµ±è¨ˆè³‡è¨Š
 		// Utill::Show1DVectorStatistics(x, "Iso Value Histogram");
 	}
 	
 	void IsoSurface::GenerateGradientHistogram() {
-		// ªì©l¤Æ¡A±N gradient length (¤w¸g³Q¤À¨©¤Æ) ªº¸ê®Æ¤À¦¨ k µ¥¥÷
+		// åˆå§‹åŒ–ï¼Œå°‡ gradient length (å·²ç¶“è¢«åˆ†è²åŒ–) çš„è³‡æ–™åˆ†æˆ k ç­‰ä»½
 		this->GradientHistogram = std::vector<float>(this->Interval, 0.0f);
 
-		// ¥²¶·¥ı§ä¥X¸ê®Æ¤¤³Ì¤j­È°µ¬°¤U¬É¡A¤W¬É«h±Ä¥Î 0¡C
+		// å¿…é ˆå…ˆæ‰¾å‡ºè³‡æ–™ä¸­æœ€å¤§å€¼åšç‚ºä¸‹ç•Œï¼Œä¸Šç•Œå‰‡æ¡ç”¨ 0ã€‚
 		float max_gradient = *std::max_element(this->GradientMagnitudes.cbegin(), this->GradientMagnitudes.cend());
 
-		// ¥²¶·±N gradient ªºªø«×¤¶©ó 0 ¨ì max_gradient ¤§¶¡ ¤Á¦¨ k ­Óµ¥¤À¡A¥ı¨D¶¡¶Z
+		// å¿…é ˆå°‡ gradient çš„é•·åº¦ä»‹æ–¼ 0 åˆ° max_gradient ä¹‹é–“ åˆ‡æˆ k å€‹ç­‰åˆ†ï¼Œå…ˆæ±‚é–“è·
 		float bin_width = ((max_gradient - 0) + 1) / this->Interval;
 		this->GradientBoundary.clear();
 		for (unsigned int i = 0; i < this->Interval; i++) {
@@ -282,7 +282,7 @@ namespace Nexus {
 			this->GradientBoundary.push_back(std::pair<float, float>(up, down));
 		}
 
-		// ±½´y¾ã­Ó¸ê®Æ¡A®Ú¾Ú¶¡¶Z¥h°µ§PÂ_
+		// æƒææ•´å€‹è³‡æ–™ï¼Œæ ¹æ“šé–“è·å»åšåˆ¤æ–·
 		for (unsigned int i = 0; i < this->GradientMagnitudes.size(); i++) {
 			for (unsigned int j = 0; j < this->GradientBoundary.size(); j++) {
 				if (this->GradientBoundary[j].first <= this->GradientMagnitudes[i] && this->GradientMagnitudes[i] < this->GradientBoundary[j].second) {
@@ -291,15 +291,15 @@ namespace Nexus {
 			}
 		}
 
-		// Åã¥Ü²Î­p¸ê°T
+		// é¡¯ç¤ºçµ±è¨ˆè³‡è¨Š
 		// Utill::Show1DVectorStatistics(this->GradientMagnitudes, "Gradient Histogram - After");
 	}
 	
 	void IsoSurface::GenerateGradientHeatMap() {
-		// ªì©l¤Æ¡A¾î¶b¬° Iso Value¡AÁa¶b¬° Gradient Length
+		// åˆå§‹åŒ–ï¼Œæ©«è»¸ç‚º Iso Valueï¼Œç¸±è»¸ç‚º Gradient Length
 		this->GradientHeatmap = std::vector<float>(this->Interval * this->Interval, 0.0f);
 
-		// ¶]¹M©Ò¦³¸ê®Æ¡A¥u­n¦³ Voxel ²Å¦X¹ïÀ³ªº Iso value ©M ¦b¬Û¹ïÀ³ªº ±è«×°Ï¶¡ ¸Ó®æ´N +=1
+		// è·‘éæ‰€æœ‰è³‡æ–™ï¼Œåªè¦æœ‰ Voxel ç¬¦åˆå°æ‡‰çš„ Iso value å’Œ åœ¨ç›¸å°æ‡‰çš„ æ¢¯åº¦å€é–“ è©²æ ¼å°± +=1
 		for (unsigned int i = 0; i < this->RawData.size(); i++) {
 			unsigned int isovalue_idx = 0;
 			unsigned int gradient_idx = 0;
@@ -324,20 +324,20 @@ namespace Nexus {
 	void IsoSurface::IsoValueHistogramEqualization() {
 		this->IsEqualization = true;
 		
-		// ¥ı¨ú±oÂÂªº histogram¡A¨Ã­«·sªì©l¤Æ
+		// å…ˆå–å¾—èˆŠçš„ histogramï¼Œä¸¦é‡æ–°åˆå§‹åŒ–
 		std::vector<float> old_histogram = this->IsoValueHistogram;
 		this->IsoValueHistogram = std::vector<float>(256, 0.0f);
 
-		// ­pºâÁ`©Ò¦³ iso value ¬° 0 ~ 255 ªºÅã¥Ü¦¸¼Æ¡C 
+		// è¨ˆç®—ç¸½æ‰€æœ‰ iso value ç‚º 0 ~ 255 çš„é¡¯ç¤ºæ¬¡æ•¸ã€‚ 
 		float total_iso_value = std::accumulate(old_histogram.cbegin(), old_histogram.cend(), 0.0);
 
-		// Âk¤@¤Æ¡A©Ò¦³Åã¥Ü¦¸¼Æ°£¥HÁ`¦¸¼Æ¡A¼Æ­È·|¤¶©ó 0 ~ 1 ¤§¶¡¡C
+		// æ­¸ä¸€åŒ–ï¼Œæ‰€æœ‰é¡¯ç¤ºæ¬¡æ•¸é™¤ä»¥ç¸½æ¬¡æ•¸ï¼Œæ•¸å€¼æœƒä»‹æ–¼ 0 ~ 1 ä¹‹é–“ã€‚
 		std::vector<float> normalize;
 		for (auto i : old_histogram) {
 			normalize.push_back(i / total_iso_value);
 		}
 
-		// ­pºâ	²Ö­pª½¤è¹Ï
+		// è¨ˆç®—	ç´¯è¨ˆç›´æ–¹åœ–
 		float current_value = 0;
 		std::vector<float> cumulative;
 		for (auto i : normalize) {
@@ -345,18 +345,18 @@ namespace Nexus {
 			cumulative.push_back(current_value);
 		}
 
-		// ¦A­«·s¬M®g¨ì 0 ~ 255 (¨Ã¥B¥|±Ë¤­¤J)
+		// å†é‡æ–°æ˜ å°„åˆ° 0 ~ 255 (ä¸¦ä¸”å››æ¨äº”å…¥)
 		std::vector<int> equal_values;
 		for (auto i : cumulative) {
 			equal_values.push_back(round(i * 255));
 		}
 
-		// ±o¨ìªº¼Æ­È¬O©Ò¿×ªº§¡¿Å¤Æ­È ¤ñ¦p equal_values[0] = 71 ¥Nªí ­ì¥»  iso value = 0 §¡¿Å¤Æ«á¡A½Õ¾ã¬°iso value = 71  ¼Æ¶q¬O¤£ÅÜªº
+		// å¾—åˆ°çš„æ•¸å€¼æ˜¯æ‰€è¬‚çš„å‡è¡¡åŒ–å€¼ æ¯”å¦‚ equal_values[0] = 71 ä»£è¡¨ åŸæœ¬  iso value = 0 å‡è¡¡åŒ–å¾Œï¼Œèª¿æ•´ç‚ºiso value = 71  æ•¸é‡æ˜¯ä¸è®Šçš„
 		for (int i = 0; i < equal_values.size(); i++) {
 			this->IsoValueHistogram[equal_values[i]] += old_histogram[i];
 		}
 
-		// ³Ì«á§O§Ñ¤F­n¹ï¾ã­Ó Volume Data °µ¤@¼Ëªº¾Ş§@¡]§¡­È¤Æ¡^¡I
+		// æœ€å¾Œåˆ¥å¿˜äº†è¦å°æ•´å€‹ Volume Data åšä¸€æ¨£çš„æ“ä½œï¼ˆå‡å€¼åŒ–ï¼‰ï¼
 		this->EqualizationData(equal_values);
 	}
 
@@ -477,7 +477,7 @@ namespace Nexus {
 	}
 
 	void IsoSurface::ComputeAllNormals(float max_gradient) {
-		// ­pºâ¨C¤@­Ó Voxel ªº Gradient ¨Ó·í§@ªk¦V¶q¡C
+		// è¨ˆç®—æ¯ä¸€å€‹ Voxel çš„ Gradient ä¾†ç•¶ä½œæ³•å‘é‡ã€‚
 		for (int k = 0; k < Attributes.Resolution.z; k++) {
 			for (int j = 0; j < Attributes.Resolution.y; j++) {
 				for (int i = 0; i < Attributes.Resolution.x; i++) {
@@ -516,7 +516,7 @@ namespace Nexus {
 						norm.z = (this->GetIsoValueFromGrid(i, j, k + 1) - this->GetIsoValueFromGrid(i, j, k - 1)) / 2 * Attributes.Ratio.z;
 					}
 
-					// Gradient ªø«×¤À¨©¤Æ
+					// Gradient é•·åº¦åˆ†è²åŒ–
 					float temp_length = glm::length(norm);
 					if (temp_length < 1) {
 						temp_length = 1;
@@ -536,8 +536,8 @@ namespace Nexus {
 
 		Logger::Message(LOG_DEBUG, "Starting generate vertices....... It will takes a long time.");
 		
-		// ¶}©l¤@­Ó¤@­Ó Voxel Åª¨ú¡A¨Ã¥B¨CÅª¤@­Ó Voxel ´N§ì¥¦¨ä¥L7­Ó Voxel (¯àºc¦¨¤@­Ó¥¿¤è§Îªº)¡A
-		// ¤@¦¸¿é¤J 8 ­Ó Voxel¡AÀË¬d¨Ã¨D¥X¥¿¤è¶ô¤¤©Ò¥]ÂĞªº¤T¨¤§Î³»ÂI»Pªk¦V¶q¬°¦ó¡C
+		// é–‹å§‹ä¸€å€‹ä¸€å€‹ Voxel è®€å–ï¼Œä¸¦ä¸”æ¯è®€ä¸€å€‹ Voxel å°±æŠ“å®ƒå…¶ä»–7å€‹ Voxel (èƒ½æ§‹æˆä¸€å€‹æ­£æ–¹å½¢çš„)ï¼Œ
+		// ä¸€æ¬¡è¼¸å…¥ 8 å€‹ Voxelï¼Œæª¢æŸ¥ä¸¦æ±‚å‡ºæ­£æ–¹å¡Šä¸­æ‰€åŒ…è¦†çš„ä¸‰è§’å½¢é ‚é»èˆ‡æ³•å‘é‡ç‚ºä½•ã€‚
 		for (int k = 0; k < Attributes.Resolution.z - 1; k++) {
 			for (int j = 0; j < Attributes.Resolution.y - 1; j++) {
 				for (int i = 0; i < Attributes.Resolution.x - 1; i++) {
@@ -575,19 +575,19 @@ namespace Nexus {
 		glm::vec3 position_list[12];
 		glm::vec3 normal_list[12];
 
-		// ¥ıÀË¬d¨C­Ó¤è¶ô¤Wªº Voxel ÂĞ»\¬°¦ó¡A¤@¦@¦³ 8 ­Ó³»ÂI¡]¨Ï¥Î¤@­Ó byte ¨Ó¥Nªí¡^¡A¦pªG¸Ó iso value ¤ñ¸û¤j¡A´N·|±N¸Ó bits ÅÜ¦¨ 1¡C
+		// å…ˆæª¢æŸ¥æ¯å€‹æ–¹å¡Šä¸Šçš„ Voxel è¦†è“‹ç‚ºä½•ï¼Œä¸€å…±æœ‰ 8 å€‹é ‚é»ï¼ˆä½¿ç”¨ä¸€å€‹ byte ä¾†ä»£è¡¨ï¼‰ï¼Œå¦‚æœè©² iso value æ¯”è¼ƒå¤§ï¼Œå°±æœƒå°‡è©² bits è®Šæˆ 1ã€‚
 		for (unsigned int vertex_index = 0; vertex_index < cell.vertices.size(); vertex_index++) {
 			if (cell.vertices[vertex_index].Value > iso_value) {
 				cube_index |= (1 << vertex_index);
 			}
 		}
 
-		// ¦pªG³£¨S¦³ Voxel ³QÂĞ»\¡A¥Nªí¦¹ Cell ¬O¨S¦³¬Û¥æªº¡]¥i¯à¦b¹Ï§Î ¥~­± ©Î ¸Ì­±¡^
+		// å¦‚æœéƒ½æ²’æœ‰ Voxel è¢«è¦†è“‹ï¼Œä»£è¡¨æ­¤ Cell æ˜¯æ²’æœ‰ç›¸äº¤çš„ï¼ˆå¯èƒ½åœ¨åœ–å½¢ å¤–é¢ æˆ– è£¡é¢ï¼‰
 		if (this->EdgeTable[cube_index] == 0) {
 			return;
 		}
 
-		// «Ø¥ß Ãä ªº¶¶§Ç
+		// å»ºç«‹ é‚Š çš„é †åº
 		std::vector<std::vector<int>> EdgeOrder = {
 			std::vector<int>{0, 1},
 			std::vector<int>{1, 2},
@@ -603,7 +603,7 @@ namespace Nexus {
 			std::vector<int>{3, 7},
 		};
 
-		// ¶}©l¤@­Ó¤@­ÓÃä¥h§ä¦³¨S¦³¬Û¥æ¡A¦pªG¦³´N¶i¦æ´¡­È­pºâ ¬Û¥æÂIªº®y¼Ğ¥H¤Îªk¦V¶q
+		// é–‹å§‹ä¸€å€‹ä¸€å€‹é‚Šå»æ‰¾æœ‰æ²’æœ‰ç›¸äº¤ï¼Œå¦‚æœæœ‰å°±é€²è¡Œæ’å€¼è¨ˆç®— ç›¸äº¤é»çš„åº§æ¨™ä»¥åŠæ³•å‘é‡
 		for (unsigned int edge_index = 0; edge_index < EdgeOrder.size(); edge_index++) {
 			if (this->EdgeTable[cube_index] & (1 << edge_index)) {
 				position_list[edge_index] = this->Interpolation(iso_value, cell.vertices[EdgeOrder[edge_index][0]], cell.vertices[EdgeOrder[edge_index][1]], INTERPOLATE_POSITION);
@@ -611,7 +611,7 @@ namespace Nexus {
 			}
 		}
 
-		// §Q¥Î Lookup table ¬dªí¥X¹ïÀ³ªº¤T¨¤§Î®y¼Ğ
+		// åˆ©ç”¨ Lookup table æŸ¥è¡¨å‡ºå°æ‡‰çš„ä¸‰è§’å½¢åº§æ¨™
 		for (unsigned int i = 0; this->TriangleTable[cube_index][i] != -1; i += 3) {
 			for (unsigned int offset = 0; offset < 3; offset++) {
 				this->AddPosition(position_list[this->TriangleTable[cube_index][i + offset]]);

@@ -54,7 +54,7 @@ namespace Nexus {
 		void SetMouseSensitivity(float sensitivity);
 		void SetZoom(float zoom);
 
-		virtual void ShowDebugUI(const char* camera_name);
+		virtual void ShowDebugUI(const std::string& camera_name);
 
 	protected:
 		glm::vec3 Position;

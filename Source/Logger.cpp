@@ -6,7 +6,7 @@
 
 namespace Nexus {
 
-	const std::string NexusVerison = "0.3.2";
+	const std::string NexusVerison = "0.4.0";
 	
 	void Logger::Message(LogLevel type, std::string message) {
 		switch (type) {
@@ -35,22 +35,24 @@ namespace Nexus {
 	}
 
 	void Logger::ShowMe() {
-		std::cout << std::endl;
-		std::cout << "  $$\\   $$\\" << std::endl;
-		std::cout << "  $$$\\  $$ |" << std::endl;
-		std::cout << "  $$$$\\ $$ | $$$$$$\\  $$\\   $$\\ $$\\   $$\\  $$$$$$$\\" << std::endl;
-		std::cout << "  $$ $$\\$$ |$$  __$$\\ \\$$\\ $$  |$$ |  $$ |$$  _____|" << std::endl;
-		std::cout << "  $$ \\$$$$ |$$$$$$$$ | \\$$$$  / $$ |  $$ |\\$$$$$$\\" << std::endl;
-		std::cout << "  $$ |\\$$$ |$$   ____| $$  $$\\  $$ |  $$ | \\____$$\\" << std::endl;
-		std::cout << "  $$ | \\$$ |\\$$$$$$$\\ $$  /\\$$\\ \\$$$$$$  |$$$$$$$  |" << std::endl;
-		std::cout << "  \\__|  \\__| \\_______|\\__/  \\__| \\______/ \\_______/" << std::endl;
-		std::cout << std::endl;
-		std::cout << "\t\t  ________    ____         __      ________  " << std::endl;
-		std::cout << "Created by: \t /_  __/ /_  /  _/____    / /___ _/ ____/ /__" << std::endl;
-		std::cout << "\t\t  / / / __ \\ / // ___/_  / / __ `/ /   / //_/" << std::endl;
-		std::cout << "\t\t / / / / / // /(__  ) /_/ / /_/ / /___/ ,<   " << std::endl;
-		std::cout << "Version: " + NexusVerison + "\t/_/ /_/ /_/___/____/\\____/\\__,_/\\____/_/|_|  " << std::endl;
-		std::cout << std::endl;
+        std::cout << std::endl;
+        std::cout << "  $$\\   $$\\" << std::endl;
+        std::cout << "  $$$\\  $$ |" << std::endl;
+        std::cout << "  $$$$\\ $$ | $$$$$$\\  $$\\   $$\\ $$\\   $$\\  $$$$$$$\\" << std::endl;
+        std::cout << "  $$ $$\\$$ |$$  __$$\\ \\$$\\ $$  |$$ |  $$ |$$  _____|" << std::endl;
+        std::cout << "  $$ \\$$$$ |$$$$$$$$ | \\$$$$  / $$ |  $$ |\\$$$$$$\\" << std::endl;
+        std::cout << "  $$ |\\$$$ |$$   ____| $$  $$\\  $$ |  $$ | \\____$$\\" << std::endl;
+        std::cout << "  $$ | \\$$ |\\$$$$$$$\\ $$  /\\$$\\ \\$$$$$$  |$$$$$$$  |" << std::endl;
+        std::cout << "  \\__|  \\__| \\_______|\\__/  \\__| \\______/ \\_______/" << std::endl;
+        std::cout << std::endl;
+        std::cout << "Created by: " << std::endl;
+        std::cout << "\t\t  ________    ____         __      ________  " << std::endl;
+        std::cout << "\t\t /_  __/ /_  /  _/____    / /___ _/ ____/ /__" << std::endl;
+        std::cout << "\t\t  / / / __ \\ / // ___/_  / / __ `/ /   / //_/" << std::endl;
+        std::cout << "\t\t / / / / / // /(__  ) /_/ / /_/ / /___/ ,<   " << std::endl;
+        std::cout << "\t\t/_/ /_/ /_/___/____/\\____/\\__,_/\\____/_/|_|  " << std::endl;
+        std::cout << "Version: " + NexusVerison << std::endl;
+        std::cout << std::endl;
 	}
 
 	// Generate timestamp for logging

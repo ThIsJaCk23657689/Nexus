@@ -1,5 +1,5 @@
 #pragma once
-#include <Windows.h>
+#include <filesystem>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -13,25 +13,15 @@
 namespace Nexus {
 	class FileLoader {
 	public:
-		static std::vector<std::string> GetAllFilesNamesWithinFolder(const std::string& folder_path, std::string search_keyword) {
-			std::vector<std::string> file_names;
-			std::string search_path = folder_path + search_keyword;
-
-			WIN32_FIND_DATA fd;
-			HANDLE hFind = ::FindFirstFile(search_path.c_str(), &fd);
-			if (hFind != INVALID_HANDLE_VALUE) {
-				do {
-					// read all (real) files in current folder
-					// , delete '!' read other 2 default folder . and ..
-					if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-						file_names.push_back(fd.cFileName);
-					}
-				} while (::FindNextFile(hFind, &fd));
-				::FindClose(hFind);
-			}
-
-			return file_names;
-		}
+        static std::vector<std::string> GetAllFilesNamesWithinFolder(const std::string& folder_path, const std::string& file_extension) {
+            std::vector<std::string> file_names;
+            for (const auto& entry : std::filesystem::directory_iterator(folder_path)) {
+			    if (entry.path().extension() == "." + file_extension) {
+                    file_names.push_back(entry.path().filename());
+			    }
+            }
+            return file_names;
+        }
 
 		static std::string LoadInfoFile(const std::string& path) {
 			std::ifstream info_file;
@@ -85,7 +75,7 @@ namespace Nexus {
 			return ShaderStream;
 		}
 
-		static void OutputTransferFunction(const char* path, std::vector<float> &transfer, IsoSurface* iso_surface) {
+		static void OutputTransferFunction(const char* path, const std::vector<float>& transfer, IsoSurface* iso_surface) {
 			Logger::Message(LOG_INFO, path);
 
 			std::ofstream MyFile(path);

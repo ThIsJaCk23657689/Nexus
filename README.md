@@ -28,11 +28,12 @@ This is a framework allows you to develop a OpenGL applications quickly and more
 * 0.3.0 ImGui Debug
 * 0.3.1 View Volume Visiualization
 * 0.3.2 Multi Screen
+* 0.4.0 Apple Mac Friendly; Update / Render function
 
 ## Feature (Coming Soon)
 * CubeMap
 * Assimp (Model Loadder)
-* 0Instancing
+* Instancing
 * Full Screen
 * Key Frame Animation
 * Billboard

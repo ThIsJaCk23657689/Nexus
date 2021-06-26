@@ -45,8 +45,8 @@ namespace Nexus {
 		this->Zoom = zoom;
 	}
 
-	void Camera::ShowDebugUI(const char* camera_name) {
-		ImGui::TextColored(ImVec4(1.0f, 0.5f, 1.0f, 1.0f), camera_name);
+	void Camera::ShowDebugUI(const std::string& camera_name) {
+		ImGui::TextColored(ImVec4(1.0f, 0.5f, 1.0f, 1.0f), "%s", camera_name.c_str());
 		ImGui::Text("Position = (%.2f, %.2f, %.2f)", this->GetPosition().x, this->GetPosition().y, this->GetPosition().z);
 		ImGui::Text("Target = (%.2f, %.2f, %.2f)", this->GetTarget().x, this->GetTarget().y, this->GetTarget().z);
 		ImGui::Text("Front = (%.2f, %.2f, %.2f)", this->GetFront().x, this->GetFront().y, this->GetFront().z);

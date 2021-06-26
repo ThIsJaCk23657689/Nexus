@@ -28,7 +28,7 @@ namespace Nexus {
 
 		~Light()  = default;
 
-		// ¨ú®ø Ambient¡BDiffuse »P Specular ªº¨î«×¡A²Î¤@¥Ñ Color ¨ÓÅÜ¤Æ
+		// å–æ¶ˆ Ambientã€Diffuse èˆ‡ Specular çš„åˆ¶åº¦ï¼Œçµ±ä¸€ç”± Color ä¾†è®ŠåŒ–
 		
 		glm::vec3 GetAmbient() const { return this->Ambient; }
 		glm::vec3 GetDiffuse() const { return this->Diffuse; }
@@ -128,7 +128,7 @@ namespace Nexus {
 		void GenerateDebugUI() {
 			/*
 			if (i != 4) {
-				// ROVªº¥ú¡A¦]¬°¦ì¸m¬OÂê©w¦bROV¤W¡A©Ò¥H³oÃä¤£µ¹½Õ¾ã
+				// ROVçš„å…‰ï¼Œå› ç‚ºä½ç½®æ˜¯éŽ–å®šåœ¨ROVä¸Šï¼Œæ‰€ä»¥é€™é‚Šä¸çµ¦èª¿æ•´
 				ImGui::SliderFloat3(std::string("Position").c_str(), (float*)&PointLights[i]->GetPosition(), -50.0f, 50.0f);
 			}
 			*/
@@ -139,7 +139,7 @@ namespace Nexus {
 			
 			/*
 			if (i != 4) {
-				// ROVªºSpecular¡A¤£µ¹½Õ¾ã¡A¬Ý°_¨Ó¤~¤£·|©Ç©Çªº
+				// ROVçš„Specularï¼Œä¸çµ¦èª¿æ•´ï¼Œçœ‹èµ·ä¾†æ‰ä¸æœƒæ€ªæ€ªçš„
 				ImGui::SliderFloat3(std::string("Specular").c_str(), (float*)&PointLights[i]->GetSpecular(), 0.0f, 1.0f);
 			}
 			*/

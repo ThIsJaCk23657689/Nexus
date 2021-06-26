@@ -402,7 +402,7 @@ namespace Nexus {
 			{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}
 		};
 
-		// ³q¥Î¸ê®Æ
+		// é€šç”¨è³‡æ–™
 		IsoSurfaceAttributes Attributes;
 		std::string InfDataFilePath;
 		std::string RawDataFilePath;
@@ -413,7 +413,7 @@ namespace Nexus {
 		bool IsInitialize = false;
 		bool IsReadyToDraw = false;
 
-		// ²Î­p±M¥Î
+		// çµ±è¨ˆå°ˆç”¨
 		bool IsEqualization = false;
 		std::chrono::duration<double> ElapsedSeconds;
 		std::vector<float> IsoValueHistogram;
@@ -422,7 +422,7 @@ namespace Nexus {
 		std::vector<std::pair<float, float>> IsoValueBoundary;
 		std::vector<std::pair<float, float>> GradientBoundary;
 
-		// Ray Casting ±M¥Î
+		// Ray Casting å°ˆç”¨
 		int CurrentRenderMode = RENDER_MODE_ISO_SURFACE;
 		GLuint VolumeTexture;
 		std::vector<glm::vec4> TextureData;
@@ -432,7 +432,7 @@ namespace Nexus {
 		unsigned int BoundingBoxVBO;
 		unsigned int BoundingBoxEBO;
 
-		// Iso Surface ±M¥Î
+		// Iso Surface å°ˆç”¨
 		float IsoValue = 80.0f;
 		std::vector<float> Vertices;
 		std::vector<float> Position;

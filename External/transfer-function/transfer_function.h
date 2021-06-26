@@ -1,6 +1,6 @@
 #pragma once
 #define IMGUI_DEFINE_MATH_OPERATORS
-#include <glad.h>
+#include <glad/glad.h>
 #include <imgui.h>
 #include <imgui_internal.h>
 

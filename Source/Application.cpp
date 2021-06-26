@@ -24,6 +24,9 @@ namespace Nexus {
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef __APPLE__
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
 		glfwWindowHint(GLFW_SAMPLES, 8);
 
 		if (Settings.EnableDebugCallback) {
@@ -111,6 +114,8 @@ namespace Nexus {
 
 			ShowDebugUI();
 
+            Update();
+
 			// Display Default (DISPLAY_MODE_DEFAULT)
 			int scr_start = 4, scr_end = 4;
 			if (Settings.CurrentDisplyMode == DISPLAY_MODE_3O1P) {
@@ -126,10 +131,10 @@ namespace Nexus {
 				scr_start = 3;
 				scr_end = 3;
 			}
-			
-			for (int i = scr_start; i <= scr_end; i++) {
-				Update(static_cast<DisplayMode>(i));
-			}
+
+            for (int i = scr_start; i <= scr_end; i++) {
+                Render(static_cast<DisplayMode>(i));
+            }
 
 			// Render imgui on the screen
 			ImGui::Render();

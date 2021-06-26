@@ -52,7 +52,7 @@ namespace Nexus {
 			glm::vec4 rtnp, ltnp, rbnp, lbnp, rtfp, ltfp, rbfp, lbfp = glm::vec4(1.0f);
 			
 			if (is_perspective) {
-				// ­pºâ³zµø§ë¼v¯x°}ªº¦U°Ñ¼Æ
+				// è¨ˆç®—é€è¦–æŠ•å½±çŸ©é™£çš„å„åƒæ•¸
 				float p_tn = tan(glm::radians(camera_fov / 2.0f)) * global_near;
 				float p_bn = -p_tn;
 				float p_rn = p_tn * aspect_wh;
@@ -67,13 +67,13 @@ namespace Nexus {
 					p_tn, p_bn, p_ln, p_rn
 				};
 
-				// ³Ğ«Øªñ¥­­±ªº4­Ó³»ÂI ¡]°O±o­n±Nªñ¥­­±©¹«e¦h®¿0.01¡AÄá¼v¾÷¤~¤£·|¬İ¤£¨ì¡^
+				// å‰µå»ºè¿‘å¹³é¢çš„4å€‹é ‚é» ï¼ˆè¨˜å¾—è¦å°‡è¿‘å¹³é¢å¾€å‰å¤šæŒª0.01ï¼Œæ”å½±æ©Ÿæ‰ä¸æœƒçœ‹ä¸åˆ°ï¼‰
 				rtnp = glm::vec4(p_rn, p_tn, -global_near + 0.01, 1.0);
 				ltnp = glm::vec4(p_ln, p_tn, -global_near + 0.01, 1.0);
 				rbnp = glm::vec4(p_rn, p_bn, -global_near + 0.01, 1.0);
 				lbnp = glm::vec4(p_ln, p_bn, -global_near + 0.01, 1.0);
 
-				// ³Ğ«Ø»·¥­­±ªº4­Ó³»ÂI¡@¡]°O±o­n±N»·¥­­±©¹«á¦h®¿0.01¡A­I´º¤~¤£·|¥´¬[¡^
+				// å‰µå»ºé å¹³é¢çš„4å€‹é ‚é»ã€€ï¼ˆè¨˜å¾—è¦å°‡é å¹³é¢å¾€å¾Œå¤šæŒª0.01ï¼ŒèƒŒæ™¯æ‰ä¸æœƒæ‰“æ¶ï¼‰
 				rtfp = glm::vec4(p_rf, p_tf, -global_far - 0.01, 1.0);
 				ltfp = glm::vec4(p_lf, p_tf, -global_far - 0.01, 1.0);
 				rbfp = glm::vec4(p_rf, p_bf, -global_far - 0.01, 1.0);
@@ -90,29 +90,29 @@ namespace Nexus {
 					t, b, l, r
 				};
 
-				// ³Ğ«Øªñ¥­­±ªº4­Ó³»ÂI ¡]°O±o­n±Nªñ¥­­±©¹«e¦h®¿0.01¡AÄá¼v¾÷¤~¤£·|¬İ¤£¨ì¡^
+				// å‰µå»ºè¿‘å¹³é¢çš„4å€‹é ‚é» ï¼ˆè¨˜å¾—è¦å°‡è¿‘å¹³é¢å¾€å‰å¤šæŒª0.01ï¼Œæ”å½±æ©Ÿæ‰ä¸æœƒçœ‹ä¸åˆ°ï¼‰
 				rtnp = glm::vec4(r, t, -global_near + 0.01, 1.0);
 				ltnp = glm::vec4(l, t, -global_near + 0.01, 1.0);
 				rbnp = glm::vec4(r, b, -global_near + 0.01, 1.0);
 				lbnp = glm::vec4(l, b, -global_near + 0.01, 1.0);
 
-				// ³Ğ«Ø»·¥­­±ªº4­Ó³»ÂI¡@¡]°O±o­n±N»·¥­­±©¹«á¦h®¿0.01¡A­I´º¤~¤£·|¥´¬[¡^
+				// å‰µå»ºé å¹³é¢çš„4å€‹é ‚é»ã€€ï¼ˆè¨˜å¾—è¦å°‡é å¹³é¢å¾€å¾Œå¤šæŒª0.01ï¼ŒèƒŒæ™¯æ‰ä¸æœƒæ‰“æ¶ï¼‰
 				rtfp = glm::vec4(r, t, -global_far - 0.01, 1.0);
 				ltfp = glm::vec4(l, t, -global_far - 0.01, 1.0);
 				rbfp = glm::vec4(r, b, -global_far - 0.01, 1.0);
 				lbfp = glm::vec4(l, b, -global_far - 0.01, 1.0);
 			}
 
-			// ¨ú±o¹w³]µøµ¡¤§Æ[¹î¯x°}«á¡A¨D¤Ï¯x°}
+			// å–å¾—é è¨­è¦–çª—ä¹‹è§€å¯ŸçŸ©é™£å¾Œï¼Œæ±‚åçŸ©é™£
 			glm::mat4 view_inv = glm::inverse(view);
 
-			// ±N³o¨Ç³»ÂI­¼¤WÆ[¹î¤Ï¯x°}¡A§Y¥i¨D¥X¥@¬É§¤¼Ğ¨t³»ÂI¡]¥ıºâªñ¥­­±¡^
+			// å°‡é€™äº›é ‚é»ä¹˜ä¸Šè§€å¯ŸåçŸ©é™£ï¼Œå³å¯æ±‚å‡ºä¸–ç•Œåæ¨™ç³»é ‚é»ï¼ˆå…ˆç®—è¿‘å¹³é¢ï¼‰
 			rtnp = view_inv * rtnp;
 			ltnp = view_inv * ltnp;
 			rbnp = view_inv * rbnp;
 			lbnp = view_inv * lbnp;
 
-			// ¦A¨Ó´«»·¥­­±
+			// å†ä¾†æ›é å¹³é¢
 			rtfp = view_inv * rtfp;
 			ltfp = view_inv * ltfp;
 			rbfp = view_inv * rbfp;
@@ -125,7 +125,7 @@ namespace Nexus {
 				ltfp, lbfp, rbfp, rtfp
 			};
 
-			// ²MªÅ View Volume ¸ê®Æ
+			// æ¸…ç©º View Volume è³‡æ–™
 			std::vector<float>().swap(this->Vertices);
 			std::vector<float>().swap(this->Position);
 			std::vector<float>().swap(this->Normal);
@@ -134,7 +134,7 @@ namespace Nexus {
 			glm::vec3 vec_2 = glm::vec3(0.0f);
 			glm::vec3 temp_normal = glm::vec3(0.0f);
 			
-			// §ó·s View Volume ªº³»ÂI¸ê®Æ
+			// æ›´æ–° View Volume çš„é ‚é»è³‡æ–™
 			// ========== Front ==========
 			vec_1 = glm::vec3(rtnp - rbnp);
 			vec_2 = glm::vec3(lbnp - rbnp);
