@@ -1,8 +1,11 @@
 #pragma once
-#include <Windows.h>
+#ifdef _WIN32 || _WIN64
+    #include <Windows.h>
+#endif
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <filesystem>
 #include <vector>
 #include <regex>
 
@@ -17,7 +20,8 @@ namespace Nexus {
 			std::vector<std::string> file_names;
 			std::string search_path = folder_path + search_keyword;
 
-			WIN32_FIND_DATA fd;
+#ifdef _WIN32 || _WIN64
+            WIN32_FIND_DATA fd;
 			HANDLE hFind = ::FindFirstFile(search_path.c_str(), &fd);
 			if (hFind != INVALID_HANDLE_VALUE) {
 				do {
@@ -29,7 +33,13 @@ namespace Nexus {
 				} while (::FindNextFile(hFind, &fd));
 				::FindClose(hFind);
 			}
+#endif
 
+#ifdef __APPLE__
+			for (const auto& entry : std::filesystem::directory_iterator(search_path)) {
+			    file_names.push_back(entry.path());
+			}
+#endif
 			return file_names;
 		}
 
