@@ -132,9 +132,9 @@ namespace Nexus {
 				scr_end = 3;
 			}
 
-            for (int i = scr_start; i <= scr_end; i++) {
-                Render(static_cast<DisplayMode>(i));
-            }
+			for (int i = scr_start; i <= scr_end; i++) {
+				Render(static_cast<DisplayMode>(i));
+			}
 
 			// Render imgui on the screen
 			ImGui::Render();

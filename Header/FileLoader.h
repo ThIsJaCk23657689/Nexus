@@ -1,4 +1,5 @@
 #pragma once
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -24,73 +25,71 @@ namespace Nexus {
             return file_names;
         }
 
-		static std::string LoadInfoFile(const std::string& path) {
-			std::ifstream info_file;
-			std::stringstream info_stream;
-			info_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-			try {
-				// Open files and loaded.
-				info_file.open(path);
-				info_stream << info_file.rdbuf();
-				info_file.close();
-			} catch (std::ifstream::failure& e) {
-				// Handle Failure
-				Nexus::Logger::Message(LOG_ERROR, "Failed to load info file. Filepath: " + path);
-				exit(-1);
-			}
-			const std::string& info_source = info_stream.str();
+        static std::string LoadInfoFile(const std::string& path) {
+            std::ifstream info_file;
+            std::stringstream info_stream;
+            info_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+            try {
+                // Open files and loaded.
+                info_file.open(path);
+                info_stream << info_file.rdbuf();
+                info_file.close();
+            } catch (std::ifstream::failure& e) {
+                // Handle Failure
+                Nexus::Logger::Message(LOG_ERROR, "Failed to load info file. Filepath: " + path);
+                exit(-1);
+            }
+            const std::string& info_source = info_stream.str();
 
-			return info_source;
-		}
-		
-		static std::vector<unsigned char> LoadRawFile(const std::string& path) {
-			std::vector<unsigned char> buffer;
-			std::ifstream file(path, std::ios::binary);
-			if (file.good()) {
-				buffer = std::vector<unsigned char>(std::istreambuf_iterator<char>(file), {});
-			} else {
-				Nexus::Logger::Message(LOG_ERROR, "FAILED TO LOAD THE RAW FILE, PLEASE CHECK THE FILE EXISTS IN THE CORRECT PATH");
-				Nexus::Logger::Message(LOG_ERROR, "FILE PATH: " + path);
-				exit(-1);
-			}
-			file.close();
-			return buffer;
-		}
+            return info_source;
+        }
 
-		static std::stringstream LoadShaderFile(const char* path, std::string shader_type) {
+        static std::vector<unsigned char> LoadRawFile(const std::string& path) {
+            std::vector<unsigned char> buffer;
+            std::ifstream file(path, std::ios::binary);
+            if (file.good()) {
+                buffer = std::vector<unsigned char>(std::istreambuf_iterator<char>(file), {});
+            } else {
+                Nexus::Logger::Message(LOG_ERROR, "FAILED TO LOAD THE RAW FILE, PLEASE CHECK THE FILE EXISTS IN THE CORRECT PATH");
+                Nexus::Logger::Message(LOG_ERROR, "FILE PATH: " + path);
+                exit(-1);
+            }
+            file.close();
+            return buffer;
+        }
 
-			std::ifstream ShaderFile;
-			std::stringstream ShaderStream;
-			ShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-			try {
-				// Open files and loaded.
-				ShaderFile.open(path);
-				ShaderStream << ShaderFile.rdbuf();
-				ShaderFile.close();
-			} catch (std::ifstream::failure& e) {
-				// Handle Failure
-				Nexus::Logger::Message(LOG_ERROR, "Failed to load " + shader_type + " shader files. Filepath: " + path);
-				exit(-1);
-			}
+        static std::stringstream LoadShaderFile(const char* path, std::string shader_type) {
+            std::ifstream ShaderFile;
+            std::stringstream ShaderStream;
+            ShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+            try {
+                // Open files and loaded.
+                ShaderFile.open(path);
+                ShaderStream << ShaderFile.rdbuf();
+                ShaderFile.close();
+            } catch (std::ifstream::failure& e) {
+                // Handle Failure
+                Nexus::Logger::Message(LOG_ERROR, "Failed to load " + shader_type + " shader files. Filepath: " + path);
+                exit(-1);
+            }
+            return ShaderStream;
+        }
 
-			return ShaderStream;
-		}
+        static void OutputTransferFunction(const char* path, std::vector<float> &transfer, IsoSurface* iso_surface) {
+            Logger::Message(LOG_INFO, path);
 
-		static void OutputTransferFunction(const char* path, const std::vector<float>& transfer, IsoSurface* iso_surface) {
-			Logger::Message(LOG_INFO, path);
+            std::ofstream MyFile(path);
+            MyFile << "Raw File Path: " << iso_surface->GetRawDataFilePath() << std::endl;
+            MyFile << "Inf File Path: " << iso_surface->GetRawDataFilePath() << std::endl;
+            MyFile << "Equalization: " << iso_surface->GetIsEqualization() << std::endl;
+            MyFile << "Resolutions: " << "(" << iso_surface->GetResolution().x << ", " << iso_surface->GetResolution().y << ", " << iso_surface->GetResolution().z << ")" << std::endl;
+            MyFile << "Data Value\t\tRed\t\tGreen\t\tBlue\t\tAlpha\t\t\n";
+            for (unsigned i = 0; i < transfer.size(); i = i + 4) {
+                MyFile << (i / 4.0f) << "\t\t\t" << round(transfer[i] * 100) / 100.0f << "\t\t" << round(transfer[i + 1] * 100) / 100.0f << "\t\t" << round(transfer[i + 2] * 100) / 100.0f << "\t\t" << round(transfer[i + 3] * 100) / 100.0f << "\t\t\n";
+            }
+            MyFile.close();
+        }
+    private:
 
-			std::ofstream MyFile(path);
-			MyFile << "Raw File Path: " << iso_surface->GetRawDataFilePath() << std::endl;
-			MyFile << "Inf File Path: " << iso_surface->GetRawDataFilePath() << std::endl;
-			MyFile << "Equalization: " << iso_surface->GetIsEqualization() << std::endl;
-			MyFile << "Resolutions: " << "(" << iso_surface->GetResolution().x << ", " << iso_surface->GetResolution().y << ", " << iso_surface->GetResolution().z << ")" << std::endl;
-			MyFile << "Data Value\t\tRed\t\tGreen\t\tBlue\t\tAlpha\t\t\n";
-			for (unsigned i = 0; i < transfer.size(); i = i + 4) {
-				MyFile << (i / 4.0f) << "\t\t\t" << round(transfer[i] * 100) / 100.0f << "\t\t" << round(transfer[i + 1] * 100) / 100.0f << "\t\t" << round(transfer[i + 2] * 100) / 100.0f << "\t\t" << round(transfer[i + 3] * 100) / 100.0f << "\t\t\n";
-			}
-			MyFile.close();
-		}
-	private:
-
-	};
+    };
 }
