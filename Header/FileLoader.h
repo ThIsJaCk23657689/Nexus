@@ -1,8 +1,8 @@
 #pragma once
-#include <filesystem>
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <filesystem>
 #include <vector>
 #include <regex>
 
@@ -13,6 +13,7 @@
 namespace Nexus {
 	class FileLoader {
 	public:
+
         static std::vector<std::string> GetAllFilesNamesWithinFolder(const std::string& folder_path, const std::string& file_extension) {
             std::vector<std::string> file_names;
             for (const auto& entry : std::filesystem::directory_iterator(folder_path)) {

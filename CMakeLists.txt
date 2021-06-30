@@ -4,10 +4,17 @@
 set(MY_PROJECT "NexusDemo")
 set(MY_LIBRARY "Nexus")
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 set(NEXUS_INCLUDE_DIRS
 	"Header"
 	"Header/Geometry/2D"
 	"Header/Geometry/3D"
+	"Header/Physics/"
+	"Header/Physics/Collision"
+	"Header/Physics/Collision/Collider"
 	"External/stb_image"
 	"External/imgui"
 	"External/implot"
@@ -34,9 +41,8 @@ target_include_directories(${MY_LIBRARY} PUBLIC ${NEXUS_INCLUDE_DIRS})
 find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(glad CONFIG REQUIRED)
-target_link_libraries(${MY_LIBRARY} PUBLIC glfw glm::glm glad::glad)
-
 # find_package(Assimp CONFIG REQUIRED)
+target_link_libraries(${MY_LIBRARY} PUBLIC glfw glm::glm glad::glad)
 # target_link_libraries(${MY_LIBRARY} PUBLIC glfw glm::glm glad::glad assimp::assimp)
 
 add_custom_command(TARGET ${MY_LIBRARY} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
