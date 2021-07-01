@@ -75,7 +75,7 @@ namespace Nexus {
             return ShaderStream;
         }
 
-        static void OutputTransferFunction(const char* path, std::vector<float> &transfer, IsoSurface* iso_surface) {
+        static void OutputTransferFunction(const char* path, std::vector<float> transfer, IsoSurface* iso_surface) {
             Logger::Message(LOG_INFO, path);
 
             std::ofstream MyFile(path);
