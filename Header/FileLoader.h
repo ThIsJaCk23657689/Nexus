@@ -15,15 +15,41 @@ namespace Nexus {
 	class FileLoader {
 	public:
 
+	    static void LoadHighDimensionData(const std::string& filepath, std::vector<GLfloat>& data, GLuint& count, GLuint& dims) {
+            std::ifstream file;
+            file.open(filepath, std::ios::in);
+            if (file.fail()) {
+                file.close();
+                Nexus::Logger::Message(LOG_ERROR, "Failed to load the high dimension data at: " + filepath);
+            }
+
+            std::string data_count, data_dims, data_temp;
+            file >> data_count;
+            file >> data_dims;
+
+            data.clear();
+            while (file >> data_temp) {
+                data.push_back(std::stof(data_temp));
+            }
+            file.close();
+
+            Nexus::Logger::Message(LOG_INFO, "The size of the vector: " + std::to_string(data.size()));
+            Nexus::Logger::Message(LOG_INFO, "The size of the high dimension data: " + data_count + " x " + data_dims);
+
+            count = std::stoi(data_count);
+            dims = std::stoi(data_dims);
+	    }
+
         static std::vector<std::string> GetAllFilesNamesWithinFolder(const std::string& folder_path, const std::string& file_extension) {
             std::vector<std::string> file_names;
             for (const auto& entry : std::filesystem::directory_iterator(folder_path)) {
 			    if (entry.path().extension() == "." + file_extension) {
-                    file_names.push_back(entry.path().filename());
+                    file_names.push_back(entry.path().filename().string());
 			    }
             }
             return file_names;
         }
+
 
         static std::string LoadInfoFile(const std::string& path) {
             std::ifstream info_file;
