@@ -19,7 +19,7 @@ namespace Nexus {
             std::vector<std::string> file_names;
             for (const auto& entry : std::filesystem::directory_iterator(folder_path)) {
 			    if (entry.path().extension() == "." + file_extension) {
-                    file_names.push_back(entry.path().filename());
+                    file_names.push_back(entry.path().filename().string());
 			    }
             }
             return file_names;
