@@ -59,10 +59,10 @@ namespace Nexus {
 		std::string line;
 		
 		std::vector<std::regex> RegFormat = {
-			std::regex("Resolution|resolution"),
-			std::regex("VoxelSize|ratio"),
-			std::regex("SampleType|sample-type"),
-			std::regex("Endian")
+			std::regex("[Rr]esolution"),
+			std::regex("[Vv]oxel[-_ ]?[Ss]ize|[Rr]atio"),
+			std::regex("[Ss]ample[-_ ]?[Tt]ype"),
+			std::regex("[Ee]ndian")
 		};
 
 		while (std::getline(info_ss, line)) {
@@ -75,6 +75,12 @@ namespace Nexus {
 			for (auto i : result) {
 				std::cout << std::to_string(i);
 			}
+
+            if (std::regex_search(line, std::regex("^#"))) {
+                // 如果第一行有 # 就視為註解
+                std::cout << "comment" << std::endl;
+                continue;
+            }
 
 			if (std::regex_search(line, RegFormat[0])) {
 				// 如果是 Resolution，格式通常是 Resolution=149:208:110、resolution=256x256x256。
@@ -98,6 +104,9 @@ namespace Nexus {
 				std::cout << resolution.x << " ";
 				std::cout << resolution.y << " ";
 				std::cout << resolution.z << " ";
+
+                std::cout << std::endl;
+                continue;
 			}
 
 			if (std::regex_search(line, RegFormat[1])) {
@@ -116,6 +125,9 @@ namespace Nexus {
 				std::cout << voxelsize.x << " ";
 				std::cout << voxelsize.y << " ";
 				std::cout << voxelsize.z << " ";
+
+                std::cout << std::endl;
+                continue;
 			}
 
 			if (std::regex_search(line, RegFormat[2])) {
@@ -123,7 +135,12 @@ namespace Nexus {
 				// 先找出 = 的位置後，擷取剩下的字串。
 				std::cout << line.find("=") << "\t" << line.substr(line.find("=") + 1) << "\t";
 				std::string sampletype_str = line.substr(line.find("=") + 1);
-				if (sampletype_str == "UnsignedChar" || sampletype_str == "unsigned char") Attributes.DataType = "unsigned char";
+				if (std::regex_search(line, std::regex("[Uu]nsigned[-_ ]?[Cc]har"))) {
+                    Attributes.DataType = "unsigned char";
+                }
+
+                std::cout << std::endl;
+                continue;
 			}
 
 			if (std::regex_search(line, RegFormat[3])) {
@@ -131,8 +148,14 @@ namespace Nexus {
 				// 先找出 = 的位置後，擷取剩下的字串。
 				std::cout << line.find("=") << "\t" << line.substr(line.find("=") + 1) << "\t";
 				std::string endian_str = line.substr(line.find("=") + 1);
-				if (endian_str == "Little" || endian_str == "") Attributes.Endian = "little";
-				if (endian_str == "Big") Attributes.Endian = "big";
+				if (std::regex_search(line, std::regex("[Ll]ittle")) || endian_str == "") {
+                    Attributes.Endian = "little";
+                } else if (std::regex_search(line, std::regex("[B]ig"))) {
+                    Attributes.Endian = "big";
+                }
+
+                std::cout << std::endl;
+                continue;
 			}
 
 			std::cout << std::endl;
@@ -190,7 +213,7 @@ namespace Nexus {
 			glBindTexture(GL_TEXTURE_3D, 0);
 
 			// Creating a bounding-box with texture coordinate.
-			glm::vec3 resolution = Attributes.Resolution;
+			glm::vec3 resolution = Attributes.Resolution * Attributes.Ratio;
 			this->BoundingBoxVertices = {
 				resolution.x, resolution.y, 0.0,				1.0, 1.0, 0.0,
 				resolution.x, 0.0, 0.0,							1.0, 0.0, 0.0,
@@ -468,6 +491,7 @@ namespace Nexus {
 			shader->SetInt("volume", 0);
 			shader->SetInt("transfer_function", 1);
 			shader->SetVec3("volume_resolution", this->Attributes.Resolution);
+            shader->SetVec3("volume_ratio", this->Attributes.Ratio);
 
 			// Draw a bounding-box, size will be the resolution of the volume data.
 			glBindVertexArray(this->BoundingBoxVAO);
@@ -614,7 +638,7 @@ namespace Nexus {
 		// 利用 Lookup table 查表出對應的三角形座標
 		for (unsigned int i = 0; this->TriangleTable[cube_index][i] != -1; i += 3) {
 			for (unsigned int offset = 0; offset < 3; offset++) {
-				this->AddPosition(position_list[this->TriangleTable[cube_index][i + offset]]);
+				this->AddPosition(position_list[this->TriangleTable[cube_index][i + offset]] * this->Attributes.Ratio);
 				this->AddNormal(glm::normalize(normal_list[this->TriangleTable[cube_index][i + offset]]));
 			}
 		}
