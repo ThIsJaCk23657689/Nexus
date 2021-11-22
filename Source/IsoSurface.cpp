@@ -31,7 +31,7 @@ namespace Nexus {
 		this->GetAttributesFromInfoFile();
 		
 		// Loading Volume Data
-		this->RawData = Nexus::FileLoader::LoadRawFile(raw_path);
+        Nexus::FileLoader::LoadRawFile(this->RawData, raw_path, Attributes);
 		Logger::Message(LOG_INFO, "Starting initialize voxels data...");
 
 		// Compute the gradient of these all voxels.
@@ -135,8 +135,22 @@ namespace Nexus {
 				// 先找出 = 的位置後，擷取剩下的字串。
 				std::cout << line.find("=") << "\t" << line.substr(line.find("=") + 1) << "\t";
 				std::string sampletype_str = line.substr(line.find("=") + 1);
-				if (std::regex_search(line, std::regex("[Uu]nsigned[-_ ]?[Cc]har"))) {
-                    Attributes.DataType = "unsigned char";
+				if (std::regex_search(line, std::regex("[Cc]har"))) {
+                    Attributes.DataType = VolumeDataType_Char;
+                } else if (std::regex_search(line, std::regex("[Ss]hort"))) {
+                    Attributes.DataType = VolumeDataType_Short;
+                } else if (std::regex_search(line, std::regex("[Ii]nt[eger]?"))) {
+                    Attributes.DataType = VolumeDataType_Int;
+                } else if (std::regex_search(line, std::regex("[Ll]ong"))) {
+                    Attributes.DataType = VolumeDataType_Long;
+                } else if (std::regex_search(line, std::regex("[Uu]nsigned[-_ ]?[Cc]har"))) {
+                    Attributes.DataType = VolumeDataType_UnsignedChar;
+                } else if (std::regex_search(line, std::regex("[Uu]nsigned[-_ ]?[Ss]hort"))) {
+                    Attributes.DataType = VolumeDataType_UnsignedShort;
+                } else if (std::regex_search(line, std::regex("[Uu]nsigned[-_ ]?[Ii]nt[eger]?"))) {
+                    Attributes.DataType = VolumeDataType_UnsignedInt;
+                } else if (std::regex_search(line, std::regex("[Uu]nsigned[-_ ]?[Ll]ong"))) {
+                    Attributes.DataType = VolumeDataType_UnsignedLong;
                 }
 
                 std::cout << std::endl;
@@ -209,7 +223,7 @@ namespace Nexus {
 			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-			glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, Attributes.Resolution.x, Attributes.Resolution.y, Attributes.Resolution.z, 0, GL_RGBA, GL_FLOAT, this->TextureData.data());
+			glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, static_cast<GLsizei>(Attributes.Resolution.x), static_cast<GLsizei>(Attributes.Resolution.y), static_cast<GLsizei>(Attributes.Resolution.z), 0, GL_RGBA, GL_FLOAT, this->TextureData.data());
 			glBindTexture(GL_TEXTURE_3D, 0);
 
 			// Creating a bounding-box with texture coordinate.
@@ -262,7 +276,7 @@ namespace Nexus {
 
 	void IsoSurface::GenerateIsoValueHistogram() {
 		// 初始化，將此 Volume Data 的資料分成 m 等份
-		this->IsoValueHistogram = std::vector<float>(this->Interval, 0.0f);
+		this->IsoValueHistogram = std::vector<float>(static_cast<unsigned int>(this->Interval), 0.0f);
 
 		// 必須先找出資料中最大值做為下界，上界則採用 0。
 		float max_isovalue = *std::max_element(this->RawData.cbegin(), this->RawData.cend());
@@ -291,7 +305,7 @@ namespace Nexus {
 	
 	void IsoSurface::GenerateGradientHistogram() {
 		// 初始化，將 gradient length (已經被分貝化) 的資料分成 k 等份
-		this->GradientHistogram = std::vector<float>(this->Interval, 0.0f);
+		this->GradientHistogram = std::vector<float>(static_cast<unsigned int>(this->Interval), 0.0f);
 
 		// 必須先找出資料中最大值做為下界，上界則採用 0。
 		float max_gradient = *std::max_element(this->GradientMagnitudes.cbegin(), this->GradientMagnitudes.cend());
@@ -320,7 +334,7 @@ namespace Nexus {
 	
 	void IsoSurface::GenerateGradientHeatMap() {
 		// 初始化，橫軸為 Iso Value，縱軸為 Gradient Length
-		this->GradientHeatmap = std::vector<float>(this->Interval * this->Interval, 0.0f);
+		this->GradientHeatmap = std::vector<float>(static_cast<unsigned int>(this->Interval * this->Interval), 0.0f);
 
 		// 跑遍所有資料，只要有 Voxel 符合對應的 Iso value 和 在相對應的 梯度區間 該格就 +=1
 		for (unsigned int i = 0; i < this->RawData.size(); i++) {
@@ -339,7 +353,7 @@ namespace Nexus {
 					break;
 				}
 			}
-			int idx = ((this->Interval - 1) - gradient_idx) * this->Interval + isovalue_idx;
+			int idx = static_cast<unsigned int>(((this->Interval - 1) - gradient_idx) * this->Interval + isovalue_idx);
 			this->GradientHeatmap[idx] += 1;
 		}
 	}
@@ -352,7 +366,7 @@ namespace Nexus {
 		this->IsoValueHistogram = std::vector<float>(256, 0.0f);
 
 		// 計算總所有 iso value 為 0 ~ 255 的顯示次數。 
-		float total_iso_value = std::accumulate(old_histogram.cbegin(), old_histogram.cend(), 0.0);
+		float total_iso_value = static_cast<float>(std::accumulate(old_histogram.cbegin(), old_histogram.cend(), 0.0));
 
 		// 歸一化，所有顯示次數除以總次數，數值會介於 0 ~ 1 之間。
 		std::vector<float> normalize;

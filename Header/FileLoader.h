@@ -70,18 +70,32 @@ namespace Nexus {
             return info_source;
         }
 
-        static std::vector<unsigned char> LoadRawFile(const std::string& path) {
-            std::vector<unsigned char> buffer;
+        static void LoadRawFile(std::vector<float>& raw_data, const std::string& path, const IsoSurfaceAttributes& attributes) {
+            size_t raw_file_size = std::filesystem::file_size(path);
+            std::cout << "Raw File Size (Bytes): " << raw_file_size << std::endl;
+
+            std::vector<uint8_t> buffer(raw_file_size / sizeof(uint8_t));
+
+//            if (attributes.DataType == VolumeDataType_UnsignedChar) {
+//                std::vector<uint8_t> buffer(raw_file_size / sizeof(uint8_t));
+//            } else if (attributes.DataType == VolumeDataType_UnsignedShort) {
+//                std::vector<uint16_t> buffer(raw_file_size / sizeof(uint16_t));
+//            } else if (attributes.DataType == VolumeDataType_UnsignedInt) {
+//                std::vector<uint32_t> buffer(raw_file_size / sizeof(uint32_t));
+//            } else if (attributes.DataType == VolumeDataType_UnsignedLong) {
+//                std::vector<uint64_t> buffer(raw_file_size / sizeof(uint64_t));
+//            }
+
             std::ifstream file(path, std::ios::binary);
-            if (file.good()) {
-                buffer = std::vector<unsigned char>(std::istreambuf_iterator<char>(file), {});
-            } else {
+            if (file.fail()) {
                 Nexus::Logger::Message(LOG_ERROR, "FAILED TO LOAD THE RAW FILE, PLEASE CHECK THE FILE EXISTS IN THE CORRECT PATH");
                 Nexus::Logger::Message(LOG_ERROR, "FILE PATH: " + path);
                 exit(-1);
             }
+            file.read(reinterpret_cast<char*>(buffer.data()), raw_file_size);
             file.close();
-            return buffer;
+
+            raw_data.assign(buffer.begin(), buffer.end());
         }
 
         static std::stringstream LoadShaderFile(const char* path, std::string shader_type) {

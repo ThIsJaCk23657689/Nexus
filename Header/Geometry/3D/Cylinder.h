@@ -44,6 +44,7 @@ namespace Nexus {
 				radius = this->BaseRadius + (float)i / this->Latitude * (this->TopRadius - this->BaseRadius);
 				float t = 1.0f - (float)i / this->Latitude;
 
+                // 0 ~ this->Longitude 個點
 				for (unsigned int j = 0, k = 0; j <= this->Longitude; j++, k += 3) {
 					x = this->UnitCircleVertices[k];
 					y = this->UnitCircleVertices[k + 1];
@@ -93,8 +94,7 @@ namespace Nexus {
 			for (unsigned int i = 0, k = baseVertexIndex + 1; i < this->Longitude; i++, k++) {
 				if (i < (this->Longitude - 1)) {
 					this->AddIndices(baseVertexIndex, k + 1, k);
-				}
-				else {
+				} else {
 					this->AddIndices(baseVertexIndex, baseVertexIndex + 1, k);
 				}
 			}
@@ -103,8 +103,7 @@ namespace Nexus {
 			for (unsigned int i = 0, k = topVertexIndex + 1; i < this->Longitude; i++, k++) {
 				if (i < (this->Longitude - 1)) {
 					this->AddIndices(topVertexIndex, k, k + 1);
-				}
-				else {
+				} else {
 					this->AddIndices(topVertexIndex, k, topVertexIndex + 1);
 				}
 			}
