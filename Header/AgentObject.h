@@ -7,6 +7,14 @@
 #include <map>
 #include <string>
 
+enum AgentState {
+    STATE_SEARCH,
+    STATE_FOOD,
+    STATE_SEX,
+    STATE_FIGHT,
+    STATE_RUN
+};
+
 class AgentObject : public GameObject {
 public:
     GLfloat Radius;
@@ -14,6 +22,8 @@ public:
     GLfloat Elasticities;
     GLfloat LastFoodFrame;
     GLint FoodAmount;
+    glm::vec3 FoodTarget = glm::vec3(0.0f);
+    AgentState CurrentState = STATE_SEARCH;
     std::map<std::string, GLfloat> Action = {
             std::make_pair("hold", 0.0f),
             std::make_pair("walk", 0.0f),
@@ -36,7 +46,11 @@ public:
     AgentObject(glm::vec3 position, glm::vec3 velocity = glm::vec3(0.0f), GLfloat radius = 0.5f);
 
     void Update(GLfloat dt);
+
     void SearchFood(BallObject food);
+    void SearchSex(AgentObject partner);
+    void SearchEnemy(AgentObject enemy);
+
     void Runaway(AgentObject enemy);
     void Edge(GLint x_min, GLint x_max, GLint y_min, GLint y_max, GLint z_min, GLint z_max);
     GLboolean GrowUp();

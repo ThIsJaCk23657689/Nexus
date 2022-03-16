@@ -7,8 +7,9 @@ AgentObject::AgentObject() : GameObject(), Radius(0.5f), Elasticities(1.0f) {
     this->Diffuse = glm::vec4(0.25f, 0.25f, 1.0f, 1.0);
     this->Specular = glm::vec4(0.55f, 0.45f, 0.45f, 1.0);
     this->VisualRadius = this->Radius + 3.0f;
-    this->FoodAmount = 6;
+    this->FoodAmount = 3;
     this->LastFoodFrame = 0;
+    this->CurrentState == STATE_SEARCH;
 }
 
 AgentObject::AgentObject(glm::vec3 position, glm::vec3 velocity, GLfloat radius)
@@ -19,8 +20,9 @@ AgentObject::AgentObject(glm::vec3 position, glm::vec3 velocity, GLfloat radius)
     this->Diffuse = glm::vec4(0.25f, 0.25f, 1.0f, 1.0);
     this->Specular = glm::vec4(0.55f, 0.45f, 0.45f, 1.0);
     this->VisualRadius = this->Radius + 3.0f;
-    this->FoodAmount = 6;
+    this->FoodAmount = 3;
     this->LastFoodFrame = 0;
+    this->CurrentState == STATE_SEARCH;
 }
 
 void AgentObject::Update(GLfloat dt) {
@@ -42,17 +44,81 @@ void AgentObject::Update(GLfloat dt) {
 
 void AgentObject::SearchFood(BallObject food) {
     if (food.Destroyed) {
+        // 如果該食物已經被吃掉了，請無視。
         return;
     }
 
-    glm::vec3 diff = food.Position - this->Position;
-    if (glm::length(diff) < this->VisualRadius) {
-        glm::vec3 force = (diff - this->Velocity) * 1.0f / glm::length(diff);
-        this->Force += force;
+    if (this->CurrentState == STATE_SEARCH) {
+        // 代表是第一眼看到食物
+        glm::vec3 diff = food.Position - this->Position;
+        if (glm::length(diff) < this->VisualRadius) {
+            // 如果有在可是範圍內 就優先過去第一眼看到的那個食物
+            this->FoodTarget = food.Position;
+            glm::vec3 force = (diff - this->Velocity) * 1.0f / glm::length(diff);;
+            this->Force += force;
+        }
+        this->CurrentState = STATE_FOOD;
+    } else if (this->CurrentState == STATE_FOOD) {
+        // 代表之前已經看過其他食物了，只需比較現在這個食物有沒有比較近 有的話就過去
+        glm::vec3 diff = food.Position - this->Position;
+        if (glm::length(diff) < this->VisualRadius) {
+            if (glm::distance(this->Position, this->FoodTarget) > glm::length(diff)) {
+                this->FoodTarget = food.Position;
+            }
+            diff = this->FoodTarget - this->Position;
+            glm::vec3 force = (diff - this->Velocity) * 1.0f / glm::length(diff);;
+            this->Force += force;
+        }
+    }
+}
+
+void AgentObject::SearchSex(AgentObject partner) {
+    if (partner.Destroyed) {
+        // 如果該夥伴已經死了，請無視。
+        return;
+    }
+
+    if (this->CurrentState == STATE_SEX) {
+        // 如果目前的agent狀況是 STATE_SEX 才會想找伴侶
+        glm::vec3 diff = partner.Position - this->Position;
+        if (glm::length(diff) < this->VisualRadius) {
+            glm::vec3 force = (diff - this->Velocity) * 1.0f / glm::length(diff);
+            this->Force += force;
+        }
+    }
+}
+
+void AgentObject::SearchEnemy(AgentObject enemy) {
+    if (enemy.Destroyed) {
+        // 如果該夥伴已經死了，請無視。
+        return;
+    }
+
+    if (this->CurrentState == STATE_SEARCH || this->CurrentState == STATE_FOOD || this->CurrentState == STATE_SEX) {
+        // 如果目前的agent狀況是 STATE_SEARCH STATE_FOOD STATE_SEX 看到敵人都會進入警戒狀態
+        // 如果自己比對方大，可以打架；反之逃跑。
+
+        glm::vec3 diff = enemy.Position - this->Position;
+        if (glm::length(diff) < this->VisualRadius) {
+            if (this->Radius > enemy.Radius) {
+                this->CurrentState = STATE_FIGHT;
+            } else {
+                this->CurrentState = STATE_RUN;
+            }
+            // 行為交給Fuzzy Logic去執行
+            this->Runaway(enemy);
+        } else {
+            if (this->FoodAmount == 6) {
+                this->CurrentState = STATE_SEX;
+            } else {
+                this->CurrentState = STATE_SEARCH;
+            }
+        }
     }
 }
 
 void AgentObject::Runaway(AgentObject enemy) {
+    // 先取得對方的資訊
     GLfloat speed = glm::length(enemy.Velocity);
     GLfloat distance = glm::distance(this->Position, enemy.Position);
 
@@ -96,7 +162,6 @@ void AgentObject::Runaway(AgentObject enemy) {
         this->DistanceMemberFunc["very far"] = 1.0f;
     }
 
-
     if (speed <= 5) {
         this->SpeedMemberFunc["slow"] = 1.0f;
     } else if (speed > 5 && speed < 15) {
@@ -129,14 +194,18 @@ void AgentObject::Runaway(AgentObject enemy) {
     this->Action["walk"] = std::max(this->DistanceMemberFunc["close"], this->SpeedMemberFunc["fast"]);
     this->Action["run"] = std::min(this->DistanceMemberFunc["close"], this->SpeedMemberFunc["fast"]);
 
-    glm::vec3 diff = this->Position - enemy.Position;
-    if (Action["hold"] > Action["walk"] && Action["hold"] > Action["run"]) {
-        this->Velocity = glm::normalize(diff) * 2.0f;
-    } else if (Action["walk"] > Action["hold"] && Action["walk"] > Action["run"]) {
-        this->Velocity = glm::normalize(diff) * 5.0f;
-    } else if (Action["run"] > Action["hold"] && Action["run"] > Action["walk"]) {
-        this->Velocity = glm::normalize(diff) * 10.0f;
+    // 算出敵人指向本身的向量
+    glm::vec3 diff = glm::vec3(0.0f);
+    if (this->CurrentState == STATE_FIGHT) {
+        // 追殺敵人
+        diff = this->Position - enemy.Position;
+    } else if (this->CurrentState == STATE_RUN) {
+        // 逃跑實在
+        diff = this->Position - enemy.Position;
     }
+    this->Force += (diff) * (this->Action["hold"] * 1.0f) * (this->Action["walk"] * 2.0f) * (this->Action["run"] * 5.0f);
+
+    // this->Velocity = Action["hold"] * glm::normalize(diff) * 0.1f +  Action["walk"] * glm::normalize(diff) * 2.0f + Action["run"] * glm::normalize(diff) * 5.0f;
 }
 
 void AgentObject::Edge(GLint x_min, GLint x_max, GLint y_min, GLint y_max, GLint z_min, GLint z_max) {
@@ -166,22 +235,33 @@ void AgentObject::Edge(GLint x_min, GLint x_max, GLint y_min, GLint y_max, GLint
 }
 
 GLboolean AgentObject::GrowUp() {
-    // std::cout << this->FoodAmount << std::endl;
     if (this->FoodAmount < 6) {
+        // 飽滿度沒有滿 就可以長大
         this->FoodAmount += 1;
         this->Radius += 0.05;
+
+        // 吃完又會變成尋找狀態
+        this->CurrentState = STATE_SEARCH;
+        this->FoodTarget = glm::vec3(0.0f);
+
         return GL_TRUE;
+
     } else {
+        // 飽滿度滿了 就不用吃食物 尋找伴侶重要
+        this->CurrentState = STATE_SEX;
+        this->FoodTarget = glm::vec3(0.0f);
+
         return GL_FALSE;
     }
 }
 
 void AgentObject::Hungry() {
-    if (this->FoodAmount < 1) {
+    if (this->FoodAmount == 0) {
         this->Die();
     } else {
         this->FoodAmount -= 1;
         this->Radius -= 0.05;
+        this->CurrentState = STATE_SEARCH;
     }
 }
 
