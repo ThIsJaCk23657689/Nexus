@@ -31,7 +31,7 @@ namespace Nexus {
 		this->GetAttributesFromInfoFile();
 		
 		// Loading Volume Data
-		this->RawData = Nexus::FileLoader::LoadRawFile(raw_path);
+        Nexus::FileLoader::LoadRawFile(this->RawData, raw_path, Attributes);
 		Logger::Message(LOG_INFO, "Starting initialize voxels data...");
 
 		// Compute the gradient of these all voxels.
@@ -59,10 +59,10 @@ namespace Nexus {
 		std::string line;
 		
 		std::vector<std::regex> RegFormat = {
-			std::regex("Resolution|resolution"),
-			std::regex("VoxelSize|ratio"),
-			std::regex("SampleType|sample-type"),
-			std::regex("Endian")
+			std::regex("[Rr]esolution"),
+			std::regex("[Vv]oxel[-_ ]?[Ss]ize|[Rr]atio"),
+			std::regex("[Ss]ample[-_ ]?[Tt]ype"),
+			std::regex("[Ee]ndian")
 		};
 
 		while (std::getline(info_ss, line)) {
@@ -75,6 +75,12 @@ namespace Nexus {
 			for (auto i : result) {
 				std::cout << std::to_string(i);
 			}
+
+            if (std::regex_search(line, std::regex("^#"))) {
+                // 如果第一行有 # 就視為註解
+                std::cout << "comment" << std::endl;
+                continue;
+            }
 
 			if (std::regex_search(line, RegFormat[0])) {
 				// 如果是 Resolution，格式通常是 Resolution=149:208:110、resolution=256x256x256。
@@ -98,6 +104,9 @@ namespace Nexus {
 				std::cout << resolution.x << " ";
 				std::cout << resolution.y << " ";
 				std::cout << resolution.z << " ";
+
+                std::cout << std::endl;
+                continue;
 			}
 
 			if (std::regex_search(line, RegFormat[1])) {
@@ -116,6 +125,9 @@ namespace Nexus {
 				std::cout << voxelsize.x << " ";
 				std::cout << voxelsize.y << " ";
 				std::cout << voxelsize.z << " ";
+
+                std::cout << std::endl;
+                continue;
 			}
 
 			if (std::regex_search(line, RegFormat[2])) {
@@ -123,7 +135,26 @@ namespace Nexus {
 				// 先找出 = 的位置後，擷取剩下的字串。
 				std::cout << line.find("=") << "\t" << line.substr(line.find("=") + 1) << "\t";
 				std::string sampletype_str = line.substr(line.find("=") + 1);
-				if (sampletype_str == "UnsignedChar" || sampletype_str == "unsigned char") Attributes.DataType = "unsigned char";
+				if (std::regex_search(line, std::regex("[Cc]har"))) {
+                    Attributes.DataType = VolumeDataType_Char;
+                } else if (std::regex_search(line, std::regex("[Ss]hort"))) {
+                    Attributes.DataType = VolumeDataType_Short;
+                } else if (std::regex_search(line, std::regex("[Ii]nt[eger]?"))) {
+                    Attributes.DataType = VolumeDataType_Int;
+                } else if (std::regex_search(line, std::regex("[Ll]ong"))) {
+                    Attributes.DataType = VolumeDataType_Long;
+                } else if (std::regex_search(line, std::regex("[Uu]nsigned[-_ ]?[Cc]har"))) {
+                    Attributes.DataType = VolumeDataType_UnsignedChar;
+                } else if (std::regex_search(line, std::regex("[Uu]nsigned[-_ ]?[Ss]hort"))) {
+                    Attributes.DataType = VolumeDataType_UnsignedShort;
+                } else if (std::regex_search(line, std::regex("[Uu]nsigned[-_ ]?[Ii]nt[eger]?"))) {
+                    Attributes.DataType = VolumeDataType_UnsignedInt;
+                } else if (std::regex_search(line, std::regex("[Uu]nsigned[-_ ]?[Ll]ong"))) {
+                    Attributes.DataType = VolumeDataType_UnsignedLong;
+                }
+
+                std::cout << std::endl;
+                continue;
 			}
 
 			if (std::regex_search(line, RegFormat[3])) {
@@ -131,8 +162,14 @@ namespace Nexus {
 				// 先找出 = 的位置後，擷取剩下的字串。
 				std::cout << line.find("=") << "\t" << line.substr(line.find("=") + 1) << "\t";
 				std::string endian_str = line.substr(line.find("=") + 1);
-				if (endian_str == "Little" || endian_str == "") Attributes.Endian = "little";
-				if (endian_str == "Big") Attributes.Endian = "big";
+				if (std::regex_search(line, std::regex("[Ll]ittle")) || endian_str == "") {
+                    Attributes.Endian = "little";
+                } else if (std::regex_search(line, std::regex("[B]ig"))) {
+                    Attributes.Endian = "big";
+                }
+
+                std::cout << std::endl;
+                continue;
 			}
 
 			std::cout << std::endl;
@@ -186,11 +223,11 @@ namespace Nexus {
 			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-			glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, Attributes.Resolution.x, Attributes.Resolution.y, Attributes.Resolution.z, 0, GL_RGBA, GL_FLOAT, this->TextureData.data());
+			glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, static_cast<GLsizei>(Attributes.Resolution.x), static_cast<GLsizei>(Attributes.Resolution.y), static_cast<GLsizei>(Attributes.Resolution.z), 0, GL_RGBA, GL_FLOAT, this->TextureData.data());
 			glBindTexture(GL_TEXTURE_3D, 0);
 
 			// Creating a bounding-box with texture coordinate.
-			glm::vec3 resolution = Attributes.Resolution;
+			glm::vec3 resolution = Attributes.Resolution * Attributes.Ratio;
 			this->BoundingBoxVertices = {
 				resolution.x, resolution.y, 0.0,				1.0, 1.0, 0.0,
 				resolution.x, 0.0, 0.0,							1.0, 0.0, 0.0,
@@ -239,7 +276,7 @@ namespace Nexus {
 
 	void IsoSurface::GenerateIsoValueHistogram() {
 		// 初始化，將此 Volume Data 的資料分成 m 等份
-		this->IsoValueHistogram = std::vector<float>(this->Interval, 0.0f);
+		this->IsoValueHistogram = std::vector<float>(static_cast<unsigned int>(this->Interval), 0.0f);
 
 		// 必須先找出資料中最大值做為下界，上界則採用 0。
 		float max_isovalue = *std::max_element(this->RawData.cbegin(), this->RawData.cend());
@@ -268,7 +305,7 @@ namespace Nexus {
 	
 	void IsoSurface::GenerateGradientHistogram() {
 		// 初始化，將 gradient length (已經被分貝化) 的資料分成 k 等份
-		this->GradientHistogram = std::vector<float>(this->Interval, 0.0f);
+		this->GradientHistogram = std::vector<float>(static_cast<unsigned int>(this->Interval), 0.0f);
 
 		// 必須先找出資料中最大值做為下界，上界則採用 0。
 		float max_gradient = *std::max_element(this->GradientMagnitudes.cbegin(), this->GradientMagnitudes.cend());
@@ -297,7 +334,7 @@ namespace Nexus {
 	
 	void IsoSurface::GenerateGradientHeatMap() {
 		// 初始化，橫軸為 Iso Value，縱軸為 Gradient Length
-		this->GradientHeatmap = std::vector<float>(this->Interval * this->Interval, 0.0f);
+		this->GradientHeatmap = std::vector<float>(static_cast<unsigned int>(this->Interval * this->Interval), 0.0f);
 
 		// 跑遍所有資料，只要有 Voxel 符合對應的 Iso value 和 在相對應的 梯度區間 該格就 +=1
 		for (unsigned int i = 0; i < this->RawData.size(); i++) {
@@ -316,7 +353,7 @@ namespace Nexus {
 					break;
 				}
 			}
-			int idx = ((this->Interval - 1) - gradient_idx) * this->Interval + isovalue_idx;
+			int idx = static_cast<unsigned int>(((this->Interval - 1) - gradient_idx) * this->Interval + isovalue_idx);
 			this->GradientHeatmap[idx] += 1;
 		}
 	}
@@ -329,7 +366,7 @@ namespace Nexus {
 		this->IsoValueHistogram = std::vector<float>(256, 0.0f);
 
 		// 計算總所有 iso value 為 0 ~ 255 的顯示次數。 
-		float total_iso_value = std::accumulate(old_histogram.cbegin(), old_histogram.cend(), 0.0);
+		float total_iso_value = static_cast<float>(std::accumulate(old_histogram.cbegin(), old_histogram.cend(), 0.0));
 
 		// 歸一化，所有顯示次數除以總次數，數值會介於 0 ~ 1 之間。
 		std::vector<float> normalize;
@@ -468,6 +505,7 @@ namespace Nexus {
 			shader->SetInt("volume", 0);
 			shader->SetInt("transfer_function", 1);
 			shader->SetVec3("volume_resolution", this->Attributes.Resolution);
+            shader->SetVec3("volume_ratio", this->Attributes.Ratio);
 
 			// Draw a bounding-box, size will be the resolution of the volume data.
 			glBindVertexArray(this->BoundingBoxVAO);
@@ -614,7 +652,7 @@ namespace Nexus {
 		// 利用 Lookup table 查表出對應的三角形座標
 		for (unsigned int i = 0; this->TriangleTable[cube_index][i] != -1; i += 3) {
 			for (unsigned int offset = 0; offset < 3; offset++) {
-				this->AddPosition(position_list[this->TriangleTable[cube_index][i + offset]]);
+				this->AddPosition(position_list[this->TriangleTable[cube_index][i + offset]] * this->Attributes.Ratio);
 				this->AddNormal(glm::normalize(normal_list[this->TriangleTable[cube_index][i + offset]]));
 			}
 		}

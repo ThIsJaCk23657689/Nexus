@@ -182,7 +182,11 @@ void TransferFunctionWidget::draw_ui()
         mouse_pos.y = clamp(mouse_pos.y, 0.f, 1.f);
 
         if (io.MouseDown[0]) {
+            // 按下左鍵時
             if (selected_point != (size_t)-1) {
+                ImGui::SetTooltip("(%4.3f, %4.3f)", mouse_pos.x, mouse_pos.y);
+
+                // 當點選到某節點上時
                 alpha_control_pts[selected_point] = mouse_pos;
 
                 // Keep the first and last control points at the edges
@@ -241,16 +245,21 @@ void TransferFunctionWidget::draw_ui()
         selected_point = -1;
     }
 
+    std::vector<ImVec2> grabbers_red;
+    std::vector<ImVec2> grabbers_green;
+    std::vector<ImVec2> grabbers_blue;
+    std::vector<ImVec2> grabbers_alpha;
+
     // Draw the alpha control points, and build the points for the polyline
     // which connects them
-    std::vector<ImVec2> polyline_pts;
     for (const auto &pt : alpha_control_pts) {
         const vec2f pt_pos = pt * view_scale + view_offset;
-        polyline_pts.push_back(pt_pos);
+        grabbers_alpha.push_back(pt_pos);
         draw_list->AddCircleFilled(pt_pos, point_radius, 0xFFFFFFFF);
+        draw_list->AddCircleFilled(pt_pos, point_radius - 2.0f, ImColor(0.8f, 0.8f, 0.8f, 1.0f));
     }
     draw_list->AddPolyline(
-        polyline_pts.data(), (int)polyline_pts.size(), 0xFFFFFFFF, false, 2.f);
+            grabbers_alpha.data(), (int)grabbers_alpha.size(), 0xFFFFFFFF, false, 2.f);
     draw_list->PopClipRect();
 
     ImGui::Dummy(ImVec2(50.0f, 50.0f));

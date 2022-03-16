@@ -10,6 +10,17 @@
 #include "Cube.h"
 
 namespace Nexus {
+
+    enum VolumeDataType {
+        VolumeDataType_Char,
+        VolumeDataType_Short,
+        VolumeDataType_Int,
+        VolumeDataType_Long,
+        VolumeDataType_UnsignedChar,
+        VolumeDataType_UnsignedShort,
+        VolumeDataType_UnsignedInt,
+        VolumeDataType_UnsignedLong,
+    };
 	
 	enum InterpolateMode {
 		INTERPOLATE_POSITION,
@@ -24,7 +35,7 @@ namespace Nexus {
 	struct IsoSurfaceAttributes {
 		glm::vec3 Resolution = glm::vec3(1.0f);
 		glm::vec3 Ratio = glm::vec3(1.0f);
-		std::string DataType = "unsigned char";
+        VolumeDataType DataType;
 		std::string Endian = "little";
 	};
 	
@@ -98,7 +109,18 @@ namespace Nexus {
 		std::string GetInfDataFilePath() const { return this->InfDataFilePath; }
 		glm::vec3 GetResolution() const { return this->Attributes.Resolution; }
 		glm::vec3 GetRatio() const { return this->Attributes.Ratio; }
-		std::string GetDataType() const { return this->Attributes.DataType; }
+        std::string GetDataType() const {
+            if (this->Attributes.DataType == VolumeDataType_UnsignedChar) {
+                return std::string("unsigned char");
+            } else if (this->Attributes.DataType == VolumeDataType_UnsignedShort) {
+                return std::string("unsigned short");
+            } else if (this->Attributes.DataType == VolumeDataType_UnsignedInt) {
+                return std::string("unsigned int");
+            } else if (this->Attributes.DataType == VolumeDataType_UnsignedLong) {
+                return std::string("unsigned long");
+            }
+            return std::string("undefined");
+        }
 		std::string GetEndian() const { return this->Attributes.Endian; }
 		int GetCurrentRenderMode() const { return this->CurrentRenderMode; }
 		unsigned int GetVoxelCount() const{ return (unsigned int)this->RawData.size(); }
@@ -407,7 +429,7 @@ namespace Nexus {
 		std::string InfDataFilePath;
 		std::string RawDataFilePath;
 		std::string InfData;
-		std::vector<unsigned char> RawData;
+		std::vector<float> RawData;
 		std::vector<glm::vec3> GridNormals;
 		std::vector<float> GradientMagnitudes;
 		bool IsInitialize = false;
@@ -443,11 +465,11 @@ namespace Nexus {
 		unsigned int VBO;
 
 		unsigned int GetIndexFromGrid(int x, int y, int z) const {
-			return z * Attributes.Resolution.y * Attributes.Resolution.x + (y * Attributes.Resolution.x + x);
+			return static_cast<unsigned int>(z * Attributes.Resolution.y * Attributes.Resolution.x + (y * Attributes.Resolution.x + x));
 		}
 
 		unsigned int GetIndexFromGrid(glm::vec3 vector) const {
-			return vector.z * Attributes.Resolution.y * Attributes.Resolution.x + (vector.y * Attributes.Resolution.x + vector.x);
+			return static_cast<unsigned int>(vector.z * Attributes.Resolution.y * Attributes.Resolution.x + (vector.y * Attributes.Resolution.x + vector.x));
 		}
 		
 		float GetIsoValueFromGrid(int x, int y, int z) const {
