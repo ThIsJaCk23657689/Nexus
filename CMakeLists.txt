@@ -15,22 +15,19 @@ set(NEXUS_INCLUDE_DIRS
 	"Header/Physics/"
 	"Header/Physics/Collision"
 	"Header/Physics/Collision/Collider"
-	"External/imgui-transfer-function"
-	"External/transfer-function")
+	"External/imgui-transfer-function")
 
 set(SOURCE_DIRS
 	"Source/*.cpp"
-	"External/stb_image/*.cpp"
-	"External/imgui-transfer-function/*.cpp"
-	"External/transfer-function/*.cpp")
+	"External/imgui-transfer-function/*.cpp")
 
 project (${MY_PROJECT} LANGUAGES CXX C)
 
 file(GLOB_RECURSE NEXUS_SOURCE CONFIGURE_DEPENDS ${SOURCE_DIRS})
 
 # Library setting (Include cpp files and header files)
-find_path(STB_INCLUDE_DIRS "stb.h")
 add_library(${MY_LIBRARY} ${NEXUS_SOURCE})
+find_path(STB_INCLUDE_DIRS "stb_c_lexer.h")
 target_include_directories(${MY_LIBRARY} PUBLIC ${NEXUS_INCLUDE_DIRS} ${STB_INCLUDE_DIRS})
 
 # Loading GLFW GLM GLAD ImGUI Assimp (vcpkg)

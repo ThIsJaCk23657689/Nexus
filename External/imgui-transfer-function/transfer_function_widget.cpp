@@ -1,18 +1,17 @@
-#include <imgui.h>
 #define IMGUI_DEFINE_MATH_OPERATORS
+#include <imgui.h>
 #include <imgui_internal.h>
 
-#include "transfer_function_widget.h"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+
 #include "embedded_colormaps.h"
+#include "transfer_function_widget.h"
 
 #ifndef TFN_WIDGET_NO_STB_IMAGE_IMPL
 #define STB_IMAGE_IMPLEMENTATION
 #endif
-
-
 
 #include "stb_image.h"
 
